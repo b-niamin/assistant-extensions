@@ -1,0 +1,28 @@
+# Background service of the health extension: syncs Garmin Connect into the `health` schema.
+# install.sh adds this file to COMPOSE_FILE in .env when the extension is installed. Paths are relative
+# to the assistant checkout (the folder of the main docker-compose.yml).
+services:
+  garmin-sync:
+    image: python:3.12-slim
+    restart: unless-stopped
+    working_dir: /app
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    command: ['sh', '/app/entrypoint.sh']
+    environment:
+      # Role ext_health_svc: the health schema (tokens included) and core.profiles, nothing else.
+      DATABASE_URL: postgresql://ext_health_svc:${SERVICES_DB_PASSWORD:?set SERVICES_DB_PASSWORD in .env}@db:5432/${POSTGRES_DB:-assistant}
+      TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY:?set TOKEN_ENCRYPTION_KEY in .env}
+      SYNC_INTERVAL_MINUTES: ${SYNC_INTERVAL_MINUTES:-30}
+      DEFAULT_PROFILE: ${DEFAULT_PROFILE:-}
+      PATH: /opt/venv/bin:/usr/local/bin:/usr/bin:/bin
+      # Runs as root: never write __pycache__ into the checkout the claude container (another uid) edits.
+      PYTHONDONTWRITEBYTECODE: '1'
+    volumes:
+      - ./extensions/health/services/garmin-sync:/app:ro
+      - garmin-venv:/opt/venv
+      - logs:/logs
+    mem_limit: 512m
+
+volumes:
+  garmin-venv:

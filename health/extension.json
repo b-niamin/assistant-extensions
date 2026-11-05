@@ -1,0 +1,11 @@
+{
+  "id": "health",
+  "name": "Training & Health",
+  "description": "Garmin: sleep, HRV, Body Battery, readiness, activities",
+  "version": "0.2.0",
+  "kind": "native",
+  "scope": "profile",
+  "shell": 1,
+  "schema": "health",
+  "services": ["garmin-sync"]
+}
