@@ -1,0 +1,126 @@
+{
+  "$schema": "../../../schemas/manifest.schema.json",
+  "schemaVersion": 1,
+  "id": "gym-tracker/muscle-map",
+  "appType": "gym-tracker",
+  "variant": "muscle-map",
+  "name": {
+    "en": "Gym Tracker",
+    "pl": "Dziennik treningowy"
+  },
+  "variantName": {
+    "en": "Muscle map",
+    "pl": "Mapa mięśni"
+  },
+  "description": {
+    "en": "Plan workouts, log sets and weights, track progress and see which muscles you trained on a body map.",
+    "pl": "Planuj treningi, zapisuj serie i ciężary, śledź postępy i zobacz na mapie ciała, które mięśnie pracowały."
+  },
+  "version": "1.1.0",
+  "dataVersion": 1,
+  "status": "review",
+  "category": "health-fitness",
+  "tags": [
+    "gym",
+    "workout",
+    "strength",
+    "sets",
+    "progress",
+    "rest-timer"
+  ],
+  "languages": [
+    "en",
+    "pl"
+  ],
+  "entry": "gym-tracker-muscle-map.html",
+  "license": "MIT",
+  "authors": [
+    {
+      "github": "piotr-liszka"
+    }
+  ],
+  "madeWith": [
+    "Claude"
+  ],
+  "created": "2026-11-05",
+  "updated": "2026-11-05",
+  "storage": {
+    "localStorage": [
+      "gym-notebook.v1"
+    ],
+    "sessionStorage": [
+      "gym-tracker-muscle-map:foldMap"
+    ]
+  },
+  "dataFormats": {
+    "export": [
+      "json"
+    ],
+    "import": [
+      "json"
+    ]
+  },
+  "browserApis": [
+    "clipboard",
+    "file-input",
+    "download",
+    "wake-lock",
+    "vibrate",
+    "audio"
+  ],
+  "sampleData": [
+    {
+      "file": "sample-data/gym-tracker-sample.json",
+      "description": {
+        "en": "Three made-up workout plans and about eight weeks of logged sessions.",
+        "pl": "Trzy przykładowe plany i około ośmiu tygodni zapisanych treningów."
+      }
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "screenshots/phone-light.png",
+      "theme": "light",
+      "device": "phone",
+      "caption": {
+        "en": "Main screen",
+        "pl": "Ekran główny"
+      }
+    },
+    {
+      "file": "screenshots/phone-dark.png",
+      "theme": "dark",
+      "device": "phone",
+      "caption": {
+        "en": "Dark mode",
+        "pl": "Tryb ciemny"
+      }
+    },
+    {
+      "file": "screenshots/phone-progress.png",
+      "theme": "light",
+      "device": "phone",
+      "caption": {
+        "en": "Progress",
+        "pl": "Postępy"
+      },
+      "actions": [
+        {
+          "click": "text=Progress"
+        }
+      ]
+    }
+  ],
+  "thirdParty": [
+    {
+      "name": "react-body-highlighter",
+      "license": "MIT",
+      "url": "https://github.com/giavinh79/react-body-highlighter",
+      "usage": "Muscle map polygon shapes (src/body.json)"
+    }
+  ],
+  "build": {
+    "command": "python3 build.py",
+    "sources": "src/"
+  }
+}
