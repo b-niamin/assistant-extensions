@@ -1,13 +1,23 @@
 # assistant-extensions
 
-Ready-made extensions (apps) for [assistant-core](https://github.com/b-niamin/assistant-core), plus
-reference skeletons Claude can start new ones from.
+Extensions (apps) for [assistant-core](https://github.com/b-niamin/assistant-core), in two kinds:
+
+| Folder | What | How |
+|---|---|---|
+| [`extensions/`](extensions) | **ready to use**: install as they are, update later | `ext install <id>` |
+| [`inspirations/`](inspirations) | **skeletons to build from**: Claude copies one and adapts it to you | `ext new <id> --from inspiration:<name>` |
+
+Ready to use:
 
 | Extension | Kind | What |
 |---|---|---|
-| [`health`](health) | native, per profile | Training & Health: Garmin sleep, HRV, Body Battery, readiness, activities. Brings the `garmin-sync` service |
-| [`gym`](gym) | onefile, per profile | Gym tracker: plans, sets and weights, progress, a muscle map |
-| [`examples/`](examples) | skeletons | `home-assistant`, `calendar`, `learning`: not installable as they are |
+| [`health`](extensions/health) | native, per profile | Training & Health: Garmin sleep, HRV, Body Battery, readiness, activities. Brings the `garmin-sync` service |
+| [`gym`](extensions/gym) | onefile, per profile | Gym tracker: plans, sets and weights, progress, a muscle map |
+
+Inspirations: [`home-assistant`](inspirations/home-assistant) (shared data, a settings panel with a token),
+[`calendar`](inspirations/calendar) (shared, dashboard tiles), [`learning`](inspirations/learning) (per
+profile, dashboard tiles). Anything outside this repo (someone's repo, an app from onefile-apps, an idea)
+can be an inspiration too: Claude builds the extension fresh and records the source as `inspiredBy`.
 
 ## Install
 
@@ -25,9 +35,8 @@ docker compose exec claude node scripts/ext.mjs install health
 ./install.sh        # once, for an extension with a compose.yml (starts its service)
 ```
 
-`ext install` copies `<id>/` into the instance's `extensions/<id>/` and records this repo's commit;
-`ext update <id>` takes a newer one. `ext new <id> --from example:<name>` starts a new extension from a
-skeleton in `examples/`.
+`ext install` copies `extensions/<id>/` into the instance's `extensions/<id>/` and records this repo's
+commit; `ext update <id>` takes a newer one.
 
 ## Layout of an extension
 
