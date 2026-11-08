@@ -46,7 +46,7 @@ commit; `ext update <id>` takes a newer one.
 ```
 <id>/
   extension.json       manifest (id, name, kind native|onefile, scope profile|shared, settings, services)
-  README.md CLAUDE.md
+  README.md AGENTS.md  rules for AI agents (CLAUDE.md: `@AGENTS.md`)
   web/routes/**        native: SvelteKit routes, mounted at /<id>
   web/lib/**           components, helpers, *.test.ts (run by the core's vitest)
   web/tiles.server.ts  dashboard tiles;  web/tools.server.ts  tools for Claude
