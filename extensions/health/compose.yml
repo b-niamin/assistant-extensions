@@ -3,7 +3,7 @@
 # to the assistant checkout (the folder of the main docker-compose.yml).
 services:
   garmin-sync:
-    image: python:3.12-slim
+    image: python:3.14-slim
     restart: unless-stopped
     working_dir: /app
     depends_on:
