@@ -5,5 +5,6 @@
   "version": "0.0.1",
   "kind": "native",
   "scope": "profile",
+  "accessory": "book",
   "shell": 1
 }

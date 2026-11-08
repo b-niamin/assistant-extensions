@@ -5,6 +5,7 @@
   "version": "0.0.1",
   "kind": "native",
   "scope": "shared",
+  "accessory": "bulb",
   "shell": 1,
   "settings": [
     { "name": "url", "label": "Home Assistant address", "type": "text", "help": "e.g. http://homeassistant.local:8123" },

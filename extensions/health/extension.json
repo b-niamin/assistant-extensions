@@ -5,6 +5,7 @@
   "version": "0.2.0",
   "kind": "native",
   "scope": "profile",
+  "accessory": "stethoscope",
   "shell": 1,
   "schema": "health",
   "services": ["garmin-sync"]
