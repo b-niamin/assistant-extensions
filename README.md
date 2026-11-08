@@ -19,6 +19,9 @@ Inspirations: [`home-assistant`](inspirations/home-assistant) (shared data, a se
 profile, dashboard tiles). Anything outside this repo (someone's repo, an app from onefile-apps, an idea)
 can be an inspiration too: Claude builds the extension fresh and records the source as `inspiredBy`.
 
+`catalog.json` lists both for the core's System settings → Extend the system; add an entry there
+when you add a folder.
+
 ## Install
 
 With the core installer (fresh machine):

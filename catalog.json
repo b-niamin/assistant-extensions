@@ -1,0 +1,43 @@
+{
+  "extensions": [
+    {
+      "id": "health",
+      "name": "Training & Health",
+      "description": "Garmin sleep, HRV, Body Battery, readiness and activities, synced every 30 minutes.",
+      "kind": "native",
+      "scope": "profile",
+      "service": true,
+      "needs": "A Garmin Connect account"
+    },
+    {
+      "id": "gym",
+      "name": "Gym Tracker",
+      "description": "Plan workouts, log sets and weights, see your progress and the muscles you trained.",
+      "kind": "onefile",
+      "scope": "profile"
+    }
+  ],
+  "inspirations": [
+    {
+      "id": "home-assistant",
+      "name": "Smart home",
+      "description": "Rooms, climate and today's energy from Home Assistant, with an address and a token in its settings.",
+      "scope": "shared",
+      "idea": "Show my Home Assistant rooms, temperatures and today's energy use."
+    },
+    {
+      "id": "calendar",
+      "name": "Family calendar",
+      "description": "One shared calendar for the household, with the next events on the dashboard.",
+      "scope": "shared",
+      "idea": "A shared calendar with upcoming events for the whole family."
+    },
+    {
+      "id": "learning",
+      "name": "Learning",
+      "description": "Spaced-repetition decks per person and a daily study streak.",
+      "scope": "profile",
+      "idea": "Spaced-repetition flashcards for learning a language, with a daily streak."
+    }
+  ]
+}
