@@ -1,0 +1,9 @@
+{
+  "id": "calendar",
+  "name": "Calendar",
+  "description": "Upcoming events from your calendars",
+  "version": "0.0.1",
+  "kind": "native",
+  "scope": "shared",
+  "shell": 1
+}

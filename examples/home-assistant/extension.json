@@ -1,0 +1,15 @@
+{
+  "id": "home-assistant",
+  "name": "Home",
+  "description": "Home Assistant: rooms, climate and energy at a glance",
+  "version": "0.0.1",
+  "kind": "native",
+  "scope": "shared",
+  "shell": 1,
+  "settings": [
+    { "name": "url", "label": "Home Assistant address", "type": "text", "help": "e.g. http://homeassistant.local:8123" },
+    { "name": "token", "label": "Long-lived access token", "type": "secret", "help": "Home Assistant -> your profile -> Security" },
+    { "name": "refresh", "label": "Refresh every", "type": "select", "options": ["1 min", "5 min", "15 min"], "default": "5 min" },
+    { "name": "show_energy", "label": "Show today's energy on the dashboard", "type": "boolean", "default": true }
+  ]
+}

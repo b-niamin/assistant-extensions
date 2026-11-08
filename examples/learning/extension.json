@@ -1,0 +1,9 @@
+{
+  "id": "learning",
+  "name": "Learning",
+  "description": "Spaced-repetition decks and a daily study streak",
+  "version": "0.0.1",
+  "kind": "native",
+  "scope": "profile",
+  "shell": 1
+}
