@@ -11,7 +11,7 @@
 <style>
 /* Layout: one phone-width column (max 560px), floating tab bar, bottom sheets for detail.
    Look: the assistant's (specs/001-design.md). Inside the shell its tokens (--page, --g-surface, --g-ink,
-   --accent, --hue-*, ...) and <assistant-pip> are injected; the fallbacks keep the file working alone.
+   --accent, --hue-*, ...) and <assistant-beni> are injected; the fallbacks keep the file working alone.
    The four plate colours map to the shell's red, accent, yellow and green. System sans throughout. */
 :root{
   --bg:var(--page,#f9f9f7);--g-surface:var(--surface,#fcfcfb);--sunk:var(--surface-2,#f0efec);--g-ink:var(--ink,#0b0b0b);--ink2:var(--ink-2,#52514e);--muted:var(--ink-2,#52514e);--faint:var(--ink-3,#898781);--line:var(--grid,#e1e0d9);
@@ -78,7 +78,7 @@ h1,h2,h3{text-wrap:balance}
 .notice span{flex:1;min-width:12ch}
 .notice button{color:var(--blue);font-weight:700;font-size:14px}
 .empty{color:var(--muted);padding:20px 4px;font-size:15px;max-width:44ch;display:flex;align-items:center;gap:12px}
-.empty assistant-pip{flex:0 0 auto}
+.empty assistant-beni{flex:0 0 auto}
 .top .brand{display:flex;align-items:center;gap:10px;min-width:0}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 22px;border-radius:var(--radius-sm,6px);font-family:var(--cond);font-weight:700;font-size:19px;letter-spacing:.01em;transition:transform .15s var(--ease),box-shadow .2s,background .2s}
@@ -412,7 +412,7 @@ nav.tabs .live{position:absolute;top:6px;right:calc(50% - 18px);width:8px;height
 <body>
 <div class="wrap">
   <div id="live" class="bar-live hide"></div>
-  <header class="top"><span class="brand"><assistant-pip id="pip" mood="steady" size="36"></assistant-pip><h1 id="title">Gym Tracker</h1></span>
+  <header class="top"><span class="brand"><assistant-beni id="pip" mood="steady" size="36"></assistant-beni><h1 id="title">Gym Tracker</h1></span>
     <button class="gear" data-act="open-settings" data-ta="settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button></header>
   <div id="notice" class="notice hide" role="status"></div>
   <main id="view"><p class="empty">Loading…</p></main>
@@ -910,7 +910,7 @@ function thumb(k,name,cls){
   }
   return `<span class="thumb ${cls||""}">${thumbCache.get(k)}</span>`;
 }
-/* Pip in the header: charged when the weekly goal is met, steady while on it, idle before the first workout. */
+/* Beni in the header: charged when the weekly goal is met, steady while on it, idle before the first workout. */
 function pipMood(m){const p=document.getElementById("pip");if(p)p.setAttribute("mood",m);return "";}
 function loadBlock(load,emptyTxt){
   const ent=Object.entries(load).sort((a,b)=>b[1]-a[1]);
@@ -1094,11 +1094,11 @@ function renderCalendar(){
 function renderProgress(){
   const done=sorted().filter(w=>w.done);
   head(t("progress"));
-  if(!done.length){$("#view").innerHTML=`<p class="empty"><assistant-pip mood="idle" size="36"></assistant-pip>${esc(t("progEmpty"))}</p><button class="btn btn-line" data-act="sample-load">${esc(t("loadSample"))}</button>`;return;}
+  if(!done.length){$("#view").innerHTML=`<p class="empty"><assistant-beni mood="idle" size="36"></assistant-beni>${esc(t("progEmpty"))}</p><button class="btn btn-line" data-act="sample-load">${esc(t("loadSample"))}</button>`;return;}
   const from=new Date();from.setDate(from.getDate()-progDays+1);const fs=ds(from);
   const recent=done.filter(w=>w.date>=fs);
   const keys=[...usedKeys().entries()].filter(([k])=>history(k).length);
-  if(!keys.length){$("#view").innerHTML=`<p class="empty"><assistant-pip mood="idle" size="36"></assistant-pip>${esc(t("progEmpty"))}</p>`;return;}
+  if(!keys.length){$("#view").innerHTML=`<p class="empty"><assistant-beni mood="idle" size="36"></assistant-beni>${esc(t("progEmpty"))}</p>`;return;}
   if(!progEx||!keys.find(([k])=>k===progEx)) progEx=keys[0][0];
   const h=history(progEx), u=unitOfKey(progEx), bw=u==="s"||h.every(x=>!x.maxKg), un=U();
   const metrics=bw?[["maxR",u==="s"?t("longest"):t("maxReps")],["sumR",u==="s"?t("totalTime"):t("sumReps")]]:[["e1rm",t("e1rm")],["maxKg",t("maxKg",un)],["vol",t("vol")]];
@@ -1168,7 +1168,7 @@ function renderLibrary(){
 function libItems(items,used){
   return items.map(e=>`<button class="item th" data-act="info" data-k="${esc(e.k)}" data-name="${esc(e.name)}">
       ${thumb(e.k,e.name,"")}<div class="tx"><div class="nm">${esc(e.name)}</div><div class="mu">${e.p.length?esc(e.p.map(mN).join(", ")):esc(e.alt)}</div></div>
-      <span class="rt">${used.has(e.k)?esc(t("doneOn",fmtShort(used.get(e.k).date))):""}</span></button>`).join("")||`<div class="empty"><assistant-pip mood="idle" size="36"></assistant-pip>${esc(t("libEmpty"))}</div>`;
+      <span class="rt">${used.has(e.k)?esc(t("doneOn",fmtShort(used.get(e.k).date))):""}</span></button>`).join("")||`<div class="empty"><assistant-beni mood="idle" size="36"></assistant-beni>${esc(t("libEmpty"))}</div>`;
 }
 
 /* ---------- sheets ---------- */
