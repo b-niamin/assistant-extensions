@@ -2,10 +2,10 @@
   "id": "health",
   "name": "Training & Health",
   "description": "Garmin: sleep, HRV, Body Battery, readiness, activities",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "kind": "native",
   "scope": "profile",
-  "accessory": "stethoscope",
+  "accessory": "headband",
   "shell": 1,
   "schema": "health",
   "services": ["garmin-sync"]

@@ -40,11 +40,39 @@ def _err(err: Exception) -> str:
     return type(err).__name__
 
 
+# Share of the progress bar each phase of a pass fills. A backfill spends nearly all of its time on
+# the metric history, so the quick phases get a small slice there.
+PHASES = ("metrics_recent", "activities", "streams", "weight", "planned")
+INCREMENTAL_SHARE = {"metrics_recent": 0.3, "activities": 0.2, "streams": 0.3, "weight": 0.1, "planned": 0.1}
+HISTORY_START = 0.15  # backfill: the quick phases fill 0..15 %, the history the rest
+
+LABELS = {
+    "metrics_recent": "Fetching the last days",
+    "activities": "Fetching activities",
+    "streams": "Fetching activity details",
+    "weight": "Fetching weight",
+    "planned": "Fetching planned workouts",
+    "metrics_history": "Fetching history",
+}
+
+
 class Engine:
     def __init__(self, garmin: MetricsService, store: Store, today: _dt.date | None = None) -> None:
         self.g = garmin
         self.s = store
         self.today = today or _dt.date.today()
+        self._run_id: str | None = None
+        self._span = (0.0, 1.0)  # the slice of the bar the current phase fills
+
+    def _progress(self, within: float, label: str) -> None:
+        """Report `within` (0..1) of the current phase. Best-effort: a failed write never stops a sync."""
+        if self._run_id is None:
+            return
+        lo, hi = self._span
+        try:
+            self.s.progress(self._run_id, lo + (hi - lo) * max(0.0, min(1.0, within)), label)
+        except Exception as e:  # noqa: BLE001
+            log.warning("progress write failed: %s", type(e).__name__)
 
     # -- phases ----------------------------------------------------------------
     def metrics(self, profile: str, start: _dt.date, end: _dt.date) -> int:
@@ -78,6 +106,8 @@ class Engine:
             rows = [r for r in (normalize.activity_row(x) for x in raw) if r]
             self.s.put_activities(profile, rows)
             count += len(rows)
+            # The total is unknown: creep towards the end of the slice page by page.
+            self._progress(1 - 0.8 ** (page + 1), f"Fetching activities ({count})")
             if not full and rows and all(r["activity_id"] in known for r in rows):
                 break
             if len(raw) < ACTIVITY_PAGE:
@@ -86,7 +116,9 @@ class Engine:
 
     def streams(self, profile: str, budget: int) -> int:
         fetched = 0
-        for a in self.s.activities_missing_streams(profile, normalize.STREAMS_SCHEMA_VERSION, budget):
+        todo = self.s.activities_missing_streams(profile, normalize.STREAMS_SCHEMA_VERSION, budget)
+        for i, a in enumerate(todo):
+            self._progress(i / len(todo), f"Fetching activity details ({i + 1}/{len(todo)})")
             try:
                 d = self.g.get_activity_details(profile, int(a["activity_id"]))
             except Exception as e:  # noqa: BLE001
@@ -132,6 +164,7 @@ class Engine:
 
     # -- passes ----------------------------------------------------------------
     def _phase(self, detail: dict[str, Any], name: str, fn, *args) -> None:  # type: ignore[no-untyped-def]
+        self._progress(0, LABELS.get(name, name))
         try:
             detail[name] = fn(*args)
         except Abort:
@@ -142,24 +175,37 @@ class Engine:
 
     def run(self, profile: str, kind: str = "incremental", since: _dt.date | None = None) -> dict[str, Any]:
         full = kind == "backfill"
-        run_id = self.s.start_run(profile, kind)
+        run_id = self._run_id = self.s.start_run(profile, kind, since)
         detail: dict[str, Any] = {}
+        recent_start = self.today - _dt.timedelta(days=RECENT_DAYS - 1)
+        weight_since = since or (self.today - _dt.timedelta(days=5 * 365 if full else 90))
+        steps = {
+            "metrics_recent": (self.metrics, profile, recent_start, self.today),
+            "activities": (self.activities, profile, full),
+            "streams": (self.streams, profile, 400 if full else 80),
+            "weight": (self.weight, profile, weight_since),
+            "planned": (self.planned, profile),
+        }
         try:
-            recent_start = self.today - _dt.timedelta(days=RECENT_DAYS - 1)
-            self._phase(detail, "metrics_recent", self.metrics, profile, recent_start, self.today)
-            self._phase(detail, "activities", self.activities, profile, full)
-            self._phase(detail, "streams", self.streams, profile, 400 if full else 80)
-            weight_since = since or (self.today - _dt.timedelta(days=5 * 365 if full else 90))
-            self._phase(detail, "weight", self.weight, profile, weight_since)
-            self._phase(detail, "planned", self.planned, profile)
+            at = 0.0
+            for name in PHASES:
+                share = INCREMENTAL_SHARE[name] * (HISTORY_START if full else 1)
+                self._span = (at, at + share)
+                fn, *args = steps[name]
+                self._phase(detail, name, fn, *args)
+                at += share
             if full:
+                self._span = (HISTORY_START, 1.0)
                 self._phase(detail, "metrics_history", self.backfill_metrics, profile, since)
         except Abort as e:
             self.s.finish_run(run_id, "failed", detail, str(e))
+            if str(e).startswith("token_rejected") or "NotAuthenticated" in str(e):
+                self.s.account_status(profile, "reconnect")
             log.error("sync aborted for %s: %s", profile, e)
             return {"status": "failed", "error": str(e), **detail}
         status = "partial" if any(isinstance(v, dict) and "error" in v for v in detail.values()) else "ok"
         self.s.finish_run(run_id, status, detail)
+        self.s.account_status(profile, "connected")
         cursor = self.s.get_cursor(profile)
         cursor["lastRun"] = self.today.isoformat()
         self.s.set_cursor(profile, cursor, full=full)
@@ -173,9 +219,11 @@ class Engine:
             self.today - _dt.timedelta(days=RECENT_DAYS)
         )
         empty, chunks, present = 0, 0, 0
+        first, total = frontier, max(1, (frontier - floor).days)
         while frontier > floor and empty < EMPTY_CHUNKS_STOP:
             end = frontier - _dt.timedelta(days=1)
             start = max(floor, end - _dt.timedelta(days=CHUNK_DAYS - 1))
+            self._progress((first - frontier).days / total, f"Fetching history: {end.strftime('%B %Y')}")
             got = self.metrics(profile, start, end)
             present += got
             empty = 0 if got else empty + 1

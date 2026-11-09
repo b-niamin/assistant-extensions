@@ -160,18 +160,106 @@ class Store:
                 (profile, Jsonb(cursor), full),
             )
 
-    def start_run(self, profile: str, kind: str) -> str:
+    def start_run(self, profile: str, kind: str, since: Any = None) -> str:
         run_id = uuid.uuid4().hex
         with self._conn() as c:
             c.execute(
-                "INSERT INTO health.sync_runs (id, profile_id, kind, status) VALUES (%s, %s, %s, 'running')",
-                (run_id, profile, kind),
+                """INSERT INTO health.sync_runs (id, profile_id, kind, status, since, progress, heartbeat_at)
+                   VALUES (%s, %s, %s, 'running', %s, 0, now())""",
+                (run_id, profile, kind, since),
             )
         return run_id
+
+    def progress(self, run_id: str, fraction: float, phase: str) -> None:
+        with self._conn() as c:
+            c.execute(
+                "UPDATE health.sync_runs SET progress = %s, phase = %s, heartbeat_at = now() WHERE id = %s",
+                (max(0.0, min(1.0, fraction)), phase, run_id),
+            )
+
+    def interrupt_stale_runs(self) -> None:
+        """At service start nothing can be running: rows still marked so were cut off."""
+        with self._conn() as c:
+            c.execute(
+                """UPDATE health.sync_runs SET status = 'failed', finished_at = now(), error = 'interrupted'
+                   WHERE status = 'running'"""
+            )
+            c.execute("UPDATE health.sync_requests SET finished_at = now() WHERE started_at IS NOT NULL AND finished_at IS NULL")
+
+    # -- requests from the settings panel --------------------------------------
+    def add_request(self, profile: str, kind: str, since: Any = None) -> str:
+        req_id = uuid.uuid4().hex
+        with self._conn() as c:
+            c.execute(
+                "INSERT INTO health.sync_requests (id, profile_id, kind, since) VALUES (%s, %s, %s, %s)",
+                (req_id, profile, kind, since),
+            )
+        return req_id
+
+    def claim_request(self) -> dict[str, Any] | None:
+        """The oldest waiting request of a connected profile, marked started."""
+        with self._conn() as c:
+            row = c.execute(
+                """UPDATE health.sync_requests SET started_at = now()
+                   WHERE id = (SELECT r.id FROM health.sync_requests r
+                               JOIN secret_garmin_tokens t ON t.user_id = r.profile_id
+                               WHERE r.started_at IS NULL AND r.source = 'garmin'
+                               ORDER BY r.requested_at LIMIT 1 FOR UPDATE SKIP LOCKED)
+                   RETURNING id, profile_id, kind, since"""
+            ).fetchone()
+        return {"id": row[0], "profile": row[1], "kind": row[2], "since": row[3]} if row else None
+
+    def finish_request(self, req_id: str) -> None:
+        with self._conn() as c:
+            c.execute("UPDATE health.sync_requests SET finished_at = now() WHERE id = %s", (req_id,))
+
+    def ever_backfilled(self, profile: str) -> bool:
+        """A history fetch ran or is waiting: the first one after a login is queued only once."""
+        with self._conn() as c:
+            row = c.execute(
+                """SELECT EXISTS (SELECT 1 FROM health.sync_requests WHERE profile_id = %s AND kind = 'backfill')
+                       OR EXISTS (SELECT 1 FROM health.sync_runs WHERE profile_id = %s AND kind = 'backfill')""",
+                (profile, profile),
+            ).fetchone()
+        return bool(row and row[0])
+
+    def set_next_run(self, profile: str, at: Any) -> None:
+        with self._conn() as c:
+            c.execute(
+                """UPDATE health.sync_state SET cursor = cursor || jsonb_build_object('nextRunAt', %s::text)
+                   WHERE profile_id = %s AND source = 'garmin'""",
+                (at.isoformat(), profile),
+            )
+
+    # -- connected accounts (mirror of secret_garmin_tokens, without the secret) --
+    def mirror_accounts(self) -> None:
+        with self._conn() as c:
+            c.execute(
+                """INSERT INTO health.connected_accounts (profile_id, source, connected_at)
+                   SELECT t.user_id, 'garmin', t.updated_at FROM secret_garmin_tokens t
+                   ON CONFLICT (profile_id, source) DO UPDATE SET checked_at = now(),
+                     status = CASE WHEN health.connected_accounts.status = 'disconnected' THEN 'connected'
+                                   ELSE health.connected_accounts.status END"""
+            )
+            c.execute(
+                """UPDATE health.connected_accounts SET status = 'disconnected', checked_at = now()
+                   WHERE source = 'garmin' AND status <> 'disconnected'
+                     AND profile_id NOT IN (SELECT user_id FROM secret_garmin_tokens)"""
+            )
+
+    def account_status(self, profile: str, status: str, fresh_login: bool = False) -> None:
+        with self._conn() as c:
+            c.execute(
+                f"""INSERT INTO health.connected_accounts (profile_id, source, status) VALUES (%s, 'garmin', %s)
+                    ON CONFLICT (profile_id, source) DO UPDATE SET status = EXCLUDED.status, checked_at = now()
+                    {", connected_at = now()" if fresh_login else ""}""",
+                (profile, status),
+            )
 
     def finish_run(self, run_id: str, status: str, detail: dict[str, Any], error: str | None = None) -> None:
         with self._conn() as c:
             c.execute(
-                "UPDATE health.sync_runs SET status = %s, finished_at = now(), detail = %s, error = %s WHERE id = %s",
-                (status, Jsonb(detail), error, run_id),
+                """UPDATE health.sync_runs SET status = %s, finished_at = now(), detail = %s, error = %s, heartbeat_at = now(),
+                     progress = CASE WHEN %s = 'failed' THEN progress ELSE 1 END WHERE id = %s""",
+                (status, Jsonb(detail), error, status, run_id),
             )

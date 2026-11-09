@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import type { DataOf } from '$shell';
   import { countUp, lineFor, Mascot, moodFor } from '$shell/ui';
   import LineChart from '../lib/LineChart.svelte';
@@ -37,6 +38,12 @@
     };
   });
 
+  /** The whole row opens the activity; the name is the real link (keyboard, middle click). */
+  function open(e: MouseEvent, id: string) {
+    if ((e.target as HTMLElement).closest('a') || e.metaKey || e.ctrlKey) return;
+    goto(`/health/activity/${id}`);
+  }
+
   const maxLoad = $derived(Math.max(1, ...data.activities.map((a) => a.training_load ?? 0)));
 
   function diffText(s: MetricSpec, diff: number): string {
@@ -71,12 +78,12 @@
     <h1>Training & Health</h1>
   </div>
   {#if data.sync.lastRun}
-    <p class="sync status {data.sync.lastRun.status === 'ok' ? 'good' : data.sync.lastRun.status === 'running' ? '' : 'critical'}">
-      Garmin {data.sync.lastRun.status === 'ok' ? 'synced' : data.sync.lastRun.status}
-      {ago(data.sync.lastRun.finished_at ?? data.sync.lastRun.started_at)}
-    </p>
+    <a class="sync status {data.sync.lastRun.status === 'ok' ? 'good' : data.sync.lastRun.status === 'running' ? 'warning' : 'critical'}" href="/settings/extensions/health">
+      {#if data.sync.lastRun.status === 'running'}Garmin syncing, started {ago(data.sync.lastRun.started_at)}{:else}Garmin {data.sync.lastRun.status === 'ok' ? 'synced' : data.sync.lastRun.status}
+        {ago(data.sync.lastRun.finished_at ?? data.sync.lastRun.started_at)}{/if}
+    </a>
   {:else}
-    <p class="sync status">Garmin not synced yet</p>
+    <a class="sync status" href="/settings/extensions/health">Garmin not synced yet</a>
   {/if}
 </div>
 
@@ -179,13 +186,13 @@
         </thead>
         <tbody>
           {#each data.activities as a}
-            <tr>
+            <tr class="link" onclick={(e) => open(e, a.activity_id)}>
               <td class="date">
                 {shortDay(a.start_time_local, a.start_time_local.slice(0, 4) !== today.slice(0, 4))}
                 <span class="muted">{a.start_time_local.slice(11, 16)}</span>
               </td>
               <td>
-                <span class="name">{a.name ?? sportLabel(a.sport)}</span>
+                <a class="name" href="/health/activity/{a.activity_id}">{a.name ?? sportLabel(a.sport)}</a>
                 <span class="sport">{sportLabel(a.sport)}</span>
               </td>
               <td class="r">{a.distance_m ? km(a.distance_m) : '–'}</td>
@@ -214,10 +221,10 @@
   <section class="card notice" aria-labelledby="sync-title">
     <h2 id="sync-title">Garmin sync</h2>
     {#if !data.sync.connected}
-      <p>Not connected yet. On the NAS run <code>docker compose exec -it garmin-sync python -m sync login</code>.</p>
+      <p>Not connected yet. <a href="/settings/extensions/health">Connect Garmin in System settings</a>.</p>
     {/if}
     {#if data.sync.lastRun?.error}
-      <p class="status critical">{data.sync.lastRun.error}</p>
+      <p class="status critical">{data.sync.lastRun.error} · <a href="/settings/extensions/health">Sync settings</a></p>
     {/if}
   </section>
 {/if}
@@ -237,6 +244,10 @@
   .sync {
     font-size: 0.8125rem;
     color: var(--ink-2);
+    text-decoration: none;
+  }
+  .sync:hover {
+    color: var(--ink);
   }
 
   /* Overview: one hero figure, then a row of stat tiles. */
@@ -489,9 +500,19 @@
   }
   .name {
     font-weight: 600;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  tr.link {
+    cursor: pointer;
+  }
+  tr.link:hover .name {
+    color: var(--accent-ink);
+    text-decoration: underline;
   }
   .sport {
     display: block;
+    font-weight: 400;
     font-size: 0.75rem;
     color: var(--ink-3);
   }

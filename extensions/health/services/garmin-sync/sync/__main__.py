@@ -4,11 +4,13 @@
   python -m sync status  [--profile alex]           token status
   python -m sync run     [--profile alex]           one incremental pass
   python -m sync backfill [--profile alex]  [--since 2020-01-01]
-  python -m sync loop                               incremental pass for every connected profile, forever
+  python -m sync loop                               sync every connected profile, forever
 
 `loop` starts each pass as a FRESH process (`python -m sync run`), so code edited in the repo is
 picked up on the next tick without a restart, and a broken edit fails one tick instead of the
-container.
+container. Every few seconds it also picks up passes asked for in System settings
+(health.sync_requests: "Sync now", "Fetch older data"), and queues the first history fetch of a
+newly connected profile by itself.
 """
 from __future__ import annotations
 
@@ -62,7 +64,9 @@ def cmd_login(a: argparse.Namespace) -> int:
         return 1
     finally:
         password = ""  # noqa: F841 - drop the reference early
+    store.account_status(a.profile, "connected", fresh_login=True)
     print("Connected:", json.dumps(status, ensure_ascii=False))
+    print("The history (up to 5 years back) is fetched within a minute; progress in System settings -> Training & Health.")
     return 0
 
 
@@ -80,21 +84,66 @@ def cmd_run(a: argparse.Namespace, kind: str = "incremental") -> int:
     return 0 if result["status"] != "failed" else 2
 
 
+TICK_SECONDS = 5
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def _code_stamp() -> float:
+    """Newest mtime of the loop's own code: when `ext update` replaces it, the loop restarts itself."""
+    return max(os.path.getmtime(os.path.join(HERE, f)) for f in os.listdir(HERE) if f.endswith(".py"))
+
+
+def _pass(profile: str, kind: str = "incremental", since: _dt.date | None = None) -> int:
+    args = [sys.executable, "-m", "sync", "backfill" if kind == "backfill" else "run", "--profile", profile]
+    if since:
+        args += ["--since", since.isoformat()]
+    rc = subprocess.call(args)
+    log.info("%s pass for %s finished rc=%s", kind, profile, rc)
+    return rc
+
+
 def cmd_loop(_: argparse.Namespace) -> int:
     minutes = max(5, int(os.environ.get("SYNC_INTERVAL_MINUTES", "30")))
     _, store = _deps()
+    due: dict[str, float] = {}  # profile -> monotonic time of its next scheduled pass
+    stamp = _code_stamp()
+    try:
+        store.interrupt_stale_runs()
+    except Exception as e:  # noqa: BLE001 - db not ready yet: the loop below retries
+        log.warning("cannot clean up old runs: %s", type(e).__name__)
     while True:
         try:
+            if _code_stamp() != stamp:
+                log.info("sync code changed: restarting the loop")
+                os.execv(sys.executable, [sys.executable, "-m", "sync", "loop"])
+        except OSError:
+            pass  # the folder is being replaced right now: look again next tick
+        try:
+            store.mirror_accounts()
             profiles = store.connected_profiles()
+            req = store.claim_request()
         except Exception as e:  # noqa: BLE001 - db down: retry next tick
-            log.error("cannot list profiles: %s", type(e).__name__)
-            profiles = []
-        if not profiles:
-            log.info("no connected profiles; run `python -m sync login` first")
+            log.error("cannot read profiles or requests: %s", type(e).__name__)
+            time.sleep(30)
+            continue
+        if req:
+            try:
+                _pass(req["profile"], req["kind"], req["since"])
+            finally:
+                store.finish_request(req["id"])
+            due[req["profile"]] = time.monotonic() + minutes * 60
+            store.set_next_run(req["profile"], _dt.datetime.now(_dt.timezone.utc) + _dt.timedelta(minutes=minutes))
+            continue
+        now = time.monotonic()
         for p in profiles:
-            rc = subprocess.call([sys.executable, "-m", "sync", "run", "--profile", p])
-            log.info("pass for %s finished rc=%s", p, rc)
-        time.sleep(minutes * 60)
+            if not store.ever_backfilled(p):
+                store.add_request(p, "backfill")  # a new login: fetch its history next tick
+                continue
+            if now >= due.get(p, 0):
+                _pass(p)
+                due[p] = time.monotonic() + minutes * 60
+                store.set_next_run(p, _dt.datetime.now(_dt.timezone.utc) + _dt.timedelta(minutes=minutes))
+        time.sleep(TICK_SECONDS)
 
 
 def main() -> int:

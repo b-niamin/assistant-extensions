@@ -10,6 +10,7 @@ TODAY = dt.date(2026, 11, 3)
 class FakeStore:
     def __init__(self):
         self.metric_days, self.activities, self.streams, self.runs, self.cursor = [], {}, {}, [], {}
+        self.steps, self.accounts = [], []
 
     def put_metric_days(self, p, m, days): self.metric_days += [(m, d["day"], d["has_value"]) for d in days]
     def put_activities(self, p, rows): self.activities.update({r["activity_id"]: r for r in rows})
@@ -21,7 +22,9 @@ class FakeStore:
     def replace_planned(self, *a): pass
     def get_cursor(self, p): return dict(self.cursor)
     def set_cursor(self, p, c, full=False): self.cursor = dict(c)
-    def start_run(self, p, k): self.runs.append([k, None]); return len(self.runs) - 1
+    def start_run(self, p, k, since=None): self.runs.append([k, None]); return len(self.runs) - 1
+    def progress(self, i, fraction, phase): self.steps.append((fraction, phase))
+    def account_status(self, p, status, fresh_login=False): self.accounts.append(status)
     def finish_run(self, i, status, detail, error=None): self.runs[i][1] = status
 
 
@@ -67,3 +70,22 @@ def test_backfill_walks_back_and_saves_frontier():
     out = eng.backfill_metrics("alex", since=TODAY - dt.timedelta(days=70))
     assert out["chunks"] == 3 and store.cursor["metricsBackfilledTo"] == "2026-08-25"
     assert store.cursor["metricsComplete"] is True
+
+
+def test_progress_only_moves_forward_and_names_each_phase():
+    store = FakeStore()
+    store.cursor = {"metricsBackfilledTo": "2026-08-01"}
+    Engine(FakeGarmin(), store, today=TODAY).run("alex", "backfill", dt.date(2026, 5, 1))
+    fractions = [f for f, _ in store.steps]
+    assert fractions == sorted(fractions)
+    assert 0 <= fractions[0] and fractions[-1] < 1
+    labels = " ".join(p for _, p in store.steps)
+    assert "activities" in labels and "History" not in labels and "history: July 2026" in labels
+    assert store.accounts == ["connected"]
+
+
+def test_rejected_token_marks_the_account_for_reconnect():
+    store = FakeStore()
+    err = GarminUpstreamError("token_rejected", reason="HTTP 401")
+    Engine(FakeGarmin(fail_metrics=err), store, today=TODAY).run("alex")
+    assert store.accounts == ["reconnect"]

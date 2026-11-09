@@ -20,7 +20,9 @@ Every table is keyed by `profile_id` (read with `psql "$CLAUDE_RO_DATABASE_URL"`
 | `health.synced_weight` | weigh-ins in kg |
 | `health.synced_planned_events` | Garmin calendar (planned workouts, races) |
 | `health.journal_entries` | subjective notes: RPE, soreness, mood, illness, injury |
-| `health.sync_runs`, `health.sync_state` | sync history and cursor |
+| `health.sync_runs`, `health.sync_state` | sync history (with live `progress` 0..1 and `phase` of a running pass) and cursor (`nextRunAt`, `metricsBackfilledTo`) |
+| `health.sync_requests` | passes asked for in System settings ("Sync now", "Fetch older data"); garmin-sync picks them up within seconds |
+| `health.connected_accounts` | which profiles have a Garmin login (`connected`, `reconnect`, `disconnected`), mirrored by garmin-sync without the secret |
 | `health.secret_garmin_tokens` | encrypted Garmin logins; only the `garmin-sync` service can read it |
 
 Look at the raw JSON (`data`, `raw`) before assuming a field name. Logs: `/logs/garmin-sync.log`.
@@ -34,6 +36,13 @@ put new logic in `sync/`. Each pass runs as a fresh process, so edits go live on
 
 - Login, once per profile: `docker compose exec -it garmin-sync python -m sync login [--profile <id>]`
   (email, password via getpass, MFA code). The password is never stored, only the encrypted token.
-- `python -m sync backfill [--since 2020-01-01]`: full history, resumable.
+- `python -m sync backfill [--since 2020-01-01]`: full history, resumable. The first one after a login is
+  queued by itself (5 years back, stops after a year without data); older data is asked for in System
+  settings -> Training & Health -> Connected accounts.
+- The `loop` checks `health.sync_requests` every 5 s and runs the scheduled pass every
+  `SYNC_INTERVAL_MINUTES`. Each pass reports `progress`/`phase` into its `sync_runs` row (the settings
+  panel's progress bar). The panel itself is `web/sources.server.ts` (spec 002, "Connected accounts").
+- Activity page: `/health/activity/<id>` (`web/routes/activity/[id]`): summary, route drawn from the GPS
+  stream, heart rate / pace / elevation / power / cadence over time, laps, the journal note.
 - A rejected token or a rate limit aborts a pass; other failures are recorded per phase in
   `health.sync_runs.detail` and the pass continues.
