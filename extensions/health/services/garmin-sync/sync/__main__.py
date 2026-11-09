@@ -81,10 +81,12 @@ def cmd_run(a: argparse.Namespace, kind: str = "incremental") -> int:
     since = _dt.date.fromisoformat(a.since) if getattr(a, "since", None) else None
     result = Engine(MetricsService(tokens), store).run(a.profile, kind, since)
     print(json.dumps(result, ensure_ascii=False, default=str))
+    _retire_outdated_loop()
     return 0 if result["status"] != "failed" else 2
 
 
 TICK_SECONDS = 5
+LOOP_VERSION = "2"  # passes started by an older loop see no SYNC_LOOP_VERSION and retire it
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -102,9 +104,30 @@ def _pass(profile: str, kind: str = "incremental", since: _dt.date | None = None
     return rc
 
 
+def _retire_outdated_loop() -> None:
+    """A loop started before health 0.3.0 never picks up sync requests and cannot restart itself, so the
+    settings panel waits forever. Its passes run the current code, so a pass ends it (SIGINT to PID 1,
+    once this pass is over) and Docker restarts the container on the current loop."""
+    if os.environ.get("SYNC_LOOP_VERSION") == LOOP_VERSION or os.getppid() != 1:
+        return
+    try:
+        with open("/proc/1/cmdline", "rb") as f:
+            argv = f.read().split(b"\0")
+    except OSError:
+        return
+    if b"sync" not in argv or b"loop" not in argv:
+        return
+    log.warning("the sync loop predates sync requests: restarting it")
+    subprocess.Popen(
+        [sys.executable, "-c", "import os, signal, time; time.sleep(5); os.kill(1, signal.SIGINT)"],
+        start_new_session=True,
+    )
+
+
 def cmd_loop(_: argparse.Namespace) -> int:
     minutes = max(5, int(os.environ.get("SYNC_INTERVAL_MINUTES", "30")))
     _, store = _deps()
+    os.environ["SYNC_LOOP_VERSION"] = LOOP_VERSION
     due: dict[str, float] = {}  # profile -> monotonic time of its next scheduled pass
     stamp = _code_stamp()
     try:

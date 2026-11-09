@@ -233,6 +233,7 @@ class Store:
 
     # -- connected accounts (mirror of secret_garmin_tokens, without the secret) --
     def mirror_accounts(self) -> None:
+        """Every loop tick: checked_at doubles as the loop's heartbeat (the panel spots a loop that is gone)."""
         with self._conn() as c:
             c.execute(
                 """INSERT INTO health.connected_accounts (profile_id, source, connected_at)
@@ -251,7 +252,7 @@ class Store:
         with self._conn() as c:
             c.execute(
                 f"""INSERT INTO health.connected_accounts (profile_id, source, status) VALUES (%s, 'garmin', %s)
-                    ON CONFLICT (profile_id, source) DO UPDATE SET status = EXCLUDED.status, checked_at = now()
+                    ON CONFLICT (profile_id, source) DO UPDATE SET status = EXCLUDED.status
                     {", connected_at = now()" if fresh_login else ""}""",
                 (profile, status),
             )

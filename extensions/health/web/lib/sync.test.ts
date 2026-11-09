@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeSync, garminSource, STALE_MS, type SyncOverview } from './sync';
+import { describeSync, garminSource, STALE_MS, STUCK_MS, type SyncOverview } from './sync';
 
 const NOW = Date.parse('2026-11-09T12:00:00Z');
 const base: SyncOverview = {
@@ -7,6 +7,7 @@ const base: SyncOverview = {
   run: null,
   lastOkAt: '2026-11-09T11:30:00Z',
   pending: null,
+  serviceAt: '2026-11-09T11:59:58Z',
   nextRunAt: null,
   historyTo: null,
   firstDay: '2026-11-03',
@@ -27,6 +28,13 @@ const run = (over: Partial<NonNullable<SyncOverview['run']>>) => ({
   ...over
 });
 
+const waiting = (ageMs: number) => ({
+  kind: 'backfill',
+  since: '2024-11-09',
+  started: false,
+  requestedAt: new Date(NOW - ageMs).toISOString()
+});
+
 describe('describeSync', () => {
   it('shows a running pass with its progress', () => {
     const s = describeSync({ ...base, run: run({}) }, NOW);
@@ -41,7 +49,16 @@ describe('describeSync', () => {
     expect(s.error).toMatch(/cut off/);
   });
   it('shows a waiting request as queued', () => {
-    expect(describeSync({ ...base, pending: { kind: 'incremental', since: null, started: false } }, NOW).state).toBe('queued');
+    expect(describeSync({ ...base, pending: waiting(10_000) }, NOW).state).toBe('queued');
+  });
+  it('flags a request that a silent service never picks up', () => {
+    const silent = new Date(NOW - STUCK_MS - 60_000).toISOString();
+    const s = describeSync({ ...base, pending: waiting(STUCK_MS + 1000), serviceAt: silent }, NOW);
+    expect(s.state).toBe('failed');
+    expect(s.error).toMatch(/restart garmin-sync/);
+    expect(describeSync({ ...base, pending: waiting(STUCK_MS + 1000), serviceAt: null }, NOW).state).toBe('failed');
+    // A loop that still ticks is busy with something else: keep waiting.
+    expect(describeSync({ ...base, pending: waiting(STUCK_MS + 1000) }, NOW).state).toBe('queued');
   });
   it('explains a rejected token', () => {
     const s = describeSync({ ...base, run: run({ status: 'failed', error: 'token_rejected: HTTP 401' }) }, NOW);
@@ -61,6 +78,19 @@ describe('garminSource', () => {
     expect(s.facts?.[0]).toEqual({ label: 'Data since', value: '30 Oct 2026' });
     const older = s.actions?.find((a) => a.id === 'fetch-older');
     expect(older?.date?.default).toBe('2024-11-09');
+    expect(older?.date?.max).toBe('2026-11-09');
     expect(older?.disabled).toBe(false);
+  });
+  it('offers only days before the history already checked', () => {
+    const s = garminSource({ ...base, historyTo: '2021-11-10' }, '2026-11-09', 'login', NOW);
+    const older = s.actions?.find((a) => a.id === 'fetch-older');
+    expect(older?.date?.default).toBe('2020-11-10');
+    expect(older?.date?.max).toBe('2021-11-09');
+  });
+  it('blocks the buttons while a request waits, frees them when the service is gone', () => {
+    const queued = garminSource({ ...base, pending: waiting(10_000) }, '2026-11-09', 'login', NOW);
+    expect(queued.actions?.every((a) => a.disabled)).toBe(true);
+    const stuck = garminSource({ ...base, pending: waiting(STUCK_MS + 1000), serviceAt: null }, '2026-11-09', 'login', NOW);
+    expect(stuck.actions?.some((a) => a.disabled)).toBe(false);
   });
 });
