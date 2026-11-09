@@ -1,6 +1,6 @@
 # assistant-extensions
 
-Extensions (apps) for [assistant-core](https://github.com/b-niamin/assistant-core), in two kinds:
+Extensions (apps) for [Beni Assistant](https://github.com/b-niamin/assistant), in two kinds:
 
 | Folder | What | How |
 |---|---|---|
@@ -27,7 +27,7 @@ when you add a folder.
 With the core installer (fresh machine):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/b-niamin/assistant-core/main/install.sh | sh -s -- health gym
+curl -fsSL https://raw.githubusercontent.com/b-niamin/assistant/main/install.sh | sh -s -- health gym
 ```
 
 Into a running instance, from its checkout:
@@ -56,5 +56,5 @@ commit; `ext update <id>` takes a newer one.
   app.html             onefile: one self-contained HTML file
 ```
 
-The full contract is [spec 002](https://github.com/b-niamin/assistant-core/blob/main/specs/002-extensions.md)
+The full contract is [spec 002](https://github.com/b-niamin/assistant/blob/main/specs/002-extensions.md)
 in the core repo. Extensions import only `$shell` from the core.
