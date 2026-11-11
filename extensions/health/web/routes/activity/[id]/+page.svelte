@@ -8,6 +8,7 @@
 
   let { data }: { data: DataOf<typeof load> } = $props();
   const t = useT();
+  const one = (v: number) => new Intl.NumberFormat(t.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v);
 
   const a = $derived(data.activity);
   const x = $derived(data.extras);
@@ -26,11 +27,11 @@
   type Kpi = { label: string; value: string; sub?: string };
   const kpis = $derived.by(() => {
     const out: Kpi[] = [];
-    if (a.distance_m) out.push({ label: t('Distance'), value: km(a.distance_m) });
+    if (a.distance_m) out.push({ label: t('Distance'), value: km(a.distance_m, t.locale) });
     out.push({ label: t('Time'), value: hms(moving), sub: a.duration_s && moving && a.duration_s - moving > 60 ? t('{time} elapsed', { time: hms(a.duration_s) }) : undefined });
     if (avgSpeed) {
       if (paced) out.push({ label: t('Avg pace'), value: `${paceText(paceOf(avgSpeed))} /km`, sub: x.maxSpeedMps ? t('best {pace}', { pace: paceText(paceOf(x.maxSpeedMps)) }) : undefined });
-      else out.push({ label: t('Avg speed'), value: `${(avgSpeed * 3.6).toFixed(1)} km/h`, sub: x.maxSpeedMps ? t('max {v}', { v: (x.maxSpeedMps * 3.6).toFixed(1) }) : undefined });
+      else out.push({ label: t('Avg speed'), value: `${one(avgSpeed * 3.6)} km/h`, sub: x.maxSpeedMps ? t('max {v}', { v: one(x.maxSpeedMps * 3.6) }) : undefined });
     }
     if (a.avg_hr) out.push({ label: t('Avg heart rate'), value: `${a.avg_hr} bpm`, sub: a.max_hr ? t('max {v}', { v: a.max_hr }) : undefined });
     if (a.avg_power) out.push({ label: t('Avg power'), value: `${a.avg_power} W`, sub: a.norm_power ? `NP ${a.norm_power} W` : a.max_power ? t('max {v}', { v: a.max_power }) : undefined });
@@ -41,14 +42,14 @@
     if (x.aerobicEffect != null)
       out.push({
         label: t('Training effect'),
-        value: t('{v} aerobic', { v: x.aerobicEffect.toFixed(1) }),
-        sub: x.anaerobicEffect != null ? t('{v} anaerobic', { v: x.anaerobicEffect.toFixed(1) }) : undefined
+        value: t('{v} aerobic', { v: one(x.aerobicEffect) }),
+        sub: x.anaerobicEffect != null ? t('{v} anaerobic', { v: one(x.anaerobicEffect) }) : undefined
       });
     return out;
   });
 
   const effect = $derived(x.effectLabel ? t(x.effectLabel.toLowerCase().replace(/_/g, ' ')) : null);
-  const lapPace = (mps?: number) => (mps ? (paced ? paceText(paceOf(mps)) : `${(mps * 3.6).toFixed(1)}`) : '–');
+  const lapPace = (mps?: number) => (mps ? (paced ? paceText(paceOf(mps)) : `${one(mps * 3.6)}`) : '–');
 </script>
 
 <svelte:head><title>{a.name ?? t(sportLabel(a.sport))} · {t('Training & Health')}</title></svelte:head>
@@ -134,7 +135,7 @@
           {#each data.laps as l (l.index)}
             <tr>
               <td>{l.index}</td>
-              <td class="r">{l.distanceM ? km(l.distanceM) : '–'}</td>
+              <td class="r">{l.distanceM ? km(l.distanceM, t.locale) : '–'}</td>
               <td class="r">{hms(l.durationS ?? null)}</td>
               <td class="r">{lapPace(l.avgSpeedMps)}{l.avgSpeedMps ? (paced ? ' /km' : ' km/h') : ''}</td>
               <td class="r">{l.avgHr ? Math.round(l.avgHr) : '–'}</td>

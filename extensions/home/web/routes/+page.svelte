@@ -136,7 +136,8 @@
   const warnings = $derived(snap.weather.warnings);
   const nothingSet = $derived(!snap.ha.configured && !snap.weather.configured);
   const deg = (v: number | null | undefined) => (v == null ? '–' : `${Math.round(v)}°`);
-  const mm = (v: number | null | undefined) => (v == null ? '–' : `${+v.toFixed(1)} mm`);
+  const mm = (v: number | null | undefined) =>
+    v == null ? '–' : `${new Intl.NumberFormat(t.locale, { maximumFractionDigits: 1 }).format(v)} mm`;
   const events = $derived(snap.calendar.events);
   const isPast = (e: { allDay: boolean; end: string }) => !e.allDay && Date.parse(e.end) <= now;
   /** Up to six: what is still ahead first, then the latest of what is over, in time order. */

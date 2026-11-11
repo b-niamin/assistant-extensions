@@ -105,7 +105,7 @@
     class:current={data.metric === 'training_readiness'}
     style:--series={hueOf('training_readiness')}
   >
-    <a class="eyebrow stretch" href="?metric=training_readiness&days={data.days}" aria-current={data.metric === 'training_readiness' ? 'true' : undefined}>{t('Training readiness')}</a>
+    <a class="eyebrow stretch" data-sveltekit-noscroll data-sveltekit-replacestate href="?metric=training_readiness&days={data.days}" aria-current={data.metric === 'training_readiness' ? 'true' : undefined}>{t('Training readiness')}</a>
     <div class="heroline">
       <strong class="heronum" use:countUp={readiness?.value ?? null}>{readiness?.value == null ? '–' : Math.round(readiness.value)}</strong>
       {#if level}<span class="status {level.tone} level">{t(level.label)}</span>{/if}
@@ -125,6 +125,8 @@
       {@const r = reading(key)}
       <a
         class="card tile rise"
+        data-sveltekit-noscroll
+        data-sveltekit-replacestate
         href="?metric={key}&days={data.days}"
         aria-current={key === data.metric ? 'true' : undefined}
         style:--i={i + 1}
@@ -156,7 +158,7 @@
     </form>
     <nav class="segmented" aria-label={t('Range')}>
       {#each data.ranges as r}
-        <a href="?metric={data.metric}&days={r}" aria-current={r === data.days ? 'true' : undefined}>{r === 365 ? t('1 y') : t('{n} d', { n: r })}</a>
+        <a data-sveltekit-noscroll data-sveltekit-replacestate href="?metric={data.metric}&days={r}" aria-current={r === data.days ? 'true' : undefined}>{r === 365 ? t('1 y') : t('{n} d', { n: r })}</a>
       {/each}
     </nav>
   </div>
@@ -207,7 +209,7 @@
                 <a class="name" href="/health/activity/{a.activity_id}">{a.name ?? t(sportLabel(a.sport))}</a>
                 <span class="sport">{t(sportLabel(a.sport))}</span>
               </td>
-              <td class="r">{a.distance_m ? km(a.distance_m) : '–'}</td>
+              <td class="r">{a.distance_m ? km(a.distance_m, t.locale) : '–'}</td>
               <td class="r">{hms(a.duration_s)}</td>
               <td class="r">{PACED.includes(a.sport) ? (pace(a.distance_m, a.duration_s) ?? '–') : '–'}</td>
               <td class="r">{a.avg_hr ?? '–'}</td>

@@ -1,5 +1,8 @@
-export function km(m: number | null): string {
-  return m == null ? '–' : `${(m / 1000).toFixed(m >= 10000 ? 1 : 2)} km`;
+/** Kilometres in the page's language: "12,34 km" in Polish, "12.34 km" in English. */
+export function km(m: number | null, locale?: string): string {
+  if (m == null) return '–';
+  const d = m >= 10000 ? 1 : 2;
+  return `${new Intl.NumberFormat(locale, { minimumFractionDigits: d, maximumFractionDigits: d }).format(m / 1000)} km`;
 }
 
 export function hms(s: number | null): string {
