@@ -1,0 +1,60 @@
+# Checks every push and pull request (audit report T2): each extension against the core on GitHub main
+# (ext check, vitest, svelte-check), the Python services' tests, and catalog.json against the folders.
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  # A core change can break an extension without a commit here: check once a day too.
+  schedule:
+    - cron: '17 4 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  extensions:
+    name: Extensions on core main
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: b-niamin/assistant
+          path: .core
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: .core/apps/web/package-lock.json
+      - name: Catalog matches the folders
+        run: node scripts/check-catalog.mjs
+      - run: npm ci --no-audit --no-fund
+        working-directory: .core/apps/web
+      - name: ext check (manifests, imports, routes, translations)
+        run: EXTENSIONS_DIR=$GITHUB_WORKSPACE/extensions node .core/scripts/ext.mjs check --languages pl
+      - name: Tests
+        run: EXTENSIONS_DIR=$GITHUB_WORKSPACE/extensions npm test
+        working-directory: .core/apps/web
+      - name: Types
+        run: EXTENSIONS_DIR=$GITHUB_WORKSPACE/extensions npm run check
+        working-directory: .core/apps/web
+
+  services:
+    name: Python services
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [health/services/garmin-sync, monitor/services/collector]
+    defaults:
+      run:
+        working-directory: extensions/${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - run: pip install -r requirements.txt pytest
+      - run: python -m pytest -q

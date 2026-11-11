@@ -1,0 +1,9 @@
+# Dependency updates as pull requests (audit report T4): the services' Python packages and the actions.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directories: [/extensions/health/services/garmin-sync, /extensions/monitor/services/collector]
+    schedule: { interval: weekly }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
