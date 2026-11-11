@@ -93,3 +93,10 @@ flowchart LR
 Folder layout: [docs/extension-layout.md](docs/extension-layout.md). Full contract:
 [spec 002](https://github.com/b-niamin/assistant/blob/main/specs/002-extensions.md) in the core repo.
 To publish an extension here, add its folder and an entry in [`catalog.json`](catalog.json).
+
+## Languages
+
+Every extension here speaks English and Polish. Texts sit in the code in English and are translated in
+`i18n/<lang>.json` ([spec 007](https://github.com/b-niamin/assistant/blob/main/specs/007-languages.md)).
+When your instance uses a language an extension lacks, Claude translates it on install;
+`ext languages` lists the gaps. A catalog entry can carry its own `"i18n"` for the store listing.

@@ -2,6 +2,8 @@
  * Today's events from Home Assistant calendars (GET /api/calendars/<entity>?start=&end=), in the house's
  * time zone. Pure: the fetch lives in ha.server.ts.
  */
+import type { Translate } from '$shell';
+import { EN } from './i18n';
 
 export interface HaEvent {
   summary?: string;
@@ -61,21 +63,21 @@ export function todayBounds(tz: string, now = new Date()): { day: string; start:
 const clock = (iso: string, tz: string) =>
   new Date(iso).toLocaleTimeString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 
-export function normalizeEvents(events: HaEvent[], calendar: string, tz: string, day: string): CalendarEvent[] {
+export function normalizeEvents(events: HaEvent[], calendar: string, tz: string, day: string, t: Translate = EN): CalendarEvent[] {
   const out: CalendarEvent[] = [];
   for (const e of events) {
-    const title = (e.summary ?? '').trim() || '(no title)';
+    const title = (e.summary ?? '').trim() || t('(no title)');
     if (e.start?.date) {
       const endDay = e.end?.date ?? e.start.date;
       // All-day events end the day after (exclusive); keep those that cover today.
       if (!(e.start.date <= day && endDay > day)) continue;
-      out.push({ title, calendar, allDay: true, start: `${day}T00:00:00`, end: `${day}T23:59:59`, when: 'All day', location: e.location });
+      out.push({ title, calendar, allDay: true, start: `${day}T00:00:00`, end: `${day}T23:59:59`, when: t('All day'), location: e.location });
     } else if (e.start?.dateTime) {
       const start = e.start.dateTime;
       const end = e.end?.dateTime ?? start;
       if (!Number.isFinite(Date.parse(start))) continue;
       const startsToday = localDay(tz, new Date(start)) === day;
-      const when = startsToday ? `${clock(start, tz)}–${clock(end, tz)}` : `until ${clock(end, tz)}`;
+      const when = startsToday ? `${clock(start, tz)}–${clock(end, tz)}` : t('until {time}', { time: clock(end, tz) });
       out.push({ title, calendar, allDay: false, start, end, when, location: e.location || undefined });
     }
   }

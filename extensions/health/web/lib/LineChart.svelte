@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Mascot } from '$shell/ui';
+  import { Mascot, useT } from '$shell/ui';
   import { niceTicks, shortDay, type Point } from './stats';
 
   /**
@@ -21,6 +21,7 @@
     /** ticks are rounded in this unit (3600 puts a seconds series on whole/half hours) */
     tickScale?: number;
   } = $props();
+  const t = useT();
 
   const H = 260;
   const PAD = { top: 16, right: 56, bottom: 28, left: 44 };
@@ -87,7 +88,7 @@
   {#if values.length === 0}
     <div class="empty" style:height="{H}px">
       <Mascot mood="idle" size={44} decorative />
-      <span>No readings in this range yet.</span>
+      <span>{t('No readings in this range yet.')}</span>
     </div>
   {:else}
     <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
@@ -95,7 +96,7 @@
       width={W}
       height={H}
       role="img"
-      aria-label="{label}, daily, {shortDay(points[0].day)} to {shortDay(points[points.length - 1].day)}. Use arrow keys to read values."
+      aria-label={t('{label}, daily, {from} to {to}. Use arrow keys to read values.', { label, from: shortDay(points[0].day, false, t.locale), to: shortDay(points[points.length - 1].day, false, t.locale) })}
       tabindex="0"
       onpointermove={onMove}
       onpointerleave={() => (hover = null)}
@@ -109,7 +110,7 @@
       <line class="baseline" x1={PAD.left} x2={W - PAD.right} y1={base} y2={base} />
       {#each xTicks as i}
         <text class="xtick" x={x(i)} y={H - 8} text-anchor={i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle'}>
-          {shortDay(points[i].day, multiYear && (i === 0 || i === points.length - 1))}
+          {shortDay(points[i].day, multiYear && (i === 0 || i === points.length - 1), t.locale)}
         </text>
       {/each}
 
@@ -140,16 +141,16 @@
     {#if hover !== null}
       <div class="tip" style:left="{tipLeft}px" aria-live="polite">
         <strong>{format(points[hover].value)}</strong>
-        <span>{shortDay(points[hover].day, true)}</span>
+        <span>{shortDay(points[hover].day, true, t.locale)}</span>
       </div>
     {/if}
   {/if}
 
   <details>
-    <summary>Show as table</summary>
+    <summary>{t('Show as table')}</summary>
     <div class="tablewrap">
       <table>
-        <thead><tr><th>Day</th><th>{label}</th></tr></thead>
+        <thead><tr><th>{t('Day')}</th><th>{label}</th></tr></thead>
         <tbody>
           {#each points.toReversed() as p}
             <tr><td>{p.day}</td><td>{format(p.value)}</td></tr>

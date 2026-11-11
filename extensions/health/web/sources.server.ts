@@ -14,29 +14,29 @@ export const sources: ExtSources = {
     const p = ctx.dataProfileId!;
     const o = await ctx.db((sql) => syncOverview(sql, p));
     const today = new Date().toISOString().slice(0, 10);
-    const garmin = garminSource(o, today, LOGIN);
-    if (garmin.state !== 'not_connected') garmin.sync = describeSync(o, Date.now());
+    const garmin = garminSource(o, today, LOGIN, Date.now(), ctx.t);
+    if (garmin.state !== 'not_connected') garmin.sync = describeSync(o, Date.now(), ctx.t);
     return [
       garmin,
       {
         id: 'strava',
         name: 'Strava',
         state: 'planned',
-        help: 'Not supported yet. Activities recorded on a Garmin watch already come in through Garmin.'
+        help: ctx.t('Not supported yet. Activities recorded on a Garmin watch already come in through Garmin.')
       }
     ];
   },
 
   async act(ctx, source, action, input) {
-    if (source !== 'garmin') throw new Error('Unknown account.');
+    if (source !== 'garmin') throw new Error(ctx.t('Unknown account.'));
     const p = ctx.dataProfileId!;
-    if (action !== 'sync-now' && action !== 'fetch-older') throw new Error('Unknown action.');
+    if (action !== 'sync-now' && action !== 'fetch-older') throw new Error(ctx.t('Unknown action.'));
     const kind = action === 'sync-now' ? 'incremental' : 'backfill';
     const since = action === 'fetch-older' ? input.date : undefined;
     if (since) {
       const o = await ctx.db((sql) => syncOverview(sql, p));
       const limit = olderLimit(o, new Date().toISOString().slice(0, 10));
-      if (since > limit) throw new Error(`History is already checked back to ${longDay(o.historyTo ?? limit)}: pick an earlier day.`);
+      if (since > limit) throw new Error(ctx.t('History is already checked back to {day}: pick an earlier day.', { day: longDay(o.historyTo ?? limit, ctx.t.locale) }));
     }
     // A request the service never picked up is replaced, not stacked behind.
     await ctx.db(async (sql) => {
@@ -46,7 +46,7 @@ export const sources: ExtSources = {
         VALUES (${crypto.randomUUID().replace(/-/g, '')}, ${p}, 'garmin', ${kind}, ${since ?? null})`;
     });
     return kind === 'incremental'
-      ? 'Sync queued: it starts within a few seconds.'
-      : `Fetching data back to ${since}: it starts within a few seconds and can take a while.`;
+      ? ctx.t('Sync queued: it starts within a few seconds.')
+      : ctx.t('Fetching data back to {day}: it starts within a few seconds and can take a while.', { day: longDay(since!, ctx.t.locale) });
   }
 };

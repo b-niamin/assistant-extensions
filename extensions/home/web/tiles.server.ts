@@ -8,6 +8,6 @@ export const tiles: ExtTile[] = [
     id: 'house',
     title: 'Home',
     size: 'md',
-    load: async (ctx) => homeTile(await snapshot(ctx, { quick: true }))
+    load: async (ctx) => homeTile(await snapshot(ctx, { quick: true }), ctx.t)
   }
 ];

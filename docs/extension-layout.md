@@ -13,6 +13,8 @@ What a folder in [`extensions/`](../extensions) or [`inspirations/`](../inspirat
   compose.yml          background services (paths relative to the core checkout)
   services/<name>/     their code
   app.html             onefile: one self-contained HTML file
+  i18n/<lang>.json     translations: English text -> that language (spec 007); onefile apps list
+                       the languages they speak in the manifest's "languages"
 ```
 
 The full contract is [spec 002](https://github.com/b-niamin/assistant/blob/main/specs/002-extensions.md)

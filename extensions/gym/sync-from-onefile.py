@@ -104,6 +104,16 @@ k = app.index('${pipMood(')
 fn = app.rfind('\nfunction ', 0, k)
 app = app[:fn+1] + PIP + app[fn+1:]
 
+# Inside the assistant, its language (spec 007) wins when the app speaks it, and the app's own toggle hides.
+LANG_ROW = ('<div class="set-row"><div class="lb">${esc(t("sLang"))}</div><div class="seg" role="group" aria-label="${esc(t("sLang"))}">'
+            '<button data-act="lang" data-v="en" class="${lang==="en"?"on":""}" lang="en">English</button>'
+            '<button data-act="lang" data-v="pl" class="${lang==="pl"?"on":""}" lang="pl">Polski</button></div></div>')
+app = must(app, LANG_ROW, '${SHELL_LANG?"":`' + LANG_ROW + '`}')
+app = must(app, 'function initLang(){ const s=settings().lang; if(s) lang=s; else {',
+           "/* Inside the assistant, its language (spec 007) wins when this app speaks it; the app's own toggle then hides. */\n"
+           'const SHELL_LANG=["en","pl"].includes(window.assistantLang)?window.assistantLang:null;\n'
+           'function initLang(){ const s=SHELL_LANG||settings().lang; if(s) lang=s; else {')
+
 body_json = json.dumps(json.loads(rd('body.json')), separators=(',', ':'))
 js = app.replace('/*@LIB@*/', rd('lib.js')).replace('/*@I18N@*/', i18n).replace('/*@BODY@*/null', body_json)
 if '/*@IMG@*/null' in js:

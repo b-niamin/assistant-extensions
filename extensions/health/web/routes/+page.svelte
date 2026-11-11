@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import type { DataOf } from '$shell';
-  import { countUp, lineFor, Mascot, moodFor } from '$shell/ui';
+  import { countUp, lineFor, Mascot, moodFor, useT } from '$shell/ui';
   import LineChart from '../lib/LineChart.svelte';
   import MetricIcon from '../lib/MetricIcon.svelte';
   import { hueOf } from '../lib/look';
@@ -13,19 +13,20 @@
   import type { load } from './+page.server';
 
   let { data }: { data: DataOf<typeof load> } = $props();
+  const t = useT();
 
   const today = new Date().toISOString().slice(0, 10);
   const PACED = ['running', 'trail_running', 'treadmill_running', 'walking', 'hiking'];
 
   const reading = (key: string) => data.latest.find((r) => r.key === key);
   const spec = $derived(specOf(data.metric)!);
-  const fmt = (v: number | null) => formatValue(spec, v);
-  const tick = (v: number) => (spec.format === 'duration' ? `${+(v / 3600).toFixed(1)}h` : v.toLocaleString('en-US'));
+  const fmt = (v: number | null) => formatValue(spec, v, t.locale);
+  const tick = (v: number) => (spec.format === 'duration' ? `${+(v / 3600).toFixed(1)}h` : v.toLocaleString(t.locale));
 
   const readiness = $derived(reading('training_readiness'));
   const level = $derived(readinessLevel(readiness?.value ?? null));
   const mood = $derived(moodFor(readiness?.value));
-  const pipSays = $derived(lineFor(mood, today));
+  const pipSays = $derived(t(lineFor(mood, today)));
 
   const stats = $derived.by(() => {
     const vals = data.series.map((p) => p.value).filter((v): v is number => v !== null);
@@ -53,58 +54,57 @@
       const m = Math.round(abs / 60);
       return `${sign}${m >= 60 ? `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m` : `${m}m`}`;
     }
-    return `${sign}${Math.round(abs).toLocaleString('en-US')}`;
+    return `${sign}${Math.round(abs).toLocaleString(t.locale)}`;
   }
   const asOf = (day: string | null | undefined) =>
-    !day ? 'no recent data' : daysBetween(day, today) > 1 ? `as of ${shortDay(day)}` : '';
+    !day ? t('no recent data') : daysBetween(day, today) > 1 ? t('as of {day}', { day: shortDay(day, false, t.locale) }) : '';
 </script>
 
-<svelte:head><title>Training & Health · Assistant</title></svelte:head>
+<svelte:head><title>{t('Training & Health')} · Assistant</title></svelte:head>
 
 {#snippet delta(s: MetricSpec, key: string)}
   {@const d = deltaVsBaseline(s, data.trends[key] ?? [])}
   {#if d}
     <span class="delta {d.tone}">
       <span aria-hidden="true">{d.tone === 'flat' ? '→' : d.diff > 0 ? '↑' : '↓'}</span>
-      {d.tone === 'flat' ? 'steady' : diffText(s, d.diff)}
-      <span class="vs">vs 7-day avg</span>
+      {d.tone === 'flat' ? t('steady') : diffText(s, d.diff)}
+      <span class="vs">{t('vs 7-day avg')}</span>
     </span>
   {/if}
 {/snippet}
 
 <div class="pagehead">
   <div>
-    <p class="eyebrow">{new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-    <h1>Training & Health</h1>
+    <p class="eyebrow">{new Date().toLocaleDateString(t.locale, { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+    <h1>{t('Training & Health')}</h1>
   </div>
   {#if data.sync.lastRun}
     <a class="sync status {data.sync.lastRun.status === 'ok' ? 'good' : data.sync.lastRun.status === 'running' ? 'warning' : 'critical'}" href="/settings/extensions/health">
-      {#if data.sync.lastRun.status === 'running'}Garmin syncing, started {ago(data.sync.lastRun.started_at)}{:else}Garmin {data.sync.lastRun.status === 'ok' ? 'synced' : data.sync.lastRun.status}
-        {ago(data.sync.lastRun.finished_at ?? data.sync.lastRun.started_at)}{/if}
+      {#if data.sync.lastRun.status === 'running'}{t('Garmin syncing, started {when}', { when: ago(data.sync.lastRun.started_at, undefined, t) })}{:else if data.sync.lastRun.status === 'ok'}{t('Garmin synced {when}', { when: ago(data.sync.lastRun.finished_at ?? data.sync.lastRun.started_at, undefined, t) })}{:else}{t('Garmin sync failed {when}', { when: ago(data.sync.lastRun.finished_at ?? data.sync.lastRun.started_at, undefined, t) })}{/if}
     </a>
   {:else}
-    <a class="sync status" href="/settings/extensions/health">Garmin not synced yet</a>
+    <a class="sync status" href="/settings/extensions/health">{t('Garmin not synced yet')}</a>
   {/if}
 </div>
 
-<section class="overview" aria-label="Latest readings">
+<section class="overview" aria-label={t('Latest readings')}>
   <div
     class="card hero rise"
     class:current={data.metric === 'training_readiness'}
     style:--series={hueOf('training_readiness')}
   >
-    <a class="eyebrow stretch" href="?metric=training_readiness&days={data.days}" aria-current={data.metric === 'training_readiness' ? 'true' : undefined}>Training readiness</a>
+    <a class="eyebrow stretch" href="?metric=training_readiness&days={data.days}" aria-current={data.metric === 'training_readiness' ? 'true' : undefined}>{t('Training readiness')}</a>
     <div class="heroline">
       <strong class="heronum" use:countUp={readiness?.value ?? null}>{readiness?.value == null ? '–' : Math.round(readiness.value)}</strong>
-      {#if level}<span class="status {level.tone} level">{level.label}</span>{/if}
+      {#if level}<span class="status {level.tone} level">{t(level.label)}</span>{/if}
     </div>
     {@render delta(specOf('training_readiness')!, 'training_readiness')}
     <div class="pipline">
-      <div class="pipwrap"><Mascot {mood} size={76} label="Beni says: {pipSays}" /></div>
+      <div class="pipwrap"><Mascot {mood} size={76} label={t('Beni says: {line}', { line: pipSays })} /></div>
       <p class="bubble">{pipSays}</p>
     </div>
     <Sparkline points={data.trends['training_readiness'] ?? []} height={48} />
-    <span class="meta">Last 14 days {asOf(readiness?.day) ? `· ${asOf(readiness?.day)}` : ''}</span>
+    <span class="meta">{t('Last 14 days')} {asOf(readiness?.day) ? `· ${asOf(readiness?.day)}` : ''}</span>
   </div>
 
   <div class="tiles">
@@ -118,8 +118,8 @@
         style:--i={i + 1}
         style:--series={hueOf(key)}
       >
-        <span class="tilehead"><MetricIcon metric={key} size={26} /><span class="eyebrow">{s.label}</span></span>
-        <strong class="value">{formatValue(s, r?.value ?? null)}</strong>
+        <span class="tilehead"><MetricIcon metric={key} size={26} /><span class="eyebrow">{t(s.label)}</span></span>
+        <strong class="value">{formatValue(s, r?.value ?? null, t.locale)}</strong>
         {@render delta(s, key)}
         <Sparkline points={data.trends[key] ?? []} />
         {#if asOf(r?.day)}<span class="meta">{asOf(r?.day)}</span>{/if}
@@ -132,68 +132,68 @@
   <div class="toolbar">
     <form method="GET">
       <label>
-        <span class="sr">Metric</span>
+        <span class="sr">{t('Metric')}</span>
         <select name="metric" onchange={(e) => (e.currentTarget.form as HTMLFormElement).requestSubmit()}>
           {#each METRICS as m}
-            <option value={m.key} selected={m.key === data.metric}>{m.label}</option>
+            <option value={m.key} selected={m.key === data.metric}>{t(m.label)}</option>
           {/each}
         </select>
       </label>
       <input type="hidden" name="days" value={data.days} />
-      <noscript><button class="btn">Show</button></noscript>
+      <noscript><button class="btn">{t('Show')}</button></noscript>
     </form>
-    <nav class="segmented" aria-label="Range">
+    <nav class="segmented" aria-label={t('Range')}>
       {#each data.ranges as r}
-        <a href="?metric={data.metric}&days={r}" aria-current={r === data.days ? 'true' : undefined}>{r === 365 ? '1 y' : `${r} d`}</a>
+        <a href="?metric={data.metric}&days={r}" aria-current={r === data.days ? 'true' : undefined}>{r === 365 ? t('1 y') : t('{n} d', { n: r })}</a>
       {/each}
     </nav>
   </div>
 
   <div class="trendhead">
-    <h2 id="trend-title"><MetricIcon metric={data.metric} size={30} />{spec.label}<span class="muted">· last {data.days === 365 ? 'year' : `${data.days} days`}</span></h2>
+    <h2 id="trend-title"><MetricIcon metric={data.metric} size={30} />{t(spec.label)}<span class="muted">· {data.days === 365 ? t('last year') : t('last {n} days', { n: data.days })}</span></h2>
     {#if stats}
       <dl class="summary">
-        <div><dt>Average</dt><dd>{fmt(stats.avg)}</dd></div>
-        <div><dt>Low</dt><dd>{fmt(stats.min)}</dd></div>
-        <div><dt>High</dt><dd>{fmt(stats.max)}</dd></div>
-        <div><dt>Days with data</dt><dd>{stats.n}/{data.series.length}</dd></div>
+        <div><dt>{t('Average')}</dt><dd>{fmt(stats.avg)}</dd></div>
+        <div><dt>{t('Low')}</dt><dd>{fmt(stats.min)}</dd></div>
+        <div><dt>{t('High')}</dt><dd>{fmt(stats.max)}</dd></div>
+        <div><dt>{t('Days with data')}</dt><dd>{stats.n}/{data.series.length}</dd></div>
       </dl>
     {/if}
   </div>
 
   {#key `${data.metric}-${data.days}`}
-    <LineChart points={data.series} format={fmt} {tick} label={spec.label} tickScale={spec.format === 'duration' ? 3600 : 1} />
+    <LineChart points={data.series} format={fmt} {tick} label={t(spec.label)} tickScale={spec.format === 'duration' ? 3600 : 1} />
   {/key}
 </section>
 
 <section class="card rise" style:--i="8" aria-labelledby="act-title">
-  <h2 id="act-title">Recent activities</h2>
+  <h2 id="act-title">{t('Recent activities')}</h2>
   {#if data.activities.length === 0}
-    <p class="muted">No activities synced yet.</p>
+    <p class="muted">{t('No activities synced yet.')}</p>
   {:else}
     <div class="tablewrap">
       <table>
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Activity</th>
-            <th class="r">Distance</th>
-            <th class="r">Time</th>
-            <th class="r">Pace</th>
-            <th class="r">Avg HR</th>
-            <th class="loadcol">Training load</th>
+            <th>{t('Date')}</th>
+            <th>{t('Activity')}</th>
+            <th class="r">{t('Distance')}</th>
+            <th class="r">{t('Time')}</th>
+            <th class="r">{t('Pace')}</th>
+            <th class="r">{t('Avg HR')}</th>
+            <th class="loadcol">{t('Training load')}</th>
           </tr>
         </thead>
         <tbody>
           {#each data.activities as a}
             <tr class="link" onclick={(e) => open(e, a.activity_id)}>
               <td class="date">
-                {shortDay(a.start_time_local, a.start_time_local.slice(0, 4) !== today.slice(0, 4))}
+                {shortDay(a.start_time_local, a.start_time_local.slice(0, 4) !== today.slice(0, 4), t.locale)}
                 <span class="muted">{a.start_time_local.slice(11, 16)}</span>
               </td>
               <td>
-                <a class="name" href="/health/activity/{a.activity_id}">{a.name ?? sportLabel(a.sport)}</a>
-                <span class="sport">{sportLabel(a.sport)}</span>
+                <a class="name" href="/health/activity/{a.activity_id}">{a.name ?? t(sportLabel(a.sport))}</a>
+                <span class="sport">{t(sportLabel(a.sport))}</span>
               </td>
               <td class="r">{a.distance_m ? km(a.distance_m) : '–'}</td>
               <td class="r">{hms(a.duration_s)}</td>
@@ -219,12 +219,12 @@
 
 {#if !data.sync.connected || data.sync.lastRun?.error}
   <section class="card notice" aria-labelledby="sync-title">
-    <h2 id="sync-title">Garmin sync</h2>
+    <h2 id="sync-title">{t('Garmin sync')}</h2>
     {#if !data.sync.connected}
-      <p>Not connected yet. <a href="/settings/extensions/health">Connect Garmin in System settings</a>.</p>
+      <p>{t('Not connected yet.')} <a href="/settings/extensions/health">{t('Connect Garmin in System settings')}</a>.</p>
     {/if}
     {#if data.sync.lastRun?.error}
-      <p class="status critical">{data.sync.lastRun.error} · <a href="/settings/extensions/health">Sync settings</a></p>
+      <p class="status critical">{data.sync.lastRun.error} · <a href="/settings/extensions/health">{t('Sync settings')}</a></p>
     {/if}
   </section>
 {/if}

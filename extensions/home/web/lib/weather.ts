@@ -3,7 +3,9 @@
  * for a WMO code, the next four periods, the summary rows and warnings derived from the forecast.
  * Pure: the fetch lives in weather.server.ts.
  */
+import type { Translate } from '$shell';
 import type { WeatherWarning } from './home';
+import { EN } from './i18n';
 
 export interface Hour {
   /** Local time at the place, "2026-11-11T18:00" (Open-Meteo with timezone=auto). */
@@ -195,22 +197,22 @@ export function summary(w: Weather): Summary {
  * Warnings the forecast itself justifies (no official source needed): storms, freezing rain, heavy rain or
  * snow, strong gusts, frost and heat. Thresholds are roughly IMGW's first warning level.
  */
-export function forecastWarnings(w: Weather): WeatherWarning[] {
+export function forecastWarnings(w: Weather, t: Translate = EN): WeatherWarning[] {
   const out: WeatherWarning[] = [];
   const hours = w.hours;
   const first = (pred: (h: Hour) => boolean) => hours.find(pred);
 
   const storm = first((h) => h.code !== null && h.code >= 95);
-  if (storm) out.push({ title: 'Thunderstorms', detail: `from about ${hhmm(storm.time)}`, tone: 'serious', source: 'forecast' });
+  if (storm) out.push({ title: t('Thunderstorms'), detail: t('from about {time}', { time: hhmm(storm.time) }), tone: 'serious', source: 'forecast' });
 
   const ice = first((h) => h.code !== null && [56, 57, 66, 67].includes(h.code));
-  if (ice) out.push({ title: 'Freezing rain, icy roads', detail: `from about ${hhmm(ice.time)}`, tone: 'serious', source: 'forecast' });
+  if (ice) out.push({ title: t('Freezing rain, icy roads'), detail: t('from about {time}', { time: hhmm(ice.time) }), tone: 'serious', source: 'forecast' });
 
   const gust = hours.reduce<Hour | null>((m, h) => ((h.gusts ?? 0) > (m?.gusts ?? 0) ? h : m), null);
   if (gust && (gust.gusts ?? 0) >= 70) {
     out.push({
-      title: 'Strong wind',
-      detail: `gusts up to ${Math.round(gust.gusts!)} km/h around ${hhmm(gust.time)}`,
+      title: t('Strong wind'),
+      detail: t('gusts up to {kmh} km/h around {time}', { kmh: Math.round(gust.gusts!), time: hhmm(gust.time) }),
       tone: gust.gusts! >= 90 ? 'serious' : 'warning',
       source: 'forecast'
     });
@@ -220,11 +222,11 @@ export function forecastWarnings(w: Weather): WeatherWarning[] {
   const wettest = hours.reduce<Hour | null>((m, h) => ((h.precip ?? 0) > (m?.precip ?? 0) ? h : m), null);
   const snowy = hours.some((h) => condition(h.code).sky === 'snow');
   if (snowy && total >= 10) {
-    out.push({ title: 'Heavy snow', detail: `about ${round1(total)} mm in 24 h`, tone: 'warning', source: 'forecast' });
+    out.push({ title: t('Heavy snow'), detail: t('about {mm} mm in 24 h', { mm: round1(total) }), tone: 'warning', source: 'forecast' });
   } else if (total >= 20 || (wettest?.precip ?? 0) >= 6) {
     out.push({
-      title: 'Heavy rain',
-      detail: `${round1(total)} mm in 24 h, most around ${hhmm(wettest?.time)}`,
+      title: t('Heavy rain'),
+      detail: t('{mm} mm in 24 h, most around {time}', { mm: round1(total), time: hhmm(wettest?.time) }),
       tone: total >= 40 ? 'serious' : 'warning',
       source: 'forecast'
     });
@@ -232,10 +234,10 @@ export function forecastWarnings(w: Weather): WeatherWarning[] {
 
   const temps = hours.map((h) => h.temp).filter((v): v is number => v !== null);
   if (temps.length && Math.min(...temps) <= -15) {
-    out.push({ title: 'Severe frost', detail: `down to ${Math.round(Math.min(...temps))}°`, tone: 'warning', source: 'forecast' });
+    out.push({ title: t('Severe frost'), detail: t('down to {deg}°', { deg: Math.round(Math.min(...temps)) }), tone: 'warning', source: 'forecast' });
   }
   if (temps.length && Math.max(...temps) >= 30) {
-    out.push({ title: 'Heat', detail: `up to ${Math.round(Math.max(...temps))}°`, tone: 'warning', source: 'forecast' });
+    out.push({ title: t('Heat'), detail: t('up to {deg}°', { deg: Math.round(Math.max(...temps)) }), tone: 'warning', source: 'forecast' });
   }
   return out;
 }

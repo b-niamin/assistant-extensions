@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { DataOf } from '$shell';
-  import { Mascot } from '$shell/ui';
+  import { Mascot, useT } from '$shell/ui';
   import { ago, beni, contactsLabel, countdown, lightsLabel } from '../lib/board';
   import ForecastChart from '../lib/ForecastChart.svelte';
   import type { Snapshot } from '../lib/types';
@@ -11,6 +11,7 @@
   import type { load } from './+page.server';
 
   let { data }: { data: DataOf<typeof load> } = $props();
+  const t = useT();
 
   // svelte-ignore state_referenced_locally
   let snap = $state<Snapshot>(data.snapshot);
@@ -101,10 +102,10 @@
   }
 
   const tz = $derived(snap.timezone || undefined);
-  const clock = $derived(new Date(now).toLocaleTimeString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit' }));
-  const date = $derived(new Date(now).toLocaleDateString('en-GB', { timeZone: tz, weekday: 'short', day: 'numeric', month: 'short' }));
+  const clock = $derived(new Date(now).toLocaleTimeString(t.locale, { timeZone: tz, hour: '2-digit', minute: '2-digit' }));
+  const date = $derived(new Date(now).toLocaleDateString(t.locale, { timeZone: tz, weekday: 'short', day: 'numeric', month: 'short' }));
   const hour = $derived(Number(new Date(now).toLocaleString('en-GB', { timeZone: tz, hour: '2-digit', hourCycle: 'h23' })));
-  const timeOf = (iso: string) => new Date(iso).toLocaleTimeString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit' });
+  const timeOf = (iso: string) => new Date(iso).toLocaleTimeString(t.locale, { timeZone: tz, hour: '2-digit', minute: '2-digit' });
 
   const cd = $derived(countdown(lastAt, nextAt, now));
   const home = $derived(snap.ha.home);
@@ -113,11 +114,11 @@
   const next4 = $derived(w ? periods(w.hours) : []);
   const sum = $derived(w ? summary(w) : null);
   const listHours = $derived(w ? w.hours.filter((_, i) => i % 3 === 0) : []);
-  const pip = $derived(beni(snap, hour));
+  const pip = $derived(beni(snap, hour, t));
   const alerts = $derived(home?.alerts ?? []);
   const warnings = $derived(snap.weather.warnings);
   const nothingSet = $derived(!snap.ha.configured && !snap.weather.configured);
-  const t = (v: number | null | undefined) => (v == null ? '–' : `${Math.round(v)}°`);
+  const deg = (v: number | null | undefined) => (v == null ? '–' : `${Math.round(v)}°`);
   const mm = (v: number | null | undefined) => (v == null ? '–' : `${+v.toFixed(1)} mm`);
   const events = $derived(snap.calendar.events);
   const isPast = (e: { allDay: boolean; end: string }) => !e.allDay && Date.parse(e.end) <= now;
@@ -129,7 +130,7 @@
   });
 </script>
 
-<svelte:head><title>Home · Assistant</title></svelte:head>
+<svelte:head><title>{t('Home')} · Assistant</title></svelte:head>
 
 {#snippet bulb()}
   <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true">
@@ -143,29 +144,29 @@
   </svg>
 {/snippet}
 
-<section class="board" class:full bind:this={board} aria-label="Home">
+<section class="board" class:full bind:this={board} aria-label={t('Home')}>
   <header class="top">
     <span class="beni" title={pip.line}>
-      <Mascot mood={pip.mood} size={34} label="Beni says: {pip.line}" />
+      <Mascot mood={pip.mood} size={34} label={t('Beni says: {line}', { line: pip.line })} />
     </span>
 
     {#if snap.ha.configured}
       <details class="pill" class:on={home && home.lights.active.length > 0}>
         <summary>
           {@render bulb()}
-          <span class:strong={home && home.lights.active.length > 0}>{lightsLabel(home?.lights)}</span>
+          <span class:strong={home && home.lights.active.length > 0}>{lightsLabel(home?.lights, t)}</span>
         </summary>
         {#if home}
           <div class="pop">
             {#if home.lights.active.length}
-              <p class="eyebrow">On</p>
+              <p class="eyebrow">{t('On')}</p>
               <ul>
-                {#each home.lights.active as l}<li><span>{l.name}</span><span class="muted">{ago(l.since, now)}</span></li>{/each}
+                {#each home.lights.active as l}<li><span>{l.name}</span><span class="muted">{ago(l.since, now, t)}</span></li>{/each}
               </ul>
             {:else}
-              <p class="muted">All {home.lights.total} lights are off.</p>
+              <p class="muted">{t.n(home.lights.total, 'The light is off.', 'All {n} lights are off.')}</p>
             {/if}
-            {#if home.lights.unknown.length}<p class="muted small">{home.lights.unknown.length} not reporting</p>{/if}
+            {#if home.lights.unknown.length}<p class="muted small">{t('{n} not reporting', { n: home.lights.unknown.length })}</p>{/if}
           </div>
         {/if}
       </details>
@@ -173,19 +174,19 @@
       <details class="pill" class:open-state={home && home.contacts.active.length > 0}>
         <summary>
           {@render pane()}
-          <span class:strong={home && home.contacts.active.length > 0}>{contactsLabel(home?.contacts)}</span>
+          <span class:strong={home && home.contacts.active.length > 0}>{contactsLabel(home?.contacts, t)}</span>
         </summary>
         {#if home}
           <div class="pop">
             {#if home.contacts.active.length}
-              <p class="eyebrow">Open</p>
+              <p class="eyebrow">{t('Open')}</p>
               <ul>
-                {#each home.contacts.active as c}<li><span>{c.name}</span><span class="muted">{ago(c.since, now)}</span></li>{/each}
+                {#each home.contacts.active as c}<li><span>{c.name}</span><span class="muted">{ago(c.since, now, t)}</span></li>{/each}
               </ul>
             {:else}
-              <p class="muted">All {home.contacts.total} doors and windows are closed.</p>
+              <p class="muted">{t.n(home.contacts.total, 'The door or window is closed.', 'All {n} doors and windows are closed.')}</p>
             {/if}
-            {#if home.contacts.unknown.length}<p class="muted small">{home.contacts.unknown.length} not reporting</p>{/if}
+            {#if home.contacts.unknown.length}<p class="muted small">{t('{n} not reporting', { n: home.contacts.unknown.length })}</p>{/if}
           </div>
         {/if}
       </details>
@@ -201,15 +202,15 @@
       class="refresh"
       class:failed={failedAt !== null}
       title={failedAt !== null
-        ? `Could not refresh. Showing data from ${timeOf(snap.at)}; retrying.`
-        : `Data from ${timeOf(snap.at)}. Next update in ${cd.left} s.`}
+        ? t('Could not refresh. Showing data from {time}; retrying.', { time: timeOf(snap.at) })
+        : t('Data from {time}. Next update in {n} s.', { time: timeOf(snap.at), n: cd.left })}
     >
-      <span class="track" role="progressbar" aria-label="Until the next update" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(cd.progress * 100)}>
+      <span class="track" role="progressbar" aria-label={t('Until the next update')} aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(cd.progress * 100)}>
         <span class="fill" style:transform="scaleX({1 - cd.progress})"></span>
       </span>
-      <span class="secs">{loading ? '…' : failedAt !== null ? 'retry' : `${cd.left} s`}</span>
+      <span class="secs">{loading ? '…' : failedAt !== null ? t('retry') : `${cd.left} s`}</span>
     </span>
-    <button class="btn-ghost icon" onclick={toggleFull} aria-label={full ? 'Leave full screen' : 'Full screen'} title={full ? 'Leave full screen' : 'Full screen'}>
+    <button class="btn-ghost icon" onclick={toggleFull} aria-label={full ? t('Leave full screen') : t('Full screen')} title={full ? t('Leave full screen') : t('Full screen')}>
       <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true">
         {#if full}<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />{:else}<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />{/if}
       </svg>
@@ -218,74 +219,74 @@
 
   {#if nothingSet}
     <div class="empty">
-      <Mascot mood="idle" size={88} label="Beni is waiting" />
+      <Mascot mood="idle" size={88} label={t('Beni is waiting')} />
       <div>
-        <h1>Nothing to watch yet</h1>
-        <p class="muted">Add your Home Assistant address and token, and a weather location, in System settings.</p>
-        <a class="btn btn-primary go" href={SETTINGS}>Open settings</a>
+        <h1>{t('Nothing to watch yet')}</h1>
+        <p class="muted">{t('Add your Home Assistant address and token, and a weather location, in System settings.')}</p>
+        <a class="btn btn-primary go" href={SETTINGS}>{t('Open settings')}</a>
       </div>
     </div>
   {:else}
     {#if snap.ha.error}
       <p class="banner status critical">
-        {snap.ha.error}. Lights, doors and calendar are unavailable. <a href={SETTINGS}>Check the settings</a>
+        {snap.ha.error}. {t('Lights, doors and calendar are unavailable.')} <a href={SETTINGS}>{t('Check the settings')}</a>
       </p>
     {/if}
 
     <div class="main">
-      <section class="now" aria-label="Weather now">
+      <section class="now" aria-label={t('Weather now')}>
         {#if w}
           <WeatherIcon sky={cond.sky} night={!w.current.isDay} size={92} />
           <p class="hero"><span class="deg">{w.current.temp == null ? '–' : Math.round(w.current.temp)}</span><span class="o">°</span></p>
-          <p class="cond">{cond.label}</p>
+          <p class="cond">{t(cond.label)}</p>
           <p class="sub num">
-            wind {w.current.wind == null ? '–' : Math.round(w.current.wind)} km/h · rain {mm(w.current.precip)}
-            {#if w.current.feels !== null && Math.abs((w.current.feels ?? 0) - (w.current.temp ?? 0)) >= 2}· feels {t(w.current.feels)}{/if}
+            {t('wind {kmh} km/h', { kmh: w.current.wind == null ? '–' : Math.round(w.current.wind) })} · {t('rain {mm}', { mm: mm(w.current.precip) })}
+            {#if w.current.feels !== null && Math.abs((w.current.feels ?? 0) - (w.current.temp ?? 0)) >= 2}· {t('feels {deg}', { deg: deg(w.current.feels) })}{/if}
           </p>
-          <p class="place muted">{w.place}{snap.weather.stale ? ` · forecast from ${timeOf(w.at)}` : ''}</p>
+          <p class="place muted">{w.place}{snap.weather.stale ? ` · ${t('forecast from {time}', { time: timeOf(w.at) })}` : ''}</p>
           <ol class="periods">
             {#each next4 as p}
               <li>
                 <span class="ptime num">{hhmm(p.time)}</span>
-                <WeatherIcon sky={condition(p.code).sky} night={!p.isDay} size={34} label={condition(p.code).label} />
-                <strong>{t(p.temp)}</strong>
+                <WeatherIcon sky={condition(p.code).sky} night={!p.isDay} size={34} label={t(condition(p.code).label)} />
+                <strong>{deg(p.temp)}</strong>
                 <span class="muted num">{mm(p.precip)}</span>
               </li>
             {/each}
           </ol>
         {:else}
           <div class="quiet">
-            <Mascot mood="tired" size={64} accessory="umbrella" label="Beni has no forecast" />
+            <Mascot mood="tired" size={64} accessory="umbrella" label={t('Beni has no forecast')} />
             <p class="muted">
-              {#if snap.weather.error}No forecast: {snap.weather.error}.{:else}Set a weather location in <a href={SETTINGS}>settings</a>.{/if}
+              {#if snap.weather.error}{t('No forecast: {error}.', { error: snap.weather.error })}{:else}{t('Set a weather location in')} <a href={SETTINGS}>{t('settings')}</a>.{/if}
             </p>
           </div>
         {/if}
       </section>
 
-      <section class="ahead" aria-label="Next 24 hours" onpointermove={hold} onfocusin={hold}>
+      <section class="ahead" aria-label={t('Next 24 hours')} onpointermove={hold} onfocusin={hold}>
         {#if w}
-          <div class="tabs" role="tablist" aria-label="Forecast view">
-            <button role="tab" aria-selected={view === 'chart'} onclick={() => pick('chart')}>Chart</button>
-            <button role="tab" aria-selected={view === 'list'} onclick={() => pick('list')}>List</button>
+          <div class="tabs" role="tablist" aria-label={t('Forecast view')}>
+            <button role="tab" aria-selected={view === 'chart'} onclick={() => pick('chart')}>{t('Chart')}</button>
+            <button role="tab" aria-selected={view === 'list'} onclick={() => pick('list')}>{t('List')}</button>
           </div>
           {#if view === 'chart'}
             <div class="lead">
-              <span class="mid">{t(w.current.temp)}</span>
-              <span class="leadcond"><WeatherIcon sky={cond.sky} night={!w.current.isDay} size={40} />{cond.label}</span>
+              <span class="mid">{deg(w.current.temp)}</span>
+              <span class="leadcond"><WeatherIcon sky={cond.sky} night={!w.current.isDay} size={40} />{t(cond.label)}</span>
             </div>
             <ForecastChart hours={w.hours} />
           {:else}
             <table class="hours">
               <thead>
-                <tr><th scope="col">Time</th><th scope="col"><span class="sr">Sky</span></th><th scope="col" class="r">Temp</th><th scope="col" class="r">Rain</th><th scope="col" class="r">Wind</th></tr>
+                <tr><th scope="col">{t('Time')}</th><th scope="col"><span class="sr">{t('Sky')}</span></th><th scope="col" class="r">{t('Temp')}</th><th scope="col" class="r">{t('Rain')}</th><th scope="col" class="r">{t('Wind')}</th></tr>
               </thead>
               <tbody>
                 {#each listHours as h}
                   <tr>
                     <td class="num strong">{hhmm(h.time)}</td>
-                    <td><WeatherIcon sky={condition(h.code).sky} night={!h.isDay} size={30} label={condition(h.code).label} /></td>
-                    <td class="r big">{t(h.temp)}</td>
+                    <td><WeatherIcon sky={condition(h.code).sky} night={!h.isDay} size={30} label={t(condition(h.code).label)} /></td>
+                    <td class="r big">{deg(h.temp)}</td>
                     <td class="r num muted">{mm(h.precip)}</td>
                     <td class="r num muted">{h.wind == null ? '–' : `${Math.round(h.wind)} km/h`}</td>
                   </tr>
@@ -298,12 +299,12 @@
     </div>
 
     <div class="lower">
-      <section class="today" aria-label="Today's calendar">
-        <p class="eyebrow">Today</p>
+      <section class="today" aria-label={t("Today's calendar")}>
+        <p class="eyebrow">{t('Today')}</p>
         {#if !snap.calendar.configured}
-          <p class="muted">Add calendar links in System settings, or connect Home Assistant.</p>
+          <p class="muted">{t('Add calendar links in System settings, or connect Home Assistant.')}</p>
         {:else if snap.calendar.error}
-          <p class="muted">Calendar unavailable: {snap.calendar.error}.</p>
+          <p class="muted">{t('Calendar unavailable: {error}.', { error: snap.calendar.error })}</p>
         {:else if events.length}
           <ul class="events">
             {#each shown as e}
@@ -313,42 +314,42 @@
                 {#if e.location}<span class="muted eloc">{e.location}</span>{/if}
               </li>
             {/each}
-            {#if events.length > shown.length}<li class="muted more">and {events.length - shown.length} more</li>{/if}
+            {#if events.length > shown.length}<li class="muted more">{t('and {n} more', { n: events.length - shown.length })}</li>{/if}
           </ul>
         {:else}
-          <p class="muted">Nothing in the calendar today.</p>
+          <p class="muted">{t('Nothing in the calendar today.')}</p>
         {/if}
       </section>
 
       {#if sum}
         <dl class="facts">
-          <div><dt>Heaviest rain</dt><dd class="num">{sum.heaviest ? `${mm(sum.heaviest.mm)} · around ${hhmm(sum.heaviest.time)}` : 'dry for 24 h'}</dd></div>
-          <div><dt>Wind</dt><dd class="num">{sum.wind ? `${sum.wind.min}–${sum.wind.max} km/h${sum.wind.gusts && sum.wind.gusts > sum.wind.max + 10 ? `, gusts ${sum.wind.gusts}` : ''}` : '–'}</dd></div>
-          <div><dt>Night</dt><dd class="num">{sum.night == null ? '–' : `low ${sum.night}°`}</dd></div>
-          {#if sum.sunrise && sum.sunset}<div><dt>Daylight</dt><dd class="num">{hhmm(sum.sunrise)}–{hhmm(sum.sunset)}</dd></div>{/if}
+          <div><dt>{t('Heaviest rain')}</dt><dd class="num">{sum.heaviest ? `${mm(sum.heaviest.mm)} · ${t('around {time}', { time: hhmm(sum.heaviest.time) })}` : t('dry for 24 h')}</dd></div>
+          <div><dt>{t('Wind')}</dt><dd class="num">{sum.wind ? `${sum.wind.min}–${sum.wind.max} km/h${sum.wind.gusts && sum.wind.gusts > sum.wind.max + 10 ? `, ${t('gusts {kmh}', { kmh: sum.wind.gusts })}` : ''}` : '–'}</dd></div>
+          <div><dt>{t('Night')}</dt><dd class="num">{sum.night == null ? '–' : t('low {deg}°', { deg: sum.night })}</dd></div>
+          {#if sum.sunrise && sum.sunset}<div><dt>{t('Daylight')}</dt><dd class="num">{hhmm(sum.sunrise)}–{hhmm(sum.sunset)}</dd></div>{/if}
         </dl>
       {/if}
     </div>
 
-    <footer class="alerts" aria-live="polite" aria-label="Alerts">
+    <footer class="alerts" aria-live="polite" aria-label={t('Alerts')}>
       {#if alerts.length || warnings.length}
         <ul>
           {#each alerts as a}
             <li class="alert">
               <span class="status {a.active ? 'critical' : 'serious'}"><strong>{a.name}</strong></span>
-              <span class="muted">{a.active ? `since ${timeOf(a.at)}` : ago(a.at, now)}</span>
+              <span class="muted">{a.active ? t('since {time}', { time: timeOf(a.at) }) : ago(a.at, now, t)}</span>
             </li>
           {/each}
           {#each warnings as wn}
             <li class="alert">
               <span class="status {wn.tone}"><strong>{wn.title}</strong></span>
               {#if wn.detail}<span class="muted">{wn.detail}</span>{/if}
-              {#if wn.source === 'forecast'}<span class="tag">forecast</span>{/if}
+              {#if wn.source === 'forecast'}<span class="tag">{t('forecast')}</span>{/if}
             </li>
           {/each}
         </ul>
       {:else}
-        <p class="calm">No alerts</p>
+        <p class="calm">{t('No alerts')}</p>
       {/if}
     </footer>
   {/if}

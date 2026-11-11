@@ -1493,7 +1493,7 @@ function renderSettings(){
       <p><button class="link" data-act="set-back">← ${esc(t("settings"))}</button></p>`;
   } else {
     h=`<section class="set-grp"><h3>${esc(t("sGeneral"))}</h3>
-      <div class="set-row"><div class="lb">${esc(t("sLang"))}</div><div class="seg" role="group" aria-label="${esc(t("sLang"))}"><button data-act="lang" data-v="en" class="${lang==="en"?"on":""}" lang="en">English</button><button data-act="lang" data-v="pl" class="${lang==="pl"?"on":""}" lang="pl">Polski</button></div></div>
+      ${SHELL_LANG?"":`<div class="set-row"><div class="lb">${esc(t("sLang"))}</div><div class="seg" role="group" aria-label="${esc(t("sLang"))}"><button data-act="lang" data-v="en" class="${lang==="en"?"on":""}" lang="en">English</button><button data-act="lang" data-v="pl" class="${lang==="pl"?"on":""}" lang="pl">Polski</button></div></div>`}
       <div class="set-row"><div class="lb">${esc(t("sUnit"))}</div><div class="seg" role="group" aria-label="${esc(t("sUnit"))}"><button data-act="unit" data-v="kg" class="${U()==="kg"?"on":""}">kg</button><button data-act="unit" data-v="lb" class="${U()==="lb"?"on":""}">lb</button></div></div>
       <div class="set-row"><div class="lb">${esc(t("sSound"))}</div><button class="tgl" role="switch" aria-checked="${st.sound!==false}" aria-label="${esc(t("sSound"))}" data-act="tgl" data-k="sound"></button></div>
       <div class="set-row"><div class="lb">${esc(t("sWake"))}</div><button class="tgl" role="switch" aria-checked="${st.wake!==false}" aria-label="${esc(t("sWake"))}" data-act="tgl" data-k="wake"></button></div>
@@ -1533,7 +1533,9 @@ function applyImport(replace){
   toast(t("impDone",plural(c.w,"workout")));
 }
 function setLang(v){ lang=v; saveSettings({lang:v}); applyStatic(); render(); tickRest(); if(sheetMode==="settings") renderSettings(); }
-function initLang(){ const s=settings().lang; if(s) lang=s; else { let n=""; try{n=(navigator.languages&&navigator.languages[0])||navigator.language||""}catch(e){} lang=/^pl\b/i.test(n)?"pl":"en"; } }
+/* Inside the assistant, its language (spec 007) wins when this app speaks it; the app's own toggle then hides. */
+const SHELL_LANG=["en","pl"].includes(window.assistantLang)?window.assistantLang:null;
+function initLang(){ const s=SHELL_LANG||settings().lang; if(s) lang=s; else { let n=""; try{n=(navigator.languages&&navigator.languages[0])||navigator.language||""}catch(e){} lang=/^pl\b/i.test(n)?"pl":"en"; } }
 
 /* ---------- example data (fake, generated relative to today) ---------- */
 function rng(seed){ return ()=>{ seed=(seed*1664525+1013904223)%4294967296; return seed/4294967296; }; }

@@ -1,12 +1,13 @@
 <script lang="ts">
   import type { DataOf } from '$shell';
-  import { Mascot } from '$shell/ui';
+  import { Mascot, useT } from '$shell/ui';
   import StreamChart from '../../../lib/StreamChart.svelte';
   import { paceOf, paceText, PACED } from '../../../lib/activity';
   import { hms, km, sportLabel } from '../../../lib/format';
   import type { load } from './+page.server';
 
   let { data }: { data: DataOf<typeof load> } = $props();
+  const t = useT();
 
   const a = $derived(data.activity);
   const x = $derived(data.extras);
@@ -19,57 +20,57 @@
     const d = new Date(a.start_time_local.replace(' ', 'T'));
     return Number.isNaN(d.getTime())
       ? a.start_time_local
-      : `${d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · ${a.start_time_local.slice(11, 16)}`;
+      : `${d.toLocaleDateString(t.locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · ${a.start_time_local.slice(11, 16)}`;
   });
 
   type Kpi = { label: string; value: string; sub?: string };
   const kpis = $derived.by(() => {
     const out: Kpi[] = [];
-    if (a.distance_m) out.push({ label: 'Distance', value: km(a.distance_m) });
-    out.push({ label: 'Time', value: hms(moving), sub: a.duration_s && moving && a.duration_s - moving > 60 ? `${hms(a.duration_s)} elapsed` : undefined });
+    if (a.distance_m) out.push({ label: t('Distance'), value: km(a.distance_m) });
+    out.push({ label: t('Time'), value: hms(moving), sub: a.duration_s && moving && a.duration_s - moving > 60 ? t('{time} elapsed', { time: hms(a.duration_s) }) : undefined });
     if (avgSpeed) {
-      if (paced) out.push({ label: 'Avg pace', value: `${paceText(paceOf(avgSpeed))} /km`, sub: x.maxSpeedMps ? `best ${paceText(paceOf(x.maxSpeedMps))}` : undefined });
-      else out.push({ label: 'Avg speed', value: `${(avgSpeed * 3.6).toFixed(1)} km/h`, sub: x.maxSpeedMps ? `max ${(x.maxSpeedMps * 3.6).toFixed(1)}` : undefined });
+      if (paced) out.push({ label: t('Avg pace'), value: `${paceText(paceOf(avgSpeed))} /km`, sub: x.maxSpeedMps ? t('best {pace}', { pace: paceText(paceOf(x.maxSpeedMps)) }) : undefined });
+      else out.push({ label: t('Avg speed'), value: `${(avgSpeed * 3.6).toFixed(1)} km/h`, sub: x.maxSpeedMps ? t('max {v}', { v: (x.maxSpeedMps * 3.6).toFixed(1) }) : undefined });
     }
-    if (a.avg_hr) out.push({ label: 'Avg heart rate', value: `${a.avg_hr} bpm`, sub: a.max_hr ? `max ${a.max_hr}` : undefined });
-    if (a.avg_power) out.push({ label: 'Avg power', value: `${a.avg_power} W`, sub: a.norm_power ? `NP ${a.norm_power} W` : a.max_power ? `max ${a.max_power}` : undefined });
-    if (a.elevation_gain_m) out.push({ label: 'Elevation gain', value: `${Math.round(a.elevation_gain_m)} m`, sub: x.elevationLossM ? `loss ${Math.round(x.elevationLossM)} m` : undefined });
-    if (x.avgCadence) out.push({ label: 'Cadence', value: `${Math.round(x.avgCadence)} ${a.sport.includes('cycling') ? 'rpm' : 'spm'}` });
-    if (a.calories) out.push({ label: 'Calories', value: `${a.calories.toLocaleString('en-US')} kcal` });
-    if (a.training_load != null) out.push({ label: 'Training load', value: String(Math.round(a.training_load)) });
+    if (a.avg_hr) out.push({ label: t('Avg heart rate'), value: `${a.avg_hr} bpm`, sub: a.max_hr ? t('max {v}', { v: a.max_hr }) : undefined });
+    if (a.avg_power) out.push({ label: t('Avg power'), value: `${a.avg_power} W`, sub: a.norm_power ? `NP ${a.norm_power} W` : a.max_power ? t('max {v}', { v: a.max_power }) : undefined });
+    if (a.elevation_gain_m) out.push({ label: t('Elevation gain'), value: `${Math.round(a.elevation_gain_m)} m`, sub: x.elevationLossM ? t('loss {m} m', { m: Math.round(x.elevationLossM) }) : undefined });
+    if (x.avgCadence) out.push({ label: t('Cadence'), value: `${Math.round(x.avgCadence)} ${a.sport.includes('cycling') ? 'rpm' : 'spm'}` });
+    if (a.calories) out.push({ label: t('Calories'), value: `${a.calories.toLocaleString(t.locale)} kcal` });
+    if (a.training_load != null) out.push({ label: t('Training load'), value: String(Math.round(a.training_load)) });
     if (x.aerobicEffect != null)
       out.push({
-        label: 'Training effect',
-        value: `${x.aerobicEffect.toFixed(1)} aerobic`,
-        sub: x.anaerobicEffect != null ? `${x.anaerobicEffect.toFixed(1)} anaerobic` : undefined
+        label: t('Training effect'),
+        value: t('{v} aerobic', { v: x.aerobicEffect.toFixed(1) }),
+        sub: x.anaerobicEffect != null ? t('{v} anaerobic', { v: x.anaerobicEffect.toFixed(1) }) : undefined
       });
     return out;
   });
 
-  const effect = $derived(x.effectLabel ? x.effectLabel.toLowerCase().replace(/_/g, ' ') : null);
+  const effect = $derived(x.effectLabel ? t(x.effectLabel.toLowerCase().replace(/_/g, ' ')) : null);
   const lapPace = (mps?: number) => (mps ? (paced ? paceText(paceOf(mps)) : `${(mps * 3.6).toFixed(1)}`) : '–');
 </script>
 
-<svelte:head><title>{a.name ?? sportLabel(a.sport)} · Training & Health</title></svelte:head>
+<svelte:head><title>{a.name ?? t(sportLabel(a.sport))} · {t('Training & Health')}</title></svelte:head>
 
-<nav class="crumbs" aria-label="Activity navigation">
-  <a href="/health">Training & Health</a>
+<nav class="crumbs" aria-label={t('Activity navigation')}>
+  <a href="/health">{t('Training & Health')}</a>
   <span class="step">
-    {#if data.prev}<a href="/health/activity/{data.prev}" rel="prev">Older</a>{/if}
-    {#if data.next}<a href="/health/activity/{data.next}" rel="next">Newer</a>{/if}
+    {#if data.prev}<a href="/health/activity/{data.prev}" rel="prev">{t('Older')}</a>{/if}
+    {#if data.next}<a href="/health/activity/{data.next}" rel="next">{t('Newer')}</a>{/if}
   </span>
 </nav>
 
 <header class="head rise">
-  <div class="beni"><Mascot mood="charged" size={64} label="Beni in a sweatband" /></div>
+  <div class="beni"><Mascot mood="charged" size={64} label={t('Beni in a sweatband')} /></div>
   <div class="title">
-    <p class="eyebrow">{sportLabel(a.sport)}{x.location ? ` · ${x.location}` : ''}</p>
-    <h1>{a.name ?? sportLabel(a.sport)}</h1>
+    <p class="eyebrow">{t(sportLabel(a.sport))}{x.location ? ` · ${x.location}` : ''}</p>
+    <h1>{a.name ?? t(sportLabel(a.sport))}</h1>
     <p class="muted when">{when}</p>
   </div>
 </header>
 
-<section class="kpis" aria-label="Summary">
+<section class="kpis" aria-label={t('Summary')}>
   {#each kpis as k, i (k.label)}
     <div class="card kpi rise" style:--i={i + 1}>
       <span class="eyebrow">{k.label}</span>
@@ -80,27 +81,27 @@
 </section>
 
 {#if effect}
-  <p class="effect"><span class="status good">{effect}</span> <span class="muted">Garmin's read of what this session trained</span></p>
+  <p class="effect"><span class="status good">{effect}</span> <span class="muted">{t("Garmin's read of what this session trained")}</span></p>
 {/if}
 
 <div class="grid" class:withmap={!!data.streams.route}>
   {#if data.streams.route}
     {@const r = data.streams.route}
     <section class="card route rise" style:--i="3" aria-labelledby="route-title">
-      <h2 id="route-title">Route</h2>
-      <svg viewBox="-20 -20 {r.width + 40} {r.height + 40}" role="img" aria-label="Route of the activity, drawn from its GPS track">
+      <h2 id="route-title">{t('Route')}</h2>
+      <svg viewBox="-20 -20 {r.width + 40} {r.height + 40}" role="img" aria-label={t('Route of the activity, drawn from its GPS track')}>
         <path class="track-casing" d={r.d} />
         <path class="track" d={r.d} />
         <circle class="start" cx={r.start[0]} cy={r.start[1]} r="14" />
         <circle class="end" cx={r.end[0]} cy={r.end[1]} r="14" />
       </svg>
-      <p class="legend"><span class="dot start"></span>Start <span class="dot end"></span>Finish</p>
+      <p class="legend"><span class="dot start"></span>{t('Start')} <span class="dot end"></span>{t('Finish')}</p>
     </section>
   {/if}
 
   {#if data.streams.series.length}
     <section class="card charts rise" style:--i="4" aria-labelledby="charts-title">
-      <h2 id="charts-title">Over time</h2>
+      <h2 id="charts-title">{t('Over time')}</h2>
       {#each data.streams.series as s (s.key)}
         <StreamChart time={data.streams.time} series={s} bind:hover />
       {/each}
@@ -108,25 +109,25 @@
   {:else}
     <section class="card charts empty rise" style:--i="4">
       <Mascot mood="idle" size={56} />
-      <p class="muted">No heart rate, pace or GPS samples for this activity yet. Details are fetched with the next sync.</p>
+      <p class="muted">{t('No heart rate, pace or GPS samples for this activity yet. Details are fetched with the next sync.')}</p>
     </section>
   {/if}
 </div>
 
 {#if data.laps.length > 1}
   <section class="card rise" style:--i="5" aria-labelledby="laps-title">
-    <h2 id="laps-title">Laps</h2>
+    <h2 id="laps-title">{t('Laps')}</h2>
     <div class="tablewrap">
       <table>
         <thead>
           <tr>
-            <th>Lap</th>
-            <th class="r">Distance</th>
-            <th class="r">Time</th>
-            <th class="r">{paced ? 'Pace' : 'Speed'}</th>
-            <th class="r">Avg HR</th>
-            {#if data.laps.some((l) => l.avgPower)}<th class="r">Power</th>{/if}
-            <th class="r">Elev. gain</th>
+            <th>{t('Lap')}</th>
+            <th class="r">{t('Distance')}</th>
+            <th class="r">{t('Time')}</th>
+            <th class="r">{paced ? t('Pace') : t('Speed')}</th>
+            <th class="r">{t('Avg HR')}</th>
+            {#if data.laps.some((l) => l.avgPower)}<th class="r">{t('Power')}</th>{/if}
+            <th class="r">{t('Elev. gain')}</th>
           </tr>
         </thead>
         <tbody>
@@ -149,11 +150,11 @@
 
 {#if data.journal}
   <section class="card rise" style:--i="6" aria-labelledby="journal-title">
-    <h2 id="journal-title">How it felt</h2>
+    <h2 id="journal-title">{t('How it felt')}</h2>
     <dl class="journal">
-      {#if data.journal.rpe != null}<div><dt>Effort (RPE)</dt><dd>{data.journal.rpe}/10</dd></div>{/if}
-      {#if data.journal.soreness != null}<div><dt>Soreness</dt><dd>{data.journal.soreness}/10</dd></div>{/if}
-      {#if data.journal.mood != null}<div><dt>Mood</dt><dd>{data.journal.mood}/5</dd></div>{/if}
+      {#if data.journal.rpe != null}<div><dt>{t('Effort (RPE)')}</dt><dd>{data.journal.rpe}/10</dd></div>{/if}
+      {#if data.journal.soreness != null}<div><dt>{t('Soreness')}</dt><dd>{data.journal.soreness}/10</dd></div>{/if}
+      {#if data.journal.mood != null}<div><dt>{t('Mood')}</dt><dd>{data.journal.mood}/5</dd></div>{/if}
     </dl>
     {#if data.journal.note}<p>{data.journal.note}</p>{/if}
   </section>

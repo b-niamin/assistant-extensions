@@ -106,12 +106,12 @@ export function extractValue(spec: MetricSpec, raw: unknown): number | null {
   return spec.extract ? spec.extract(data) : pick(data, spec.keys);
 }
 
-export function formatValue(spec: MetricSpec, v: number | null): string {
+export function formatValue(spec: MetricSpec, v: number | null, locale = 'en-US'): string {
   if (v === null) return '–';
   if (spec.format === 'duration') {
     const h = Math.floor(v / 3600);
     const m = Math.round((v % 3600) / 60);
     return `${h}h ${String(m).padStart(2, '0')}m`;
   }
-  return `${Math.round(v).toLocaleString('en-US')}${spec.unit ? ' ' + spec.unit : ''}`;
+  return `${Math.round(v).toLocaleString(locale)}${spec.unit ? ' ' + spec.unit : ''}`;
 }

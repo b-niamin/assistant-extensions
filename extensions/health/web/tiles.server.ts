@@ -27,14 +27,14 @@ export const tiles: ExtTile[] = [
     load: (ctx) =>
       ctx.db(async (sql) => {
         const s = await recentSeries(sql, ctx.dataProfileId!, ['training_readiness', 'hrv'], 14);
-        return readinessTile(s.training_readiness, s.hrv);
+        return readinessTile(s.training_readiness, s.hrv, ctx.t);
       })
   },
   {
     id: 'running-week',
     title: 'Running',
     size: 'md',
-    load: (ctx) => ctx.db(async (sql) => runningTile(await runningWeeks(sql, ctx.dataProfileId!)))
+    load: (ctx) => ctx.db(async (sql) => runningTile(await runningWeeks(sql, ctx.dataProfileId!), ctx.t))
   },
   {
     id: 'resting-hr',
@@ -43,7 +43,7 @@ export const tiles: ExtTile[] = [
     load: (ctx) =>
       ctx.db(async (sql) => {
         const s = await recentSeries(sql, ctx.dataProfileId!, ['resting_heart_rate'], 30);
-        return metricTile('resting_heart_rate', s.resting_heart_rate, 'red', today());
+        return metricTile('resting_heart_rate', s.resting_heart_rate, 'red', today(), ctx.t);
       })
   },
   {
@@ -53,7 +53,7 @@ export const tiles: ExtTile[] = [
     load: (ctx) =>
       ctx.db(async (sql) => {
         const s = await recentSeries(sql, ctx.dataProfileId!, ['sleep'], 14);
-        return metricTile('sleep', s.sleep, 'violet', today());
+        return metricTile('sleep', s.sleep, 'violet', today(), ctx.t);
       })
   }
 ];

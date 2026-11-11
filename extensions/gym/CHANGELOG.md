@@ -3,6 +3,10 @@
 Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/) as described in ARTIFACTS-DEVELOPMENT.md.
 
+## 1.3.0 - 2026-11-11
+
+- Speaks the assistant's language (System settings -> Language, spec 007) when it is English or Polish; the app's own language switch then hides. Name and description in Polish.
+
 ## 1.2.0 - 2026-11-11
 
 Brings in Gym Tracker 1.1.0 from onefile-apps, in the assistant's look. Data unchanged (data version 1).

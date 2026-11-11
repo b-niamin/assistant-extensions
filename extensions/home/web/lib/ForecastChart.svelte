@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { useT } from '$shell/ui';
   import { hhmm, type Hour } from './weather';
 
   /**
@@ -7,6 +8,7 @@
    * and arrow keys. The "List" tab next to it is this chart's table twin.
    */
   let { hours }: { hours: Hour[] } = $props();
+  const t = useT();
 
   let width = $state(560);
   const H = 270;
@@ -79,15 +81,15 @@
       width={width}
       height={H}
       role="img"
-      aria-label="Temperature and precipitation over the next 24 hours. Use the arrow keys to read each hour."
+      aria-label={t('Temperature and precipitation over the next 24 hours. Use the arrow keys to read each hour.')}
       tabindex="0"
       onpointermove={move}
       onpointerleave={() => (hover = null)}
       onkeydown={key}
       onblur={() => (hover = null)}
     >
-      {#each ticks as t}
-        <line class="grid" x1={x(t.i)} x2={x(t.i)} y1={PAD.t - 8} y2={BARS_BOTTOM} />
+      {#each ticks as tk}
+        <line class="grid" x1={x(tk.i)} x2={x(tk.i)} y1={PAD.t - 8} y2={BARS_BOTTOM} />
       {/each}
       {#if zero !== null}
         <line class="zero" x1={PAD.l} x2={width - PAD.r} y1={zero} y2={zero} />
@@ -105,7 +107,7 @@
       {#if (hours[wettest]?.precip ?? 0) > 0}
         <text class="tick" x={x(wettest)} y={BARS_BOTTOM - barH(hours[wettest].precip) - 6} text-anchor="middle">{fmtMm(hours[wettest].precip)}</text>
       {:else}
-        <text class="tick" x={PAD.l} y={BARS_BOTTOM - 6}>dry for 24 h</text>
+        <text class="tick" x={PAD.l} y={BARS_BOTTOM - 6}>{t('dry for 24 h')}</text>
       {/if}
 
       {#if hours[0].temp !== null}
@@ -118,9 +120,9 @@
         <text class="end" x={x(last) + 6} y={y(hours[last].temp) + 4}>{fmtT(hours[last].temp)}</text>
       {/if}
 
-      {#each ticks as t}
-        <text class="tick time" class:strong={t.i === 0} x={x(t.i)} y={H - 8} text-anchor={t.i === 0 ? 'start' : 'middle'}>
-          {t.i === 0 ? 'now' : hhmm(hours[t.i].time)}
+      {#each ticks as tk}
+        <text class="tick time" class:strong={tk.i === 0} x={x(tk.i)} y={H - 8} text-anchor={tk.i === 0 ? 'start' : 'middle'}>
+          {tk.i === 0 ? t('now') : hhmm(hours[tk.i].time)}
         </text>
       {/each}
 

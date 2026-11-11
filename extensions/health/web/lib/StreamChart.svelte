@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { useT } from '$shell/ui';
   import { hms } from './format';
   import { paceText, type Series } from './activity';
   import { niceTicks } from './stats';
@@ -17,14 +18,15 @@
     series: Series;
     hover?: number | null;
   } = $props();
+  const t = useT();
 
   const H = 150;
   const PAD = { top: 12, right: 12, bottom: 24, left: 44 };
   let W = $state(720);
 
   const fmt = (v: number | null) =>
-    v == null ? '–' : series.key === 'pace' ? `${paceText(v)} /km` : `${Math.round(v).toLocaleString('en-US')} ${series.unit}`;
-  const tickText = (v: number) => (series.key === 'pace' ? paceText(v) : Math.round(v).toLocaleString('en-US'));
+    v == null ? '–' : series.key === 'pace' ? `${paceText(v)} /km` : `${Math.round(v).toLocaleString(t.locale)} ${series.unit}`;
+  const tickText = (v: number) => (series.key === 'pace' ? paceText(v) : Math.round(v).toLocaleString(t.locale));
 
   const values = $derived(series.values.filter((v): v is number => v !== null));
   // Pace has outliers when walking a few steps: clip the slowest 3 % so the chart keeps its shape.
@@ -92,11 +94,11 @@
 
 <figure class="stream" style:--series={series.hue}>
   <figcaption>
-    <span class="label">{series.label}</span>
+    <span class="label">{t(series.label)}</span>
     {#if hover != null}
-      <span class="read"><strong>{fmt(hv)}</strong> <span class="muted">at {hms(time[hover] ?? 0)}</span></span>
+      <span class="read"><strong>{fmt(hv)}</strong> <span class="muted">{t('at {time}', { time: hms(time[hover] ?? 0) })}</span></span>
     {:else if avg != null}
-      <span class="read"><span class="muted">avg</span> <strong>{fmt(avg)}</strong></span>
+      <span class="read"><span class="muted">{t('avg')}</span> <strong>{fmt(avg)}</strong></span>
     {/if}
   </figcaption>
   <div class="plot" bind:clientWidth={W}>
@@ -104,16 +106,16 @@
       width={W}
       height={H}
       role="img"
-      aria-label="{series.label} over the activity, average {fmt(avg)}"
+      aria-label={t('{label} over the activity, average {avg}', { label: t(series.label), avg: fmt(avg) })}
       onpointermove={onmove}
       onpointerleave={() => (hover = null)}
     >
-      {#each ticks as t (t)}
-        <line class="grid" x1={PAD.left} x2={W - PAD.right} y1={y(t)} y2={y(t)} />
-        <text class="tick" x={PAD.left - 8} y={y(t)} dy="0.32em" text-anchor="end">{tickText(t)}</text>
+      {#each ticks as tk (tk)}
+        <line class="grid" x1={PAD.left} x2={W - PAD.right} y1={y(tk)} y2={y(tk)} />
+        <text class="tick" x={PAD.left - 8} y={y(tk)} dy="0.32em" text-anchor="end">{tickText(tk)}</text>
       {/each}
-      {#each timeTicks as t (t)}
-        <text class="tick" x={x(t)} y={H - 6} text-anchor="middle">{timeLabel(t)}</text>
+      {#each timeTicks as tk (tk)}
+        <text class="tick" x={x(tk)} y={H - 6} text-anchor="middle">{timeLabel(tk)}</text>
       {/each}
       {#each runs as r, i (i)}
         <path class="wash" d={area(r)} />

@@ -1,4 +1,6 @@
 /** Pure helpers behind the health dashboard figures and charts (no DB, no DOM). */
+import type { Translate } from '$shell';
+import { EN } from './i18n';
 import type { MetricSpec } from './metrics';
 
 export interface Point {
@@ -60,9 +62,12 @@ export function niceTicks(min: number, max: number, count = 4): number[] {
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-/** '2026-11-03' -> '3 Nov' (or '3 Nov 2025' when withYear). */
-export function shortDay(iso: string, withYear = false): string {
+/** '2026-11-03' -> '3 Nov' (or '3 Nov 2025' when withYear); in the page's language when a locale is given. */
+export function shortDay(iso: string, withYear = false, locale?: string): string {
   const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+  if (locale && !locale.startsWith('en')) {
+    return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: withYear ? 'numeric' : undefined, timeZone: 'UTC' });
+  }
   return `${d} ${MONTHS[m - 1]}${withYear ? ' ' + y : ''}`;
 }
 
@@ -72,10 +77,10 @@ export function daysBetween(a: string, b: string): number {
 }
 
 /** '12 min ago', '3 h ago', '2 d ago'. */
-export function ago(from: Date | string, now = new Date()): string {
+export function ago(from: Date | string, now = new Date(), t: Translate = EN): string {
   const s = Math.max(0, (now.getTime() - new Date(from).getTime()) / 1000);
-  if (s < 90) return 'just now';
-  if (s < 3600) return `${Math.round(s / 60)} min ago`;
-  if (s < 86400 * 2) return `${Math.round(s / 3600)} h ago`;
-  return `${Math.round(s / 86400)} d ago`;
+  if (s < 90) return t('just now');
+  if (s < 3600) return t('{n} min ago', { n: Math.round(s / 60) });
+  if (s < 86400 * 2) return t('{n} h ago', { n: Math.round(s / 3600) });
+  return t('{n} d ago', { n: Math.round(s / 86400) });
 }
