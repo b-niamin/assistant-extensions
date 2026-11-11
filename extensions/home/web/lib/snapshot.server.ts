@@ -3,6 +3,7 @@
  * call), weather (Open-Meteo, cached 15 min in the extension's KV so a restart or an outage still shows
  * the last forecast) and today's calendar (cached 5 min in memory). Each part fails on its own.
  */
+import { publicUrl } from './net';
 import type { ExtensionContext, Translate } from '$shell';
 import { normalizeEvents, sortEvents, todayBounds, type CalendarEvent } from './calendar';
 import { haClient, baseUrl, HaError, type HaClient } from './ha.server';
@@ -117,7 +118,10 @@ export async function loadFeed(url: string, timeoutMs = 8000, t: Translate = EN)
   if (hit && Date.now() - hit.at < FEED_TTL) return hit.cal;
   const host = new URL(url).host;
   try {
+    if (!publicUrl(url)) throw new FeedError(t('Calendar at {host} is not on the internet: only public calendar links work', { host }));
     const res = await fetch(url, { headers: { Accept: FEED_ACCEPT }, signal: AbortSignal.timeout(timeoutMs) });
+    // A redirect must not lead into the stack either.
+    if (res.url && !publicUrl(res.url)) throw new FeedError(t('Calendar at {host} is not on the internet: only public calendar links work', { host }));
     if (!res.ok) throw new FeedError(t('Calendar at {host} answered {status}', { host, status: res.status }));
     const text = await res.text();
     if (text.length > FEED_MAX_BYTES) throw new FeedError(t('Calendar at {host} is too large', { host }));

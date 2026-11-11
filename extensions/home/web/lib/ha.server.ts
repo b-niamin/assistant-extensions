@@ -2,6 +2,7 @@
  * Read-only Home Assistant REST client: /api/config, /api/states, /api/calendars. The token stays here,
  * on the server; nothing it returns carries it.
  */
+import { allowedHaUrl } from './net';
 import type { HaEvent } from './calendar';
 import type { HaState } from './home';
 
@@ -37,6 +38,7 @@ export function baseUrl(v: unknown): string | null {
 
 export function haClient(base: string, token: string, timeoutMs = 6000): HaClient {
   async function get<T>(path: string): Promise<T> {
+    if (!allowedHaUrl(base)) throw new HaError('That address is one of the assistant\'s own services, not Home Assistant', 'unreachable');
     let res: Response;
     try {
       res = await fetch(`${base}${path}`, {

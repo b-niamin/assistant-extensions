@@ -210,5 +210,6 @@
   "Calendar at {host} failed: {error}": "Kalendarz pod {host} nie działa: {error}",
   "Home Assistant did not answer in time": "Home Assistant nie odpowiedział na czas",
   "ended": "zakończone",
-  "New alert: {names}": "Nowy alert: {names}"
+  "New alert: {names}": "Nowy alert: {names}",
+  "Calendar at {host} is not on the internet: only public calendar links work": "Kalendarz pod {host} nie jest w internecie: działają tylko publiczne linki do kalendarzy"
 }
