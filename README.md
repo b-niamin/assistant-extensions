@@ -13,8 +13,10 @@ Ready to use:
 |---|---|---|
 | [`health`](extensions/health) | native, per profile | Training & Health: Garmin sleep, HRV, Body Battery, readiness, activities. Brings the `garmin-sync` service |
 | [`gym`](extensions/gym) | onefile, per profile | Gym tracker: plans, sets and weights, progress, a muscle map |
+| [`home`](extensions/home) | native, shared | Home: a calm board from Home Assistant (lights, doors and windows, camera alerts), weather with warnings, today's calendar, auto refresh |
 
-Inspirations: [`home-assistant`](inspirations/home-assistant) (shared data, a settings panel with a token),
+Inspirations: [`home-assistant`](inspirations/home-assistant) (shared data, a settings panel with a token; the
+ready-made [`home`](extensions/home) grew from it),
 [`calendar`](inspirations/calendar) (shared, dashboard tiles), [`learning`](inspirations/learning) (per
 profile, dashboard tiles). Anything outside this repo (someone's repo, an app from onefile-apps, an idea)
 can be an inspiration too: Claude builds the extension fresh and records the source as `inspiredBy`.

@@ -17,17 +17,18 @@
       "kind": "onefile",
       "scope": "profile",
       "accessory": "headband"
+    },
+    {
+      "id": "home",
+      "name": "Home",
+      "description": "A calm board for the house: lights, doors and windows, camera alerts, weather with warnings and today's calendar, from Home Assistant.",
+      "kind": "native",
+      "scope": "shared",
+      "needs": "Home Assistant with a long-lived access token",
+      "accessory": "bulb"
     }
   ],
   "inspirations": [
-    {
-      "id": "home-assistant",
-      "name": "Smart home",
-      "description": "Rooms, climate and today's energy from Home Assistant, with an address and a token in its settings.",
-      "scope": "shared",
-      "idea": "Show my Home Assistant rooms, temperatures and today's energy use.",
-      "accessory": "bulb"
-    },
     {
       "id": "calendar",
       "name": "Family calendar",
