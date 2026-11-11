@@ -186,5 +186,7 @@
   "Cross country skiing ws": "Narciarstwo biegowe",
   "Resort skiing snowboarding ws": "Narciarstwo zjazdowe",
   "Multi sport": "Multisport",
-  "The sync service is not picking up requests. Restart it in System settings -> Worker (Training & Health · garmin-sync).": "Usługa synchronizacji nie odbiera zleceń. Zrestartuj ją w Ustawieniach systemu -> Worker (Trening i zdrowie · garmin-sync)."
+  "The sync service is not picking up requests. Restart it in System settings -> Worker (Training & Health · garmin-sync).": "Usługa synchronizacji nie odbiera zleceń. Zrestartuj ją w Ustawieniach systemu -> Worker (Trening i zdrowie · garmin-sync).",
+  "Last Garmin sync {when}": "Ostatnia synchronizacja z Garminem {when}",
+  "Garmin synced {when}, some data skipped": "Garmin zsynchronizowany {when}, część danych pominięta"
 }

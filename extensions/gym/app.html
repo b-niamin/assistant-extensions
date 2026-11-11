@@ -259,6 +259,7 @@ nav.tabs .live{position:absolute;top:6px;right:calc(50% - 18px);width:8px;height
 /* timer: round floating button, controls slide out to the left; big view covers 3/4 of the screen */
 .rest{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:21;display:flex;flex-direction:row-reverse;align-items:center;gap:8px;pointer-events:none;opacity:0;transform:translateY(16px) scale(.9);transition:opacity .25s,transform .3s var(--ease)}
 .rest.show{opacity:1;transform:none}
+.vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .rest.show .fab,.rest.show.open .rest-panel{pointer-events:auto}
 .fab{position:relative;flex:0 0 auto;width:64px;height:64px;border-radius:50%;background:var(--pri);color:var(--on-pri);display:grid;place-items:center;box-shadow:0 10px 24px rgba(var(--sh-c),.32);transition:transform .15s var(--ease)}
 .fab:active{transform:scale(.93)}
@@ -501,7 +502,7 @@ img.thumb{display:block;object-fit:cover}
   <div id="notice" class="notice hide" role="status"></div>
   <main id="view"><p class="empty">Loading…</p></main>
 </div>
-<div class="rest" id="rest" aria-live="polite">
+<div class="rest" id="rest">
   <button class="fab" data-act="rest-open" data-ta="timerAria" aria-label="Timer" aria-expanded="false"><svg viewBox="0 0 64 64" aria-hidden="true"><circle class="bgc" cx="32" cy="32" r="29"/><circle class="fg" id="restRing" cx="32" cy="32" r="29" stroke-dasharray="182.2" stroke-dashoffset="0"/></svg><b id="restT">1:30</b></button>
   <div class="rest-panel" role="group" data-ta="timer" aria-label="Timer">
     <button class="r" data-act="rest-adj" data-s="-15" data-ta="restSub" aria-label="15 s shorter">−15</button>
@@ -526,6 +527,7 @@ img.thumb{display:block;object-fit:cover}
   <div class="sh-body" id="shBody"></div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<p class="vh" id="restSay" role="status"></p>
 <canvas id="fx" aria-hidden="true"></canvas>
 <nav class="tabs" aria-label="Sections">
   <button data-tab="workout" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/></svg><span data-t="tabWorkout">Workout</span><span class="live hide" id="liveDot"></span></button>
@@ -1586,7 +1588,11 @@ const restDef=()=>settings().rest||90;
 const fmtRest=s=>Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
 function showBig(on){ restBig=on; $("#rbig").classList.toggle("on",on); $("#rbigBg").classList.toggle("on",on); }
 function setRestOpen(on){ restOpen=on; $("#rest").classList.toggle("open",on); $("#rest .fab").setAttribute("aria-expanded",on?"true":"false"); }
-function startRest(sec){ restTotal=sec*1000; restEnd=Date.now()+restTotal; restBuzzed=false; restOn=true; clearInterval(restIv); restIv=setInterval(tickRest,250); tickRest(); }
+// Screen readers hear the rest at its start, with 10 s left and at its end, not every tick (the time
+// on the button changes four times a second).
+let restSaid="";
+function sayRest(text){ if(text===restSaid) return; restSaid=text; $("#restSay").textContent=text; }
+function startRest(sec){ restTotal=sec*1000; restEnd=Date.now()+restTotal; restBuzzed=false; restOn=true; clearInterval(restIv); restIv=setInterval(tickRest,250); sayRest(t("timer")+" "+fmtRest(sec)); tickRest(); }
 function tickRest(){
   const el=$("#rest");
   if(!restOn){ el.classList.remove("run","end"); $("#restT").textContent=fmtRest(restDef()); $("#restRing").setAttribute("stroke-dashoffset","0"); $("#restGo").textContent=t("tStart"); $("#rbig").classList.remove("end"); return; }
@@ -1595,7 +1601,8 @@ function tickRest(){
   const end=s===0; el.classList.add("run"); el.classList.toggle("end",end); $("#restGo").textContent=t("skip");
   $("#rbigT").textContent=fmtRest(s); $("#rbigRing").setAttribute("stroke-dashoffset",(RBC*(1-f)).toFixed(1));
   $("#rbig").classList.toggle("end",end); $("#rbigSub").textContent=end?t("tUp"):t("tLeft"); $("#rbigGo").textContent=end?t("tDone"):t("skip");
-  if(end&&!restBuzzed){ restBuzzed=true; buzz([120,80,120]); beep(); }
+  if(s===10) sayRest("0:10");
+  if(end&&!restBuzzed){ restBuzzed=true; buzz([120,80,120]); beep(); sayRest(t("tUp")); }
   if(ms<-20000) stopRest();
 }
 function stopRest(){ clearInterval(restIv); restOn=false; showBig(false); tickRest(); }

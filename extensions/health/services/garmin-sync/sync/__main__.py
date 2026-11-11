@@ -91,7 +91,13 @@ def _pass(profile: str, kind: str = "incremental", since: _dt.date | None = None
     args = [sys.executable, "-m", "sync", "backfill" if kind == "backfill" else "run", "--profile", profile]
     if since:
         args += ["--since", since.isoformat()]
-    rc = subprocess.call(args)
+    # A pass that hangs (Garmin never answering) must not stop the loop for good.
+    limit = int(os.environ.get("SYNC_PASS_TIMEOUT_S", "7200" if kind == "backfill" else "1200"))
+    try:
+        rc = subprocess.call(args, timeout=limit)
+    except subprocess.TimeoutExpired:
+        log.error("%s pass for %s killed after %ss", kind, profile, limit)
+        return 124
     log.info("%s pass for %s finished rc=%s", kind, profile, rc)
     return rc
 

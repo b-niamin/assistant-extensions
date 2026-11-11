@@ -2,7 +2,7 @@
   "id": "home",
   "name": "Home",
   "description": "Home Assistant at a glance: lights, doors and windows, camera alerts, weather and today's calendar",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "kind": "native",
   "scope": "shared",
   "accessory": "bulb",

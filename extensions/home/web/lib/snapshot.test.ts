@@ -57,7 +57,7 @@ function fakeFetch(opts: { haDown?: boolean; badToken?: boolean; auth?: string[]
       return new Response(`BEGIN:VCALENDAR\r\nX-WR-CALNAME:School\r\nBEGIN:VEVENT\r\nUID:1\r\nSUMMARY:Parents' evening\r\nDTSTART;VALUE=DATE:${day}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`);
     }
     if (url.host === 'api.open-meteo.com') {
-      expect(url.searchParams.get('latitude')).toBe('52.2300');
+      expect(url.searchParams.get('latitude')).toBe('52.23');
       return Response.json(FORECAST);
     }
     return new Response('not found', { status: 404 });

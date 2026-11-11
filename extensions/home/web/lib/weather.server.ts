@@ -26,8 +26,9 @@ export async function geocode(name: string, timeoutMs = 5000): Promise<Place | n
 
 export async function forecast(place: Place, timeoutMs = 6000): Promise<Weather> {
   const params = new URLSearchParams({
-    latitude: place.lat.toFixed(4),
-    longitude: place.lon.toFixed(4),
+    // About 1 km: enough for the weather, not the address of the house (the place goes to Open-Meteo).
+    latitude: place.lat.toFixed(2),
+    longitude: place.lon.toFixed(2),
     current: 'temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m,precipitation,is_day',
     hourly: 'temperature_2m,precipitation,precipitation_probability,weather_code,wind_speed_10m,wind_gusts_10m,is_day',
     daily: 'sunrise,sunset',

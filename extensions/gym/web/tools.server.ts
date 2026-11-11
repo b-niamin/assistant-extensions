@@ -5,7 +5,7 @@
  * stores per profile; ctx.kv is that storage. Writes add documents in the same shape and never change or
  * remove existing ones; the app shows them the next time it opens.
  */
-import type { ExtTool } from '$shell';
+import { dayIn, type ExtTool } from '$shell';
 
 const KEY = 'gym-notebook.v1';
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
@@ -60,7 +60,7 @@ const num = (v: unknown) => {
   return Number.isFinite(n) && n >= 0 && n < 100000 ? String(Math.round(n * 1000) / 1000) : '';
 };
 const text = (v: unknown, max: number) => String(v ?? '').trim().slice(0, max);
-const isoDay = (d: Date) => d.toISOString().slice(0, 10);
+const isoDay = (d: Date) => dayIn(d);
 
 /** One exercise of a workout in plain fields: sets with reps (or seconds for timed ones) and kg. */
 const plainExercise = (e: ExerciseDoc) => ({

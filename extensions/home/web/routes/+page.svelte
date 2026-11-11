@@ -52,7 +52,7 @@
     const timer = setInterval(() => {
       now = Date.now();
       if (now >= nextAt) refresh();
-      if (now >= turnAt) {
+      if (rotating() && now >= turnAt) {
         view = view === 'chart' ? 'list' : 'chart';
         turnAt = now + ROTATE_MS;
       }
@@ -71,17 +71,34 @@
   });
 
   /**
-   * Chart and List take turns every ROTATE_MS, like a wall display. Picking a tab, or pointing at the
-   * forecast, holds it for HOLD_MS; then the turns go on.
+   * On a wall display (full screen) Chart and List take turns every ROTATE_MS. Never under reduced motion,
+   * never while focus is in the forecast (a keyboard or screen reader user is reading it), and never again
+   * once someone picked a view (WCAG 2.2.2). Pointing at the forecast holds it for a turn.
    */
   const ROTATE_MS = 10_000;
-  const HOLD_MS = 120_000;
   let turnAt = Date.now() + ROTATE_MS;
+  let picked = $state(false);
+  let focusInside = $state(false);
+  const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const rotating = () => full && !reduced && !picked && !focusInside;
   function pick(v: 'chart' | 'list') {
     view = v;
-    turnAt = Date.now() + HOLD_MS;
+    picked = true;
   }
   const hold = () => (turnAt = Math.max(turnAt, Date.now() + ROTATE_MS));
+  const leave = (e: FocusEvent) => {
+    if (!(e.currentTarget as Element).contains(e.relatedTarget as Node | null)) focusInside = false;
+  };
+
+  // Alerts: only new ones are announced (the list itself re-renders every second with "5 min ago").
+  let announced = new Set<string>();
+  let announce = $state('');
+  $effect(() => {
+    const keys = alerts.map((a) => `${a.name}|${a.at}`);
+    const fresh = alerts.filter((a, i) => !announced.has(keys[i]));
+    if (fresh.length && announced.size) announce = fresh.map((a) => a.name).join(', ');
+    announced = new Set(keys);
+  });
 
   // A wall tablet: full screen, and keep the screen on while it is.
   let lock: { release(): Promise<void> } | null = null;
@@ -227,6 +244,7 @@
       </div>
     </div>
   {:else}
+    <h1 class="sr">{t('Home')}</h1>
     {#if snap.ha.error}
       <p class="banner status critical">
         {snap.ha.error}. {t('Lights, doors and calendar are unavailable.')} <a href={SETTINGS}>{t('Check the settings')}</a>
@@ -264,11 +282,11 @@
         {/if}
       </section>
 
-      <section class="ahead" aria-label={t('Next 24 hours')} onpointermove={hold} onfocusin={hold}>
+      <section class="ahead" aria-label={t('Next 24 hours')} onpointermove={hold} onfocusin={() => (focusInside = true)} onfocusout={leave}>
         {#if w}
-          <div class="tabs" role="tablist" aria-label={t('Forecast view')}>
-            <button role="tab" aria-selected={view === 'chart'} onclick={() => pick('chart')}>{t('Chart')}</button>
-            <button role="tab" aria-selected={view === 'list'} onclick={() => pick('list')}>{t('List')}</button>
+          <div class="tabs" role="group" aria-label={t('Forecast view')}>
+            <button type="button" aria-pressed={view === 'chart'} onclick={() => pick('chart')}>{t('Chart')}</button>
+            <button type="button" aria-pressed={view === 'list'} onclick={() => pick('list')}>{t('List')}</button>
           </div>
           {#if view === 'chart'}
             <div class="lead">
@@ -310,7 +328,7 @@
             {#each shown as e}
               <li class:allday={e.allDay} class:past={isPast(e)} class:live={!e.allDay && !isPast(e) && Date.parse(e.start) <= now}>
                 <span class="etime num">{e.when}</span>
-                <span class="etitle">{e.title}</span>
+                <span class="etitle">{e.title}{#if isPast(e)}<span class="sr"> ({t('ended')})</span>{/if}</span>
                 {#if e.location}<span class="muted eloc">{e.location}</span>{/if}
               </li>
             {/each}
@@ -331,7 +349,8 @@
       {/if}
     </div>
 
-    <footer class="alerts" aria-live="polite" aria-label={t('Alerts')}>
+    <p class="sr" role="status">{announce ? t('New alert: {names}', { names: announce }) : ''}</p>
+    <footer class="alerts" aria-label={t('Alerts')}>
       {#if alerts.length || warnings.length}
         <ul>
           {#each alerts as a}
@@ -621,7 +640,7 @@
     font-weight: 600;
     border-bottom: 2px solid transparent;
   }
-  .tabs button[aria-selected='true'] {
+  .tabs button[aria-pressed='true'] {
     color: var(--ink);
     border-bottom-color: var(--brand);
   }
@@ -724,8 +743,10 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .events li.past {
-    opacity: 0.45;
+  /* Past events: a quieter colour that still reads (opacity made them 3:1). */
+  .events li.past,
+  .events li.past .muted {
+    color: var(--ink-3);
   }
   .events li.live .etime {
     color: var(--accent-ink);

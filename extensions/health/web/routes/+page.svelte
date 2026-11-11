@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import type { DataOf } from '$shell';
-  import { countUp, lineFor, Mascot, moodFor, useT } from '$shell/ui';
+  import { countUp, lineFor, Mascot, moodFor, todayIn, useT } from '$shell/ui';
   import LineChart from '../lib/LineChart.svelte';
   import MetricIcon from '../lib/MetricIcon.svelte';
   import { hueOf } from '../lib/look';
@@ -15,7 +15,21 @@
   let { data }: { data: DataOf<typeof load> } = $props();
   const t = useT();
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIn();
+
+  /** The sync pill: green only for a recent good pass; a partial one is yellow, an old one red. */
+  const SYNC_OLD_MS = 6 * 3600_000;
+  const pill = $derived.by(() => {
+    const r = data.sync.lastRun;
+    if (!r) return null;
+    const at = r.finished_at ?? r.started_at;
+    const when = ago(at, undefined, t);
+    if (r.status === 'running') return { tone: 'warning', text: t('Garmin syncing, started {when}', { when: ago(r.started_at, undefined, t) }) };
+    if (r.status === 'failed') return { tone: 'critical', text: t('Garmin sync failed {when}', { when }) };
+    if (Date.now() - new Date(at).getTime() > SYNC_OLD_MS) return { tone: 'critical', text: t('Last Garmin sync {when}', { when }) };
+    if (r.status === 'partial') return { tone: 'warning', text: t('Garmin synced {when}, some data skipped', { when }) };
+    return { tone: 'good', text: t('Garmin synced {when}', { when }) };
+  });
   const PACED = ['running', 'trail_running', 'treadmill_running', 'walking', 'hiking'];
 
   const reading = (key: string) => data.latest.find((r) => r.key === key);
@@ -78,10 +92,8 @@
     <p class="eyebrow">{new Date().toLocaleDateString(t.locale, { weekday: 'long', day: 'numeric', month: 'long' })}</p>
     <h1>{t('Training & Health')}</h1>
   </div>
-  {#if data.sync.lastRun}
-    <a class="sync status {data.sync.lastRun.status === 'ok' ? 'good' : data.sync.lastRun.status === 'running' ? 'warning' : 'critical'}" href="/settings/extensions/health">
-      {#if data.sync.lastRun.status === 'running'}{t('Garmin syncing, started {when}', { when: ago(data.sync.lastRun.started_at, undefined, t) })}{:else if data.sync.lastRun.status === 'ok'}{t('Garmin synced {when}', { when: ago(data.sync.lastRun.finished_at ?? data.sync.lastRun.started_at, undefined, t) })}{:else}{t('Garmin sync failed {when}', { when: ago(data.sync.lastRun.finished_at ?? data.sync.lastRun.started_at, undefined, t) })}{/if}
-    </a>
+  {#if pill}
+    <a class="sync status {pill.tone}" href="/settings/extensions/health">{pill.text}</a>
   {:else}
     <a class="sync status" href="/settings/extensions/health">{t('Garmin not synced yet')}</a>
   {/if}

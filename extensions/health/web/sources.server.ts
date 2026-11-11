@@ -3,7 +3,7 @@
  * and progress, and the actions the panel offers. The web app never touches Garmin itself: an action
  * queues a row in health.sync_requests and the garmin-sync service runs it within seconds.
  */
-import type { ExtSources } from '$shell';
+import { todayIn, type ExtSources } from '$shell';
 import { syncOverview } from './lib/sync.server';
 import { describeSync, garminSource, longDay, olderLimit } from './lib/sync';
 
@@ -13,7 +13,7 @@ export const sources: ExtSources = {
   async list(ctx) {
     const p = ctx.dataProfileId!;
     const o = await ctx.db((sql) => syncOverview(sql, p));
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayIn();
     const garmin = garminSource(o, today, LOGIN, Date.now(), ctx.t);
     if (garmin.state !== 'not_connected') garmin.sync = describeSync(o, Date.now(), ctx.t);
     return [
@@ -35,7 +35,7 @@ export const sources: ExtSources = {
     const since = action === 'fetch-older' ? input.date : undefined;
     if (since) {
       const o = await ctx.db((sql) => syncOverview(sql, p));
-      const limit = olderLimit(o, new Date().toISOString().slice(0, 10));
+      const limit = olderLimit(o, todayIn());
       if (since > limit) throw new Error(ctx.t('History is already checked back to {day}: pick an earlier day.', { day: longDay(o.historyTo ?? limit, ctx.t.locale) }));
     }
     // A request the service never picked up is replaced, not stacked behind.

@@ -208,5 +208,7 @@
   "Calendar at {host} is not a calendar": "Pod {host} nie ma kalendarza",
   "Calendar at {host} did not answer in time": "Kalendarz pod {host} nie odpowiedział na czas",
   "Calendar at {host} failed: {error}": "Kalendarz pod {host} nie działa: {error}",
-  "Home Assistant did not answer in time": "Home Assistant nie odpowiedział na czas"
+  "Home Assistant did not answer in time": "Home Assistant nie odpowiedział na czas",
+  "ended": "zakończone",
+  "New alert: {names}": "Nowy alert: {names}"
 }
