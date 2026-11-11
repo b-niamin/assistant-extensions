@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ExtensionContext } from '$shell';
 import { snapshot } from './snapshot.server';
+import { sources } from '../sources.server';
+import { tools } from '../tools.server';
 
 function ctx(settings: Record<string, string | number | null>, token: string | null = 'secret-token') {
   const kv = new Map<string, string>();
@@ -27,14 +29,15 @@ const FORECAST = {
   daily: { time: ['2026-11-11'], sunrise: ['2026-11-11T06:58'], sunset: ['2026-11-11T15:59'] }
 };
 
-function fakeFetch(opts: { haDown?: boolean; auth?: string[] } = {}) {
+function fakeFetch(opts: { haDown?: boolean; badToken?: boolean; auth?: string[] } = {}) {
   return vi.fn(async (input: string | URL, init?: RequestInit) => {
     const url = new URL(String(input));
     const auth = (init?.headers as Record<string, string> | undefined)?.Authorization;
     if (url.host === 'ha.local:8123') {
       opts.auth?.push(auth ?? '');
       if (opts.haDown) throw new TypeError('fetch failed');
-      if (url.pathname === '/api/config') return Response.json({ latitude: 52.23, longitude: 21.01, time_zone: 'Europe/Warsaw', location_name: 'Dom' });
+      if (opts.badToken) return new Response('', { status: 401 });
+      if (url.pathname === '/api/config') return Response.json({ latitude: 52.23, longitude: 21.01, time_zone: 'Europe/Warsaw', location_name: 'Dom', version: '2026.11.1' });
       if (url.pathname === '/api/states')
         return Response.json([
           { entity_id: 'light.kitchen', state: 'on', attributes: { friendly_name: 'Kitchen' } },
@@ -60,7 +63,8 @@ describe('snapshot', () => {
   it('puts the house, the weather at the home zone and today together, with the token only in the header', async () => {
     const auth: string[] = [];
     vi.stubGlobal('fetch', fakeFetch({ auth }));
-    const { ctx: c, kv } = ctx({ url: 'ha.local:8123/', refresh: '30 s' });
+    const { ctx: c, kv } = ctx({ url: 'ha.local:8123/' });
+    kv.set('config', JSON.stringify({ refresh_seconds: 30 }));
     const s = await snapshot(c);
     expect(s.refreshSeconds).toBe(30);
     expect(s.timezone).toBe('Europe/Warsaw');
@@ -87,5 +91,41 @@ describe('snapshot', () => {
     const s = await snapshot(ctx({}, null).ctx);
     expect(s.ha.configured).toBe(false);
     expect(s.weather.configured).toBe(false);
+  });
+});
+
+describe('connected account', () => {
+  it('asks for the address and token until both are set', async () => {
+    vi.stubGlobal('fetch', fakeFetch());
+    const [s] = await sources.list(ctx({}, null).ctx);
+    expect(s).toMatchObject({ id: 'home-assistant', state: 'not_connected', fields: ['url', 'token'] });
+  });
+  it('shows the house once connected, and says so after a save', async () => {
+    vi.stubGlobal('fetch', fakeFetch());
+    const c = ctx({ url: 'http://ha.local:8123' }).ctx;
+    const [s] = await sources.list(c);
+    expect(s.state).toBe('connected');
+    expect(s.account).toBe('Dom · ha.local:8123');
+    expect(s.facts?.find((f) => f.label === 'Lights watched')?.value).toBe('1');
+    expect(await sources.act!(c, 'home-assistant', 'saved', {})).toBe('Connected to Home Assistant 2026.11.1 (Dom): 1 light, 1 door or window.');
+  });
+  it('asks for a new token when Home Assistant rejects it', async () => {
+    vi.stubGlobal('fetch', fakeFetch({ badToken: true }));
+    const [s] = await sources.list(ctx({ url: 'http://ha.local:8123' }).ctx);
+    expect(s.state).toBe('reconnect');
+  });
+});
+
+describe('tools', () => {
+  const tool = (name: string) => tools.find((t) => t.name === name)!;
+  it('lists entities and configures what the board watches', async () => {
+    vi.stubGlobal('fetch', fakeFetch());
+    const { ctx: c, kv } = ctx({ url: 'http://ha.local:8123' });
+    const listed = (await tool('entities').run({ domain: 'light' }, c)) as { entities: { id: string; watched?: string }[] };
+    expect(listed.entities).toEqual([{ id: 'light.kitchen', name: 'Kitchen', state: 'on', device_class: undefined, watched: 'light' }]);
+    const res = (await tool('configure').run({ alerts: ['binary_sensor.*'], refresh_seconds: 30 }, c)) as { matched: Record<string, number> };
+    expect(res.matched).toEqual({ alerts: 1 });
+    expect(JSON.parse(kv.get('config')!)).toMatchObject({ alerts: 'binary_sensor.*', refresh_seconds: 30, lights: '' });
+    await expect(tool('configure').run({ colour: 'red' }, c)).rejects.toThrow('unknown setting: colour');
   });
 });

@@ -10,17 +10,25 @@ import { officialWarnings, parsePatterns, matches, summarize, type HaState } fro
 import { forecastWarnings, parseCoords, type Weather } from './weather';
 import { forecast, geocode, type Place } from './weather.server';
 import type { Snapshot } from './types';
+import { readConfig, type HomeConfig } from './config';
 
 export type { Snapshot };
 
+/** What the board watches, as Claude last set it (home__configure). */
+export const configOf = async (ctx: ExtensionContext): Promise<HomeConfig> => readConfig(await ctx.kv.get('config'));
+
+/** The Home Assistant client from the settings (address) and secrets (token), or null when not set. */
+export async function clientOf(ctx: ExtensionContext, timeoutMs = 6000): Promise<{ ha: HaClient; base: string } | null> {
+  const base = baseUrl(await ctx.settings.get('url'));
+  const token = await ctx.secrets.get('token');
+  return base && token ? { ha: haClient(base, token, timeoutMs), base } : null;
+}
 
 const WEATHER_TTL = 15 * 60_000;
 const WEATHER_MAX_AGE = 6 * 3600_000;
 const CALENDAR_TTL = 5 * 60_000;
 const CONFIG_TTL = 3600_000;
 
-const REFRESH: Record<string, number> = { '30 s': 30, '1 min': 60, '2 min': 120, '5 min': 300 };
-export const refreshSeconds = (v: unknown) => REFRESH[String(v)] ?? 60;
 
 type HaConfig = Awaited<ReturnType<HaClient['config']>>;
 let configCache: { key: string; at: number; value: HaConfig } | null = null;
@@ -95,15 +103,15 @@ export interface SnapshotOptions {
 }
 
 export async function snapshot(ctx: ExtensionContext, opts: SnapshotOptions = {}): Promise<Snapshot> {
-  const s = await ctx.settings.all();
-  const token = await ctx.secrets.get('token');
-  const base = baseUrl(s.url);
-  const ha = base && token ? haClient(base, token, opts.quick ? 1800 : 6000) : null;
-  const haKey = base ?? '';
+  const location = await ctx.settings.get('location');
+  const conf = await configOf(ctx);
+  const client = await clientOf(ctx, opts.quick ? 1800 : 6000);
+  const ha = client?.ha ?? null;
+  const haKey = client?.base ?? '';
 
   const out: Snapshot = {
     at: new Date().toISOString(),
-    refreshSeconds: refreshSeconds(s.refresh),
+    refreshSeconds: conf.refresh_seconds,
     timezone: 'UTC',
     ha: { configured: !!ha },
     weather: { configured: false, warnings: [] },
@@ -116,7 +124,7 @@ export async function snapshot(ctx: ExtensionContext, opts: SnapshotOptions = {}
     const [st, cfg] = await Promise.allSettled([ha.states(), haConfig(ha, haKey)]);
     if (st.status === 'fulfilled') {
       states = st.value;
-      out.ha.home = summarize(states, { lights: s.lights, contacts: s.contacts, alerts: s.alerts, alertMinutes: s.alert_minutes });
+      out.ha.home = summarize(states, { lights: conf.lights, contacts: conf.contacts, alerts: conf.alerts, alertMinutes: conf.alert_minutes });
     } else {
       out.ha.error = message(st.reason);
     }
@@ -127,7 +135,7 @@ export async function snapshot(ctx: ExtensionContext, opts: SnapshotOptions = {}
   const weatherPart = (async () => {
     let place: Place | null;
     try {
-      place = await resolvePlace(ctx, s.location, config);
+      place = await resolvePlace(ctx, location, config);
     } catch (e) {
       out.weather.configured = true;
       out.weather.error = `Could not find the place: ${message(e)}`;
@@ -140,10 +148,10 @@ export async function snapshot(ctx: ExtensionContext, opts: SnapshotOptions = {}
       out.weather.data = w.data;
       out.weather.stale = w.stale || undefined;
       if (!config?.time_zone) out.timezone = w.data.timezone;
-      out.weather.warnings = [...officialWarnings(states, parsePatterns(s.weather_alerts)), ...forecastWarnings(w.data)];
+      out.weather.warnings = [...officialWarnings(states, parsePatterns(conf.weather_alerts)), ...forecastWarnings(w.data)];
     } catch (e) {
       out.weather.error = message(e);
-      out.weather.warnings = officialWarnings(states, parsePatterns(s.weather_alerts));
+      out.weather.warnings = officialWarnings(states, parsePatterns(conf.weather_alerts));
     }
   })();
 
@@ -154,7 +162,7 @@ export async function snapshot(ctx: ExtensionContext, opts: SnapshotOptions = {}
       return;
     }
     try {
-      out.calendar.events = await todaysEvents(ha, parsePatterns(s.calendars), out.timezone, haKey);
+      out.calendar.events = await todaysEvents(ha, parsePatterns(conf.calendars), out.timezone, haKey);
     } catch (e) {
       out.calendar.error = message(e);
     }

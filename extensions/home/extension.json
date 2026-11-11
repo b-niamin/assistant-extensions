@@ -2,21 +2,29 @@
   "id": "home",
   "name": "Home",
   "description": "Home Assistant at a glance: lights, doors and windows, camera alerts, weather and today's calendar",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "kind": "native",
   "scope": "shared",
   "accessory": "bulb",
   "shell": 1,
   "settings": [
-    { "name": "url", "label": "Home Assistant address", "type": "text", "help": "e.g. http://homeassistant.local:8123" },
-    { "name": "token", "label": "Long-lived access token", "type": "secret", "help": "Home Assistant -> your profile -> Security -> Long-lived access tokens" },
-    { "name": "location", "label": "Weather location", "type": "text", "help": "A place (Warszawa) or coordinates (52.23, 21.01). Empty: the home zone from Home Assistant." },
-    { "name": "refresh", "label": "Refresh every", "type": "select", "options": ["30 s", "1 min", "2 min", "5 min"], "default": "1 min" },
-    { "name": "lights", "label": "Lights to watch", "type": "text", "help": "Entity ids, * allowed, comma separated (light.*, switch.lamp_*). Empty: every light." },
-    { "name": "contacts", "label": "Doors and windows to watch", "type": "text", "help": "Entity ids, * allowed. Empty: every door, window, garage door and opening sensor." },
-    { "name": "alerts", "label": "Alert sensors", "type": "text", "help": "Entity ids that raise an alert when on or fired, e.g. binary_sensor.*_person, event.doorbell. Empty: no alerts." },
-    { "name": "alert_minutes", "label": "Keep an alert for (minutes)", "type": "number", "default": 10, "help": "How long an alert stays after the sensor goes quiet." },
-    { "name": "weather_alerts", "label": "Weather warning sensors", "type": "text", "help": "Optional Home Assistant entities with official warnings (e.g. binary_sensor.meteoalarm). Forecast-based warnings are always on." },
-    { "name": "calendars", "label": "Calendars", "type": "text", "help": "Calendar entity ids from Home Assistant, * allowed. Empty: every calendar." }
+    {
+      "name": "url",
+      "label": "Address",
+      "type": "text",
+      "help": "e.g. http://homeassistant.local:8123"
+    },
+    {
+      "name": "token",
+      "label": "Long-lived access token",
+      "type": "secret",
+      "help": "Home Assistant -> your profile -> Security -> Long-lived access tokens"
+    },
+    {
+      "name": "location",
+      "label": "Weather location",
+      "type": "text",
+      "help": "A place (Warszawa) or coordinates (52.23, 21.01). Empty: the home location set in Home Assistant."
+    }
   ]
 }

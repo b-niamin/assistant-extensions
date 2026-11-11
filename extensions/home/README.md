@@ -20,19 +20,26 @@ on an alert, tired when it cannot reach Home Assistant. Full screen (top right) 
 
 Read-only on purpose: it never switches anything in Home Assistant.
 
-## Settings (System settings -> Home)
+## Connecting (System settings -> Home)
 
-| Field | |
+At the top, under **Connected accounts**, the **Home Assistant** card takes the address (e.g.
+`http://homeassistant.local:8123`) and a long-lived access token (Home Assistant -> your profile ->
+Security). Connect checks it right away and the card then shows the version and what the board watches.
+Below, under Settings, the **weather location**: `Warszawa` or `52.23, 21.01`; empty = the home location
+set in Home Assistant.
+
+Everything else is set by talking to Claude or Codex in the terminal ("watch only the living room lamps",
+"alert me when the driveway camera sees a person", "refresh every 30 s"). They use the extension's
+tools: `home__entities` to find ids, `home__configure` to change what the board watches:
+
+| Key | Default |
 |---|---|
-| Home Assistant address | e.g. `http://homeassistant.local:8123` |
-| Long-lived access token | Home Assistant -> your profile -> Security -> Long-lived access tokens |
-| Weather location | `Warszawa` or `52.23, 21.01`; empty = the home location set in Home Assistant |
-| Refresh every | 30 s, 1 min (default), 2 min, 5 min |
-| Lights to watch | entity ids, `*` allowed (`light.*, switch.lamp_*`); empty = every light (light groups are skipped) |
-| Doors and windows to watch | empty = every `binary_sensor` with device class door, window, garage_door or opening |
-| Alert sensors | e.g. `binary_sensor.*_person, event.doorbell`; empty = no alerts |
-| Keep an alert for | minutes after the sensor goes quiet (default 10) |
-| Weather warning sensors | optional official warnings from Home Assistant, e.g. `binary_sensor.meteoalarm` |
-| Calendars | calendar entity ids, `*` allowed; empty = every calendar |
+| `lights` | every light (light groups skipped); entity ids or patterns with `*`, switches allowed |
+| `contacts` | every `binary_sensor` with device class door, window, garage_door or opening |
+| `alerts` | none; e.g. `binary_sensor.*_person, event.doorbell` |
+| `alert_minutes` | 10: how long an alert stays after the sensor goes quiet |
+| `weather_alerts` | none; official warnings such as `binary_sensor.meteoalarm` |
+| `calendars` | every calendar |
+| `refresh_seconds` | 60 (15 to 3600) |
 
 Weather comes from [Open-Meteo](https://open-meteo.com) (free, no key). The token never leaves the server.

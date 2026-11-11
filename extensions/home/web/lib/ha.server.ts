@@ -15,7 +15,7 @@ export class HaError extends Error {
 }
 
 export interface HaClient {
-  config(): Promise<{ latitude?: number; longitude?: number; time_zone?: string; location_name?: string }>;
+  config(): Promise<{ latitude?: number; longitude?: number; time_zone?: string; location_name?: string; version?: string }>;
   states(): Promise<HaState[]>;
   calendars(): Promise<{ entity_id: string; name?: string }[]>;
   events(entity: string, start: string, end: string): Promise<HaEvent[]>;

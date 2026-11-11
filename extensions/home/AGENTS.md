@@ -14,14 +14,22 @@ Rules of the shell's `AGENTS.md` and `specs/002-extensions.md` apply. In short: 
 - Pure logic, unit-tested: `home.ts` (lights, contacts, alerts, official warnings), `weather.ts`
   (Open-Meteo normalization, periods, summary, forecast warnings), `calendar.ts` (today in the house's
   time zone), `board.ts` (Beni's mood and line, labels, countdown), `tile.ts`.
+- Settings: only the connection (`url`, secret `token`, edited in the "Connected accounts" card that
+  `web/sources.server.ts` declares with `fields`) and `location`. What the board watches lives in
+  `ctx.kv` `config` (`web/lib/config.ts`), changed only through the `home__configure` tool.
 - Caches: the forecast in `ctx.kv` (`weather`, 15 min, served up to 6 h old when Open-Meteo fails) and
   geocoded places (`geo:<name>`); HA config (1 h) and today's events (5 min) in memory.
 
 ## Data for Claude
 
-`home__overview` returns the snapshot: lights on, doors and windows open (with `since`), alerts, weather
-now and per hour for 24 h with warnings, today's events. `home__query` has nothing to read (no tables);
-the KV rows are the cached forecast.
+- `home__overview`: the snapshot (lights on, doors and windows open with `since`, alerts, weather now and
+  per hour for 24 h with warnings, today's events) and the current config.
+- `home__entities`: Home Assistant entities (filter by `domain`, `search`) and whether the board watches each.
+- `home__configure`: change what the board watches (lights, contacts, alerts, alert_minutes, weather_alerts,
+  calendars, refresh_seconds; `reset` to start from the defaults). Validates and reports how many entities
+  each pattern matches. Prefer it to telling the owner to edit anything.
+
+`home__query` has nothing to read (no tables). The KV rows are `config`, the cached forecast and geocoded places.
 
 ## Tests
 
