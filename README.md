@@ -5,9 +5,9 @@
 # Beni Assistant extensions
 
 Extensions for [Beni Assistant](https://github.com/b-niamin/assistant).
-`extensions/` holds ones you install as they are; `inspirations/` holds skeletons Claude adapts into new ones.
+`extensions/` holds ones you install as they are, and the working examples Claude reads when it builds a new one.
 
-[Ready to use](#ready-to-use) · [Inspirations](#inspirations) · [Install](#install) · [Write your own](#write-your-own)
+[Ready to use](#ready-to-use) · [Install](#install) · [Write your own](#write-your-own)
 
 </div>
 
@@ -69,19 +69,6 @@ and `write_data`):
 The contract (`web/tools.server.ts`, a read-only `overview`, one tool per write):
 [spec 005](https://github.com/b-niamin/assistant/blob/main/specs/005-claude-tools.md).
 
-## Inspirations
-
-Skeletons, not installed as they are. Claude copies one and changes it to fit.
-
-| Inspiration | Example of |
-|---|---|
-| [`home-assistant`](inspirations/home-assistant) | Shared data and a settings panel with a secret token (`home` started from it) |
-| [`calendar`](inspirations/calendar) | Shared data and dashboard tiles |
-| [`learning`](inspirations/learning) | Per-profile data, dashboard tiles and a daily streak |
-
-A repo, an app from [onefile-apps](https://github.com/b-niamin/onefile-apps) or a description works as
-a starting point too. Claude writes the extension from scratch and records the source as `inspiredBy`.
-
 ## Install
 
 With a new Beni Assistant:
@@ -95,13 +82,16 @@ Command-line install and updates: [docs/install.md](docs/install.md).
 
 ## Write your own
 
-Ask Claude in your instance, e.g. *"build me a habit tracker based on &lt;link&gt;"*. It starts from an
-inspiration (`ext new <id> --from inspiration:<name>`) and uses the app's layout and components.
+Ask Claude in your instance, e.g. *"build me a habit tracker based on &lt;link&gt;"*. A repo, an app from
+[onefile-apps](https://github.com/b-niamin/onefile-apps) or a description is the starting point; Claude
+writes the extension from scratch, reads a ready-made one here as a working example (`home`: a connected
+service with a token, `health`: per-profile data with tiles), uses the app's layout and components, and
+records the source as `inspiredBy`.
 
 ```mermaid
 flowchart LR
   idea(["idea, repo or onefile app"]) --> claude["Claude in your instance"]
-  insp[("inspirations/")] --> claude
+  ready -. "read as examples" .-> claude
   claude --> ext["your extension<br/>page, tiles, tools, tables"]
   ready[("extensions/")] -- "ext install" --> ext
 ```

@@ -62,35 +62,5 @@
         }
       }
     }
-  ],
-  "inspirations": [
-    {
-      "id": "calendar",
-      "name": "Family calendar",
-      "description": "One shared calendar for the household, with the next events on the dashboard.",
-      "scope": "shared",
-      "idea": "A shared calendar with upcoming events for the whole family.",
-      "accessory": "pencil",
-      "i18n": {
-        "pl": {
-          "name": "Kalendarz rodzinny",
-          "description": "Jeden wspólny kalendarz domowników, z najbliższymi wydarzeniami na pulpicie."
-        }
-      }
-    },
-    {
-      "id": "learning",
-      "name": "Learning",
-      "description": "Spaced-repetition decks per person and a daily study streak.",
-      "scope": "profile",
-      "idea": "Spaced-repetition flashcards for learning a language, with a daily streak.",
-      "accessory": "book",
-      "i18n": {
-        "pl": {
-          "name": "Nauka",
-          "description": "Fiszki z powtórkami w odstępach dla każdej osoby i codzienna seria nauki."
-        }
-      }
-    }
   ]
 }

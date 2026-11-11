@@ -1,6 +1,6 @@
 # Layout of an extension
 
-What a folder in [`extensions/`](../extensions) or [`inspirations/`](../inspirations) holds. Back to the [README](../README.md).
+What a folder in [`extensions/`](../extensions) holds. Back to the [README](../README.md).
 
 ```
 <id>/
