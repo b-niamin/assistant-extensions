@@ -1,6 +1,12 @@
-# assistant-extensions
+<p align="center">
+  <img src="docs/beni.svg" alt="Beni, the assistant's mascot: an orange jelly-bean runner in a sweatband" width="120" />
+</p>
 
-Extensions (apps) for [Beni Assistant](https://github.com/b-niamin/assistant), in two kinds:
+<h1 align="center">assistant-extensions</h1>
+
+<p align="center">Extensions (apps) for <a href="https://github.com/b-niamin/assistant">Beni Assistant</a>.</p>
+
+Two kinds:
 
 | Folder | What | How |
 |---|---|---|
@@ -9,11 +15,24 @@ Extensions (apps) for [Beni Assistant](https://github.com/b-niamin/assistant), i
 
 Ready to use:
 
-| Extension | Kind | What |
+| [Training & Health](extensions/health) · `health` | [Gym Tracker](extensions/gym) · `gym` | [Home](extensions/home) · `home` |
 |---|---|---|
-| [`health`](extensions/health) | native, per profile | Training & Health: Garmin sleep, HRV, Body Battery, readiness, activities. Brings the `garmin-sync` service |
-| [`gym`](extensions/gym) | onefile, per profile | Gym tracker: plans, sets and weights, progress, a muscle map |
-| [`home`](extensions/home) | native, shared | Home: a calm board from Home Assistant (lights, doors and windows, camera alerts), weather with warnings, today's calendar, auto refresh |
+| <a href="docs/screenshots/health.png"><img src="docs/screenshots/health.png" width="300" alt="Training & Health: readiness, sleep, HRV, Body Battery and more"></a> | <a href="docs/screenshots/gym.png"><img src="docs/screenshots/gym.png" width="300" alt="Gym Tracker: this week, plans and a muscle map"></a> | <a href="docs/screenshots/home.png"><img src="docs/screenshots/home.png" width="300" alt="Home: weather, lights, doors and windows, today's calendar"></a> |
+| Native, per profile. Garmin sleep, HRV, Body Battery, readiness, activities with route, laps and charts. Brings the `garmin-sync` service | Onefile, per profile. Plans, sets and weights, progress, a muscle map | Native, shared. A calm board from Home Assistant (lights, doors and windows, camera alerts), weather with warnings, today's calendar, auto refresh |
+
+<details>
+<summary>Larger screenshots, light and dark</summary>
+
+| Light | Dark |
+|---|---|
+| <img src="docs/screenshots/health.png" alt="Training & Health, light"> | <img src="docs/screenshots/health-dark.png" alt="Training & Health, dark"> |
+| <img src="docs/screenshots/health-activity.png" alt="An activity: distance, pace, heart rate, route and charts"> | |
+| <img src="docs/screenshots/gym.png" alt="Gym Tracker, light"> | <img src="docs/screenshots/gym-dark.png" alt="Gym Tracker, dark"> |
+| <img src="docs/screenshots/home.png" alt="Home, light"> | <img src="docs/screenshots/home-dark.png" alt="Home, dark"> |
+
+</details>
+
+Screenshots use demo data.
 
 Inspirations: [`home-assistant`](inspirations/home-assistant) (shared data, a settings panel with a token; the
 ready-made [`home`](extensions/home) grew from it),
@@ -35,8 +54,8 @@ curl -fsSL https://raw.githubusercontent.com/b-niamin/assistant/main/install.sh 
 Into a running instance, from its checkout:
 
 ```sh
-docker compose exec claude node scripts/ext.mjs available
-docker compose exec claude node scripts/ext.mjs install health
+docker compose exec llm node scripts/ext.mjs available
+docker compose exec llm node scripts/ext.mjs install health
 ./install.sh        # once, for an extension with a compose.yml (starts its service)
 ```
 
