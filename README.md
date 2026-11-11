@@ -64,6 +64,7 @@ and `write_data`):
 | `health` | `health__overview`: latest metrics, daily series, recent activities | `health__add_journal_entry` |
 | `gym` | `gym__overview`: plans, this week against the goal, recent workouts with sets | `gym__log_workout`, `gym__save_plan` |
 | `home` | `home__overview`: lights, doors and windows, alerts, weather, today's calendar | `home__configure` (what the board watches; `home__entities` lists ids) |
+| `monitor` | `monitor__overview`: CPU, memory, temperature, disks, network, containers now; `monitor__history` | none |
 
 The contract (`web/tools.server.ts`, a read-only `overview`, one tool per write):
 [spec 005](https://github.com/b-niamin/assistant/blob/main/specs/005-claude-tools.md).
@@ -86,7 +87,7 @@ a starting point too. Claude writes the extension from scratch and records the s
 With a new Beni Assistant:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/b-niamin/assistant/main/install.sh | sudo sh -s -- health gym home
+curl -fsSL https://raw.githubusercontent.com/b-niamin/assistant/main/install.sh | sudo sh -s -- health gym home monitor
 ```
 
 In a running instance: **System settings → Extend the system**, or ask Claude *"add the gym tracker"*.

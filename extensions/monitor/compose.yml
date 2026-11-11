@@ -1,0 +1,41 @@
+# Background service of the monitor extension: samples the machine every 30 s into the `monitor` schema.
+# install.sh adds this file to COMPOSE_FILE in .env when the extension is installed. Paths are relative
+# to the assistant checkout (the folder of the main docker-compose.yml).
+#
+# It sees the machine through its /proc and /sys, mounted read-only, and never through the Docker socket.
+# Any Linux host works (NAS, mini PC, Raspberry Pi; amd64 or arm64). With Docker Desktop or OrbStack on a
+# Mac these are the Linux VM's figures, not macOS's: the page says so.
+services:
+  monitor-collector:
+    image: python:3.14-slim
+    restart: unless-stopped
+    working_dir: /app
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    command: ['sh', '/app/entrypoint.sh']
+    # The machine's hostname instead of the container's id.
+    uts: host
+    environment:
+      # Role ext_monitor_svc: the monitor schema and core.profiles, nothing else.
+      DATABASE_URL: postgresql://ext_monitor_svc:${SERVICES_DB_PASSWORD:?set SERVICES_DB_PASSWORD in .env}@db:5432/${POSTGRES_DB:-assistant}
+      MONITOR_INTERVAL_SECONDS: ${MONITOR_INTERVAL_SECONDS:-30}
+      MONITOR_KEEP_DAYS: ${MONITOR_KEEP_DAYS:-30}
+      HOST_PROC: /host/proc
+      HOST_SYS: /host/sys
+      PATH: /opt/venv/bin:/usr/local/bin:/usr/bin:/bin
+      # Runs as root until the venv is ready: never write __pycache__ into the checkout.
+      PYTHONDONTWRITEBYTECODE: '1'
+    volumes:
+      # Also the disk it reports as "assistant": the filesystem holding the checkout.
+      - ./extensions/monitor/services/collector:/app:ro
+      - monitor-venv:/opt/venv
+      # Also the disk it reports as "docker": where Docker keeps volumes (the database's too).
+      - logs:/logs
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    security_opt: ['no-new-privileges:true']
+    mem_limit: 160m
+    cpus: 0.25
+
+volumes:
+  monitor-venv:

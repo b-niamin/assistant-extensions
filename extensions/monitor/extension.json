@@ -1,0 +1,12 @@
+{
+  "id": "monitor",
+  "name": "System monitor",
+  "description": "The machine the assistant runs on: CPU, memory, temperature, disks, network and containers, sampled every 30 seconds",
+  "version": "1.0.0",
+  "kind": "native",
+  "scope": "shared",
+  "accessory": "wrench",
+  "shell": 1,
+  "schema": "monitor",
+  "services": ["monitor-collector"]
+}
