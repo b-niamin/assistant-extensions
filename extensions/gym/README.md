@@ -26,6 +26,12 @@ Download [`gym-tracker-muscle-map.html`](gym-tracker-muscle-map.html) and open i
 file to an AI chat and ask it to show it as an artifact. English and Polish,
 light and dark, works offline.
 
+## In Beni Assistant
+
+Claude reaches the log through the assistant's MCP server: `gym__overview` (plans, this week, recent
+workouts with sets), `gym__log_workout` and `gym__save_plan` (`web/tools.server.ts`). Writes only add
+workouts or plans and show up the next time the app opens.
+
 ## Your data
 
 - Stays in this browser only (local storage: `gym-notebook.v1`). Nothing is sent anywhere.

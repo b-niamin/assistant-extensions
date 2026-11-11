@@ -53,6 +53,21 @@ An activity in Training & Health:
 
 <sub>Screenshots use demo data.</sub>
 
+## Tools for Claude
+
+Each extension adds tools to the assistant's MCP server, which Claude uses from claude.ai (the Claude
+connector) or from the app's terminal. Besides the generic ones (`describe` and `query`, or `read_data`
+and `write_data`):
+
+| Extension | Reads | Writes |
+|---|---|---|
+| `health` | `health__overview`: latest metrics, daily series, recent activities | `health__add_journal_entry` |
+| `gym` | `gym__overview`: plans, this week against the goal, recent workouts with sets | `gym__log_workout`, `gym__save_plan` |
+| `home` | `home__overview`: lights, doors and windows, alerts, weather, today's calendar | `home__configure` (what the board watches; `home__entities` lists ids) |
+
+The contract (`web/tools.server.ts`, a read-only `overview`, one tool per write):
+[spec 005](https://github.com/b-niamin/assistant/blob/main/specs/005-claude-tools.md).
+
 ## Inspirations
 
 Skeletons, not installed as they are. Claude copies one and changes it to fit.

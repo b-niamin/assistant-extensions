@@ -10,7 +10,7 @@ Kind `native`, scope `profile`, schema `health`.
 ## Install
 
 ```sh
-node scripts/ext.mjs install health     # in the assistant checkout (or the claude container)
+node scripts/ext.mjs install health     # in the assistant checkout (or the app's terminal)
 ./install.sh                            # on the host: starts garmin-sync (adds compose.yml to COMPOSE_FILE)
 docker compose exec -it garmin-sync python -m sync login   # Garmin login; the password is never stored
 ```

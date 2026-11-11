@@ -8,7 +8,8 @@ What a folder in [`extensions/`](../extensions) or [`inspirations/`](../inspirat
   README.md AGENTS.md  rules for AI agents (CLAUDE.md: `@AGENTS.md`)
   web/routes/**        native: SvelteKit routes, mounted at /<id>
   web/lib/**           components, helpers, *.test.ts (run by the core's vitest)
-  web/tiles.server.ts  dashboard tiles;  web/tools.server.ts  tools for Claude
+  web/tiles.server.ts  dashboard tiles
+  web/tools.server.ts  MCP tools for Claude, native and onefile (a read-only overview, one tool per write)
   db/migrations/*.sql  additive SQL for schema <id>; tables named secret_* are for its service only
   compose.yml          background services (paths relative to the core checkout)
   services/<name>/     their code

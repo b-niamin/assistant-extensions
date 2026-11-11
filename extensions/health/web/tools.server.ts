@@ -1,6 +1,7 @@
 /**
- * Tools for Claude (spec 005). The shell already gives Claude `describe` and read-only `query` over the
- * health schema; these add a ready-made overview and the one write Claude may do: a journal entry.
+ * Tools for the AI (spec 005 of the core), as `health__<tool>` on the assistant's MCP server. The shell
+ * already gives `describe` and read-only `query` over the health schema; these add the ready-made overview
+ * and the one write the AI may do: a journal entry.
  */
 import type { ExtTool } from '$shell';
 import { latestReadings, recentActivities, recentSeries } from './lib/health.server';
@@ -17,6 +18,8 @@ const scale = (v: unknown, name: string, max: number): number | null => {
 export const tools: ExtTool[] = [
   {
     name: 'overview',
+    title: 'Training overview',
+    readOnly: true,
     description:
       'Garmin overview for a profile: the latest reading of every daily metric (sleep, HRV, body battery, ' +
       'stress, resting HR, steps, training readiness, ...), the daily series of the last `days` days ' +
@@ -39,6 +42,9 @@ export const tools: ExtTool[] = [
   },
   {
     name: 'add_journal_entry',
+    title: 'Save how a day felt',
+    readOnly: false,
+    destructive: true,
     description:
       'Save how a day (or one activity) felt: rpe 0-10, soreness 0-10, mood 0-10, note, illness, injury. ' +
       'One entry per profile, day and activity: saving again updates it.',

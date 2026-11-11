@@ -1,5 +1,5 @@
 /**
- * Tools for Claude and Codex (spec 005). The board only reads Home Assistant and never switches anything;
+ * Tools for the AI (spec 005 of the core), as `home__<tool>` on the assistant's MCP server. The board only reads Home Assistant and never switches anything;
  * the one write is `configure`: what the board watches. The address and token are set by the owner in
  * System settings, never here, and the token never leaves the server.
  */
@@ -17,6 +17,8 @@ const patternProp = (what: string) => ({
 export const tools: ExtTool[] = [
   {
     name: 'overview',
+    title: 'The house now',
+    readOnly: true,
     description:
       'The house right now, from Home Assistant: which lights are on, which doors and windows are open (with since ' +
       'when), active or recent alerts (cameras, doorbell), weather now and for the next 24 hours with warnings, ' +
@@ -39,6 +41,8 @@ export const tools: ExtTool[] = [
   },
   {
     name: 'entities',
+    title: 'Home Assistant entities',
+    readOnly: true,
     description:
       'Home Assistant entities to choose from when configuring the board: id, name, state, domain and device class. ' +
       'Filter by `domain` (light, switch, binary_sensor, event, calendar, cover, lock, sensor, ...) and/or `search` ' +
@@ -77,6 +81,8 @@ export const tools: ExtTool[] = [
   },
   {
     name: 'configure',
+    title: 'Configure the board',
+    readOnly: false,
     description:
       'Change what the board watches; only the keys you pass change. lights (default every light), contacts (default ' +
       'every door/window/garage_door/opening binary sensor), alerts (sensors that raise an alert while on or right after ' +

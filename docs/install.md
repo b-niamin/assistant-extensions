@@ -11,8 +11,8 @@ curl -fsSL https://raw.githubusercontent.com/b-niamin/assistant/main/install.sh 
 Into a running instance, from its checkout:
 
 ```sh
-docker compose exec llm node scripts/ext.mjs available
-docker compose exec llm node scripts/ext.mjs install health
+docker compose exec terminal node scripts/ext.mjs available
+docker compose exec terminal node scripts/ext.mjs install health
 ./install.sh        # once, for an extension with a compose.yml (starts its service)
 ```
 
