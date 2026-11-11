@@ -12,6 +12,7 @@ import { forecast, geocode, type Place } from './weather.server';
 import type { Snapshot } from './types';
 import { readConfig, type HomeConfig } from './config';
 import { feedUrls, parseIcs, todayFromIcs, type IcsCalendar } from './ics';
+import { EN } from './i18n';
 
 export type { Snapshot };
 
@@ -101,28 +102,34 @@ async function todaysEvents(ha: HaClient, patterns: RegExp[], tz: string, key: s
 
 const FEED_TTL = 10 * 60_000;
 const FEED_MAX_BYTES = 5_000_000;
+// In two parts: `ext check`'s text scan would take a star-slash-star as the start of a comment.
+const FEED_ACCEPT = 'text/calendar, text/plain, */' + '*';
+/** A feed problem already worded for the owner (not wrapped again). */
+class FeedError extends Error {}
 const feedCache = new Map<string, { at: number; cal: IcsCalendar }>();
 
 /** The calendar subscription links (System settings -> Home -> Calendars); a secret, as such links grant access. */
 export const feedsOf = async (ctx: ExtensionContext) => feedUrls(await ctx.secrets.get('calendar_links'));
 
 /** One ICS feed, cached 10 min (and served stale when the next fetch fails). */
-export async function loadFeed(url: string, timeoutMs = 8000): Promise<IcsCalendar> {
+export async function loadFeed(url: string, timeoutMs = 8000, t: Translate = EN): Promise<IcsCalendar> {
   const hit = feedCache.get(url);
   if (hit && Date.now() - hit.at < FEED_TTL) return hit.cal;
+  const host = new URL(url).host;
   try {
-    const res = await fetch(url, { headers: { Accept: 'text/calendar, text/plain, */*' }, signal: AbortSignal.timeout(timeoutMs) });
-    if (!res.ok) throw new Error(`answered ${res.status}`);
+    const res = await fetch(url, { headers: { Accept: FEED_ACCEPT }, signal: AbortSignal.timeout(timeoutMs) });
+    if (!res.ok) throw new FeedError(t('Calendar at {host} answered {status}', { host, status: res.status }));
     const text = await res.text();
-    if (text.length > FEED_MAX_BYTES) throw new Error('is too large');
-    if (!text.includes('BEGIN:VCALENDAR')) throw new Error('is not a calendar');
+    if (text.length > FEED_MAX_BYTES) throw new FeedError(t('Calendar at {host} is too large', { host }));
+    if (!text.includes('BEGIN:VCALENDAR')) throw new FeedError(t('Calendar at {host} is not a calendar', { host }));
     const cal = parseIcs(text);
     feedCache.set(url, { at: Date.now(), cal });
     return cal;
   } catch (e) {
     if (hit) return hit.cal;
-    const why = e instanceof Error && e.name === 'TimeoutError' ? 'did not answer in time' : e instanceof Error ? e.message : 'failed';
-    throw new Error(`Calendar at ${new URL(url).host} ${why}`);
+    if (e instanceof FeedError) throw e;
+    if (e instanceof Error && e.name === 'TimeoutError') throw new Error(t('Calendar at {host} did not answer in time', { host }));
+    throw new Error(t('Calendar at {host} failed: {error}', { host, error: e instanceof Error ? e.message : String(e) }));
   }
 }
 
@@ -209,8 +216,8 @@ export async function snapshot(ctx: ExtensionContext, opts: SnapshotOptions = {}
       })(),
       ...feeds.map(async (url) => {
         try {
-          const cal = await loadFeed(url, opts.quick ? 1800 : 8000);
-          return todayFromIcs(cal, feedName(url, cal), out.timezone);
+          const cal = await loadFeed(url, opts.quick ? 1800 : 8000, ctx.t);
+          return todayFromIcs(cal, feedName(url, cal), out.timezone, undefined, ctx.t);
         } catch (e) {
           errors.push(message(e, ctx.t));
           return [];

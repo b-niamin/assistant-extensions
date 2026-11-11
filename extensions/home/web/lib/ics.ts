@@ -5,7 +5,9 @@
  * DAILY/WEEKLY/MONTHLY/YEARLY, INTERVAL, BYDAY, BYMONTHDAY, BYMONTH, COUNT, UNTIL), EXDATE and moved
  * occurrences (RECURRENCE-ID). Pure: the fetch lives in snapshot.server.ts.
  */
+import type { Translate } from '$shell';
 import { localDay, offsetMinutes, type CalendarEvent } from './calendar';
+import { EN } from './i18n';
 
 interface Prop {
   value: string;
@@ -263,7 +265,7 @@ function occursOn(ev: IcsEvent, rule: Record<string, string>, day: number, house
 }
 
 /** The events of one feed that touch today (house zone), as board events. */
-export function todayFromIcs(cal: IcsCalendar, calendar: string, houseTz: string, now = new Date()): CalendarEvent[] {
+export function todayFromIcs(cal: IcsCalendar, calendar: string, houseTz: string, now = new Date(), t: Translate = EN): CalendarEvent[] {
   const today = localDay(houseTz, now);
   const [ty, tm, td] = today.split('-').map(Number);
   const todayNum = dayNum(ty, tm, td);
@@ -280,7 +282,7 @@ export function todayFromIcs(cal: IcsCalendar, calendar: string, houseTz: string
       const first = dayNum(occ.y, occ.m, occ.d);
       const days = Math.max(1, Math.round(ev.duration / 86400));
       if (todayNum < first || todayNum >= first + days) return;
-      out.push({ title: ev.title, calendar, allDay: true, start: `${today}T00:00:00`, end: `${today}T23:59:59`, when: 'All day', location: ev.location });
+      out.push({ title: ev.title, calendar, allDay: true, start: `${today}T00:00:00`, end: `${today}T23:59:59`, when: t('All day'), location: ev.location });
       return;
     }
     const start = toEpoch({ ...occ, secs: ev.start.secs, tz: ev.start.tz }, houseTz);
@@ -293,7 +295,7 @@ export function todayFromIcs(cal: IcsCalendar, calendar: string, houseTz: string
       allDay: false,
       start: new Date(start).toISOString(),
       end: new Date(end).toISOString(),
-      when: !startsToday ? `until ${clock(end)}` : end > start ? `${clock(start)}–${clock(end)}` : clock(start),
+      when: !startsToday ? t('until {time}', { time: clock(end) }) : end > start ? `${clock(start)}–${clock(end)}` : clock(start),
       location: ev.location
     });
   };
