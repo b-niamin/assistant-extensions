@@ -33,7 +33,7 @@ jobs:
       - run: npm ci --no-audit --no-fund
         working-directory: .core/apps/web
       - name: ext check (manifests, imports, routes, translations)
-        run: EXTENSIONS_DIR=$GITHUB_WORKSPACE/extensions node .core/scripts/ext.mjs check --languages pl
+        run: EXTENSIONS_DIR=$GITHUB_WORKSPACE/extensions node .core/scripts/ext.mjs check $(ls extensions) --languages pl
       - name: Tests
         run: EXTENSIONS_DIR=$GITHUB_WORKSPACE/extensions npm test
         working-directory: .core/apps/web
