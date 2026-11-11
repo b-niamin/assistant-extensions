@@ -11,6 +11,7 @@ import { forecastWarnings, parseCoords, type Weather } from './weather';
 import { forecast, geocode, type Place } from './weather.server';
 import type { Snapshot } from './types';
 import { readConfig, type HomeConfig } from './config';
+import { feedUrls, parseIcs, todayFromIcs, type IcsCalendar } from './ics';
 
 export type { Snapshot };
 
@@ -97,6 +98,36 @@ async function todaysEvents(ha: HaClient, patterns: RegExp[], tz: string, key: s
   return events;
 }
 
+const FEED_TTL = 10 * 60_000;
+const FEED_MAX_BYTES = 5_000_000;
+const feedCache = new Map<string, { at: number; cal: IcsCalendar }>();
+
+/** The calendar subscription links (System settings -> Home -> Calendars); a secret, as such links grant access. */
+export const feedsOf = async (ctx: ExtensionContext) => feedUrls(await ctx.secrets.get('calendar_links'));
+
+/** One ICS feed, cached 10 min (and served stale when the next fetch fails). */
+export async function loadFeed(url: string, timeoutMs = 8000): Promise<IcsCalendar> {
+  const hit = feedCache.get(url);
+  if (hit && Date.now() - hit.at < FEED_TTL) return hit.cal;
+  try {
+    const res = await fetch(url, { headers: { Accept: 'text/calendar, text/plain, */*' }, signal: AbortSignal.timeout(timeoutMs) });
+    if (!res.ok) throw new Error(`answered ${res.status}`);
+    const text = await res.text();
+    if (text.length > FEED_MAX_BYTES) throw new Error('is too large');
+    if (!text.includes('BEGIN:VCALENDAR')) throw new Error('is not a calendar');
+    const cal = parseIcs(text);
+    feedCache.set(url, { at: Date.now(), cal });
+    return cal;
+  } catch (e) {
+    if (hit) return hit.cal;
+    const why = e instanceof Error && e.name === 'TimeoutError' ? 'did not answer in time' : e instanceof Error ? e.message : 'failed';
+    throw new Error(`Calendar at ${new URL(url).host} ${why}`);
+  }
+}
+
+/** A feed's name: its own (X-WR-CALNAME), else the host. */
+export const feedName = (url: string, cal: IcsCalendar) => cal.name ?? new URL(url).host;
+
 export interface SnapshotOptions {
   /** Tiles have 2.5 s: short HA timeout, weather from the cache only when it has one. */
   quick?: boolean;
@@ -155,17 +186,39 @@ export async function snapshot(ctx: ExtensionContext, opts: SnapshotOptions = {}
     }
   })();
 
+  const feeds = await feedsOf(ctx);
+  out.calendar.configured = !!ha || feeds.length > 0;
   const calendarPart = (async () => {
-    if (!ha) return;
-    if (out.ha.error) {
-      out.calendar.error = out.ha.error;
-      return;
-    }
-    try {
-      out.calendar.events = await todaysEvents(ha, parsePatterns(conf.calendars), out.timezone, haKey);
-    } catch (e) {
-      out.calendar.error = message(e);
-    }
+    // Without Home Assistant's zone, "today" follows the forecast's: wait for it.
+    if (!config?.time_zone) await weatherPart;
+    const errors: string[] = [];
+    const lists = await Promise.all([
+      (async () => {
+        if (!ha) return [];
+        if (out.ha.error) {
+          errors.push(out.ha.error);
+          return [];
+        }
+        try {
+          return await todaysEvents(ha, parsePatterns(conf.calendars), out.timezone, haKey);
+        } catch (e) {
+          errors.push(message(e));
+          return [];
+        }
+      })(),
+      ...feeds.map(async (url) => {
+        try {
+          const cal = await loadFeed(url, opts.quick ? 1800 : 8000);
+          return todayFromIcs(cal, feedName(url, cal), out.timezone);
+        } catch (e) {
+          errors.push(message(e));
+          return [];
+        }
+      })
+    ]);
+    out.calendar.events = sortEvents(lists.flat());
+    const sources = (ha ? 1 : 0) + feeds.length;
+    if (errors.length && errors.length >= sources) out.calendar.error = errors[0];
   })();
 
   await Promise.all([weatherPart, calendarPart]);

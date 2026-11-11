@@ -65,12 +65,41 @@ export function nameOf(s: HaState): string {
   return s.entity_id.slice(s.entity_id.indexOf('.') + 1).replace(/_/g, ' ');
 }
 
-/** A light group lists its members in attributes.entity_id: counting it too would count a lamp twice. */
+/** A group (light group, or a group of plugs) lists its members in attributes.entity_id. */
 const isGroup = (s: HaState) => Array.isArray(s.attributes?.entity_id);
 
+/** Words that make a switch a lamp: a smart plug or relay with a lamp on it (English and Polish). */
+const LAMP_WORDS = new Set([
+  'lamp', 'lamps', 'lampa', 'lampy', 'lampka', 'lampki', 'light', 'lights', 'lighting', 'światło', 'światła',
+  'oświetlenie', 'żyrandol', 'kinkiet', 'kinkiety', 'led', 'leds', 'bulb', 'żarówka', 'żarówki'
+]);
+const LAMP_ICON = /^mdi:(lamp|lamps|floor-lamp|desk-lamp|ceiling-light|wall-sconce|lightbulb|led-strip|string-lights|track-light|light)/;
+
+const words = (v: string) => v.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+
+/** A switch.* that drives a lamp: a lamp word in its id or name (whole words: "ledger" is not), or a lamp icon. */
+export function isLampSwitch(s: HaState): boolean {
+  if (domainOf(s.entity_id) !== 'switch') return false;
+  const icon = s.attributes?.icon;
+  if (typeof icon === 'string' && LAMP_ICON.test(icon)) return true;
+  return [...words(s.entity_id), ...words(nameOf(s))].some((w) => LAMP_WORDS.has(w));
+}
+
+/** Watched as a light: the owner's patterns when set, else every light.* and every lamp switch. */
 export function isLight(s: HaState, patterns: RegExp[]): boolean {
   if (patterns.length) return matches(s.entity_id, patterns);
-  return domainOf(s.entity_id) === 'light' && !isGroup(s);
+  return domainOf(s.entity_id) === 'light' || isLampSwitch(s);
+}
+
+/** The lights to count: a group stays only when none of its members is counted already, so no lamp counts twice. */
+export function lightsOf(states: HaState[], patterns: RegExp[]): HaState[] {
+  const lights = states.filter((s) => isLight(s, patterns));
+  const singles = new Set(lights.filter((s) => !isGroup(s)).map((s) => s.entity_id));
+  return lights.filter((s) => {
+    if (!isGroup(s)) return true;
+    const members = s.attributes!.entity_id as unknown[];
+    return !members.some((m) => typeof m === 'string' && singles.has(m));
+  });
 }
 
 export function isContact(s: HaState, patterns: RegExp[]): boolean {
@@ -148,7 +177,7 @@ export function summarize(states: HaState[], opts: HomeOptions, now = Date.now()
   const cp = parsePatterns(opts.contacts);
   const minutes = Number(opts.alertMinutes);
   return {
-    lights: group(states.filter((s) => isLight(s, lp))),
+    lights: group(lightsOf(states, lp)),
     contacts: group(states.filter((s) => isContact(s, cp))),
     alerts: alertsFrom(states, parsePatterns(opts.alerts), Number.isFinite(minutes) ? minutes : 10, now)
   };

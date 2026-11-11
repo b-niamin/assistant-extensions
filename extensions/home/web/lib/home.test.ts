@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { alertsFrom, homeZone, isActive, officialWarnings, parsePatterns, summarize, type HaState } from './home';
+import { alertsFrom, homeZone, isActive, isLampSwitch, lightsOf, officialWarnings, parsePatterns, summarize, type HaState } from './home';
 
 const NOW = Date.parse('2026-11-11T17:00:00Z');
 const s = (entity_id: string, state: string, attributes: Record<string, unknown> = {}, last_changed?: string): HaState => ({
@@ -91,5 +91,37 @@ describe('homeZone and official warnings', () => {
       parsePatterns('binary_sensor.*')
     );
     expect(w).toEqual([{ title: 'Orange wind warning', detail: undefined, tone: 'serious', source: 'official' }]);
+  });
+});
+
+describe('lamps on plugs and light groups', () => {
+  const plug = (id: string, state: string, attributes: Record<string, unknown> = {}) => s(id, state, attributes);
+  it('counts switches named as lamps, in English and Polish, as whole words only', () => {
+    expect(isLampSwitch(plug('switch.desk_lamp', 'on'))).toBe(true);
+    expect(isLampSwitch(plug('switch.plug_3', 'on', { friendly_name: 'Lampka nocna' }))).toBe(true);
+    expect(isLampSwitch(plug('switch.salon_zyrandol', 'on', { friendly_name: 'Żyrandol w salonie' }))).toBe(true);
+    expect(isLampSwitch(plug('switch.tv_led', 'on'))).toBe(true);
+    expect(isLampSwitch(plug('switch.ledger_printer', 'on'))).toBe(false);
+    expect(isLampSwitch(plug('switch.bathroom_heater', 'on', { friendly_name: 'Bathroom heater' }))).toBe(false);
+    expect(isLampSwitch(plug('light.desk_lamp', 'on'))).toBe(false);
+  });
+  it('counts a switch with a lamp icon', () => {
+    expect(isLampSwitch(plug('switch.plug_7', 'on', { icon: 'mdi:floor-lamp' }))).toBe(true);
+    expect(isLampSwitch(plug('switch.plug_8', 'on', { icon: 'mdi:power-socket-eu' }))).toBe(false);
+  });
+  it('counts a group of plugs once, and a group whose members are counted not at all', () => {
+    const states = [
+      plug('switch.lamp_left', 'off'),
+      plug('switch.plug_a', 'on', { friendly_name: 'Plug A' }),
+      plug('switch.plug_b', 'off', { friendly_name: 'Plug B' }),
+      plug('light.living_room_plugs', 'on', { friendly_name: 'Living room', entity_id: ['switch.plug_a', 'switch.plug_b'] }),
+      plug('light.left_group', 'off', { entity_id: ['switch.lamp_left'] })
+    ];
+    const ids = lightsOf(states, []).map((x) => x.entity_id);
+    expect(ids).toEqual(['switch.lamp_left', 'light.living_room_plugs']);
+    expect(summarize(states, {}).lights.active.map((l) => l.name)).toEqual(['Living room']);
+  });
+  it('still lets explicit patterns win', () => {
+    expect(lightsOf([plug('switch.desk_lamp', 'on'), plug('light.a', 'on')], parsePatterns('light.*')).map((x) => x.entity_id)).toEqual(['light.a']);
   });
 });

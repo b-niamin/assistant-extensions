@@ -2,7 +2,7 @@
   "id": "home",
   "name": "Home",
   "description": "Home Assistant at a glance: lights, doors and windows, camera alerts, weather and today's calendar",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "kind": "native",
   "scope": "shared",
   "accessory": "bulb",
@@ -25,6 +25,12 @@
       "label": "Weather location",
       "type": "text",
       "help": "A place (Warszawa) or coordinates (52.23, 21.01). Empty: the home location set in Home Assistant."
+    },
+    {
+      "name": "calendar_links",
+      "label": "Calendar links",
+      "type": "secret",
+      "help": "Subscription links (ICS or webcal) from Google, iCloud, Outlook, ..., separated by spaces. Read-only. Kept secret: such a link opens the calendar to anyone who has it."
     }
   ]
 }

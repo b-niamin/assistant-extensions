@@ -48,14 +48,13 @@
   }
 
   onMount(() => {
-    try {
-      if (localStorage.getItem('home:view') === 'list') view = 'list';
-    } catch {
-      /* private mode: chart it is */
-    }
     const timer = setInterval(() => {
       now = Date.now();
       if (now >= nextAt) refresh();
+      if (now >= turnAt) {
+        view = view === 'chart' ? 'list' : 'chart';
+        turnAt = now + ROTATE_MS;
+      }
     }, 1000);
     const wake = () => {
       if (document.visibilityState === 'visible' && Date.now() - lastAt > 10_000) refresh();
@@ -70,14 +69,18 @@
     };
   });
 
+  /**
+   * Chart and List take turns every ROTATE_MS, like a wall display. Picking a tab, or pointing at the
+   * forecast, holds it for HOLD_MS; then the turns go on.
+   */
+  const ROTATE_MS = 10_000;
+  const HOLD_MS = 120_000;
+  let turnAt = Date.now() + ROTATE_MS;
   function pick(v: 'chart' | 'list') {
     view = v;
-    try {
-      localStorage.setItem('home:view', v);
-    } catch {
-      /* not remembered, fine */
-    }
+    turnAt = Date.now() + HOLD_MS;
   }
+  const hold = () => (turnAt = Math.max(turnAt, Date.now() + ROTATE_MS));
 
   // A wall tablet: full screen, and keep the screen on while it is.
   let lock: { release(): Promise<void> } | null = null;
@@ -260,7 +263,7 @@
         {/if}
       </section>
 
-      <section class="ahead" aria-label="Next 24 hours">
+      <section class="ahead" aria-label="Next 24 hours" onpointermove={hold} onfocusin={hold}>
         {#if w}
           <div class="tabs" role="tablist" aria-label="Forecast view">
             <button role="tab" aria-selected={view === 'chart'} onclick={() => pick('chart')}>Chart</button>
@@ -298,7 +301,7 @@
       <section class="today" aria-label="Today's calendar">
         <p class="eyebrow">Today</p>
         {#if !snap.calendar.configured}
-          <p class="muted">Calendars come from Home Assistant once it is connected.</p>
+          <p class="muted">Add calendar links in System settings, or connect Home Assistant.</p>
         {:else if snap.calendar.error}
           <p class="muted">Calendar unavailable: {snap.calendar.error}.</p>
         {:else if events.length}

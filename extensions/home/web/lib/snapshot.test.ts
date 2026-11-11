@@ -4,13 +4,13 @@ import { snapshot } from './snapshot.server';
 import { sources } from '../sources.server';
 import { tools } from '../tools.server';
 
-function ctx(settings: Record<string, string | number | null>, token: string | null = 'secret-token') {
+function ctx(settings: Record<string, string | number | null>, token: string | null = 'secret-token', links: string | null = null) {
   const kv = new Map<string, string>();
   return {
     kv,
     ctx: {
       settings: { all: async () => settings, get: async (n: string) => settings[n] ?? null },
-      secrets: { get: async () => token },
+      secrets: { get: async (name: string) => (name === 'calendar_links' ? links : token) },
       kv: {
         all: async () => Object.fromEntries(kv),
         get: async (k: string) => kv.get(k) ?? null,
@@ -48,6 +48,10 @@ function fakeFetch(opts: { haDown?: boolean; badToken?: boolean; auth?: string[]
         const day = url.searchParams.get('start')!.slice(0, 10);
         return Response.json([{ summary: 'Dentist', start: { dateTime: `${day}T15:30:00+01:00` }, end: { dateTime: `${day}T16:00:00+01:00` } }]);
       }
+    }
+    if (url.host === 'cal.example') {
+      const day = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Warsaw' }).replace(/-/g, '');
+      return new Response(`BEGIN:VCALENDAR\r\nX-WR-CALNAME:School\r\nBEGIN:VEVENT\r\nUID:1\r\nSUMMARY:Parents' evening\r\nDTSTART;VALUE=DATE:${day}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`);
     }
     if (url.host === 'api.open-meteo.com') {
       expect(url.searchParams.get('latitude')).toBe('52.2300');
@@ -127,5 +131,25 @@ describe('tools', () => {
     expect(res.matched).toEqual({ alerts: 1 });
     expect(JSON.parse(kv.get('config')!)).toMatchObject({ alerts: 'binary_sensor.*', refresh_seconds: 30, lights: '' });
     await expect(tool('configure').run({ colour: 'red' }, c)).rejects.toThrow('unknown setting: colour');
+  });
+});
+
+describe('calendar subscriptions', () => {
+  it('merges ICS feeds with Home Assistant calendars, and shows them in their own card', async () => {
+    vi.stubGlobal('fetch', fakeFetch());
+    const c = ctx({ url: 'http://ha.local:8123' }, 'secret-token', 'webcal://cal.example/school.ics').ctx;
+    const s = await snapshot(c);
+    expect(s.calendar.events.map((e) => [e.title, e.calendar])).toEqual([
+      ["Parents' evening", 'School'],
+      ['Dentist', 'Family']
+    ]);
+    const cards = await sources.list(c);
+    expect(cards[1]).toMatchObject({ id: 'calendars', state: 'connected', fields: ['calendar_links'], facts: [{ label: 'School', value: '1 event today' }] });
+  });
+  it('works without Home Assistant', async () => {
+    vi.stubGlobal('fetch', fakeFetch());
+    const s = await snapshot(ctx({ location: '52.23, 21.01' }, null, 'https://cal.example/a.ics').ctx);
+    expect(s.calendar.configured).toBe(true);
+    expect(s.calendar.events.map((e) => e.title)).toEqual(["Parents' evening"]);
   });
 });

@@ -11,14 +11,15 @@ Rules of the shell's `AGENTS.md` and `specs/002-extensions.md` apply. In short: 
   Each part fails on its own: Home Assistant down still shows the weather.
 - Home Assistant (`web/lib/ha.server.ts`): read-only REST, `GET /api/config`, `/api/states`,
   `/api/calendars[/<entity>]`, with the token from `ctx.secrets.get('token')`. It never calls a service.
-- Pure logic, unit-tested: `home.ts` (lights, contacts, alerts, official warnings), `weather.ts`
+- Pure logic, unit-tested: `home.ts` (lights incl. lamp switches via `isLampSwitch` and group de-duplication
+  in `lightsOf`, contacts, alerts, official warnings), `ics.ts` (ICS subscriptions: parse, recurrences, today), `weather.ts`
   (Open-Meteo normalization, periods, summary, forecast warnings), `calendar.ts` (today in the house's
   time zone), `board.ts` (Beni's mood and line, labels, countdown), `tile.ts`.
-- Settings: only the connection (`url`, secret `token`, edited in the "Connected accounts" card that
-  `web/sources.server.ts` declares with `fields`) and `location`. What the board watches lives in
+- Settings: the connection (`url`, secret `token`) and the calendar subscription links (secret
+  `calendar_links`), each edited in its "Connected accounts" card (`web/sources.server.ts`, `fields`), and `location`. What the board watches lives in
   `ctx.kv` `config` (`web/lib/config.ts`), changed only through the `home__configure` tool.
 - Caches: the forecast in `ctx.kv` (`weather`, 15 min, served up to 6 h old when Open-Meteo fails) and
-  geocoded places (`geo:<name>`); HA config (1 h) and today's events (5 min) in memory.
+  geocoded places (`geo:<name>`); HA config (1 h), today's HA events (5 min) and ICS feeds (10 min, stale on failure) in memory.
 
 ## Data for Claude
 

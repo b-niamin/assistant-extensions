@@ -5,7 +5,7 @@
  */
 import type { ExtTool } from '$shell';
 import { applyChange, DEFAULT_CONFIG, PATTERN_KEYS } from './lib/config';
-import { domainOf, isContact, isLight, matches, nameOf, parsePatterns } from './lib/home';
+import { domainOf, isContact, lightsOf, matches, nameOf, parsePatterns } from './lib/home';
 import { clientOf, configOf, snapshot } from './lib/snapshot.server';
 import { summary } from './lib/weather';
 
@@ -61,6 +61,7 @@ export const tools: ExtTool[] = [
       const lp = parsePatterns(conf.lights);
       const cp = parsePatterns(conf.contacts);
       const ap = parsePatterns(conf.alerts);
+      const counted = new Set(lightsOf(states, lp).map((s) => s.entity_id));
       const rows = states
         .filter((s) => !domain || domainOf(s.entity_id) === domain)
         .filter((s) => !search || s.entity_id.includes(search) || nameOf(s).toLowerCase().includes(search))
@@ -69,7 +70,7 @@ export const tools: ExtTool[] = [
           name: nameOf(s),
           state: s.state,
           device_class: typeof s.attributes?.device_class === 'string' ? s.attributes.device_class : undefined,
-          watched: isLight(s, lp) ? 'light' : isContact(s, cp) ? 'door/window' : ap.length && matches(s.entity_id, ap) ? 'alert' : undefined
+          watched: counted.has(s.entity_id) ? 'light' : isContact(s, cp) ? 'door/window' : ap.length && matches(s.entity_id, ap) ? 'alert' : undefined
         }));
       return { total: rows.length, entities: rows.slice(0, limit) };
     }
