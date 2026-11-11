@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import type { DataOf } from '$shell';
-  import { countUp, lineFor, Mascot, moodFor, todayIn, useT } from '$shell/ui';
+  import { countUp, lineFor, Mascot, moodFor, saveOnChoose, todayIn, useT } from '$shell/ui';
   import LineChart from '../lib/LineChart.svelte';
   import MetricIcon from '../lib/MetricIcon.svelte';
   import { hueOf } from '../lib/look';
@@ -144,10 +144,10 @@
 
 <section class="card trend rise" style:--i="7" style:--series={hueOf(data.metric)} aria-labelledby="trend-title">
   <div class="toolbar">
-    <form method="GET">
+    <form method="GET" use:saveOnChoose data-sveltekit-noscroll data-sveltekit-replacestate>
       <label>
         <span class="sr">{t('Metric')}</span>
-        <select name="metric" onchange={(e) => (e.currentTarget.form as HTMLFormElement).requestSubmit()}>
+        <select name="metric">
           {#each METRICS as m}
             <option value={m.key} selected={m.key === data.metric}>{t(m.label)}</option>
           {/each}

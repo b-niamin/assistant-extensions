@@ -2,7 +2,7 @@
   "id": "health",
   "name": "Training & Health",
   "description": "Garmin: sleep, HRV, Body Battery, readiness, activities",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "kind": "native",
   "scope": "profile",
   "accessory": "headband",
