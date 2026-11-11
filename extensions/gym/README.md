@@ -14,9 +14,11 @@ Plan workouts, log sets and weights, track progress and see which muscles you tr
 
 - Workout plans, quick start or repeat the last session
 - Log sets, reps and weight with suggestions from last time
-- Rest timer with sound and vibration, screen stays on
+- Timer on a round floating button, with a big 3/4-screen view, sound and vibration; screen stays on
+- Exercise library with photos, nine simple categories and a low back pain set
 - Progress charts, estimated 1RM, calendar
 - Muscle map of what you trained, kg or lb, plate calculator
+- Phone and desktop layout (side menu, two columns)
 
 ## Use it
 
@@ -33,5 +35,12 @@ light and dark, works offline.
 ## Credits
 
 - Authors: [@piotr-liszka](https://github.com/piotr-liszka)
-- Version 1.1.0 · MIT license · [Changelog](CHANGELOG.md)
+- Version 1.2.0 · MIT license · [Changelog](CHANGELOG.md)
 - react-body-highlighter (MIT): Muscle map polygon shapes (src/body.json). <https://github.com/giavinh79/react-body-highlighter>
+- Free Exercise DB (Unlicense): Exercise photos (src/img), resized to WebP and embedded as base64. <https://github.com/yuhonas/free-exercise-db>
+
+## Updating from onefile-apps
+
+The app is the Gym Tracker from [onefile-apps](https://github.com/b-niamin/onefile-apps/tree/main/apps/gym-tracker/muscle-map)
+in the assistant's look. To bring in upstream changes, clone that repo and run
+`python3 sync-from-onefile.py <onefile-apps>/apps/gym-tracker/muscle-map/src`; it rebuilds `app.html`.

@@ -3,6 +3,30 @@
 Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/) as described in ARTIFACTS-DEVELOPMENT.md.
 
+## 1.2.0 - 2026-11-11
+
+Brings in Gym Tracker 1.1.0 from onefile-apps, in the assistant's look. Data unchanged (data version 1).
+
+Workout
+- The exercise where you tick the first set moves up, after the ones already started, and the page scrolls to it. The order is saved with the workout.
+- The quick-fill bar (Same / +2.5 kg / +1 rep) folds away smoothly after the last set.
+
+Timer
+- Round floating button in the corner. Tap it for −15, +5 s, +15 and Start; Start opens a big timer over 3/4 of the screen.
+- Starts only by hand, no longer after ticking a set.
+- Takes its time from the last seconds field you entered (e.g. 40 s plank).
+
+Library
+- New exercises: prone swimmers and a low back set: cat-camel, bird dog, dead bug, side plank, glute bridge, hip flexor stretch.
+- Photos from Free Exercise DB. Drawings only where it has no photos (halo, plank pull-through, bird dog).
+- Nine simple categories instead of 15 muscles, including "Low back pain". Tapping a category no longer scrolls the page.
+
+Look
+- Desktop layout: side menu, two columns, library grid, centred dialogs.
+- Messages (e.g. "New record") are full width and hide completely.
+- The timer, its big view and the desktop side menu use the shell's surfaces and tokens.
+- `sync-from-onefile.py` rebuilds `app.html` from the onefile sources with the restyle applied.
+
 ## 1.1.0 - 2026-11-06
 
 - Wears the assistant's look: its colour tokens (light and dark), system sans, its radii and flat cards.

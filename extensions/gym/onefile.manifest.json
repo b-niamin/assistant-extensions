@@ -16,7 +16,7 @@
     "en": "Plan workouts, log sets and weights, track progress and see which muscles you trained on a body map.",
     "pl": "Planuj treningi, zapisuj serie i ciężary, śledź postępy i zobacz na mapie ciała, które mięśnie pracowały."
   },
-  "version": "1.1.0",
+  "version": "1.2.0",
   "dataVersion": 1,
   "status": "review",
   "category": "health-fitness",
@@ -43,7 +43,7 @@
     "Claude"
   ],
   "created": "2026-11-05",
-  "updated": "2026-11-05",
+  "updated": "2026-11-11",
   "storage": {
     "localStorage": [
       "gym-notebook.v1"
@@ -117,6 +117,12 @@
       "license": "MIT",
       "url": "https://github.com/giavinh79/react-body-highlighter",
       "usage": "Muscle map polygon shapes (src/body.json)"
+    },
+    {
+      "name": "Free Exercise DB",
+      "license": "Unlicense",
+      "url": "https://github.com/yuhonas/free-exercise-db",
+      "usage": "Exercise photos (src/img), resized to WebP and embedded as base64"
     }
   ],
   "build": {
