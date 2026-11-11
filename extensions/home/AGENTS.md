@@ -16,7 +16,7 @@ Rules of the shell's `AGENTS.md` and `specs/002-extensions.md` apply. In short: 
   (Open-Meteo normalization, periods, summary, forecast warnings), `calendar.ts` (today in the house's
   time zone), `board.ts` (Beni's mood and line, labels, countdown), `tile.ts`.
 - Settings: the connection (`url`, secret `token`) and the calendar subscription links (secret
-  `calendar_links`), each edited in its "Connected accounts" card (`web/sources.server.ts`, `fields`), and `location`. What the board watches lives in
+  `calendar_links`, a list: `"multiple": true`, one link per line), each edited in its "Connected accounts" card (`web/sources.server.ts`, `fields`), and `location`. What the board watches lives in
   `ctx.kv` `config` (`web/lib/config.ts`), changed only through the `home__configure` tool.
 - Caches: the forecast in `ctx.kv` (`weather`, 15 min, served up to 6 h old when Open-Meteo fails) and
   geocoded places (`geo:<name>`); HA config (1 h), today's HA events (5 min) and ICS feeds (10 min, stale on failure) in memory.

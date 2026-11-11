@@ -157,7 +157,7 @@
   "Address": "Adres",
   "A place (Warszawa) or coordinates (52.23, 21.01). Empty: the home location set in Home Assistant.": "Miejscowość (Warszawa) albo współrzędne (52.23, 21.01). Puste: lokalizacja domu ustawiona w Home Assistant.",
   "Calendar links": "Linki do kalendarzy",
-  "Subscription links (ICS or webcal) from Google, iCloud, Outlook, ..., separated by spaces. Read-only. Kept secret: such a link opens the calendar to anyone who has it.": "Linki subskrypcji (ICS lub webcal) z Google, iCloud, Outlooka, ..., oddzielone spacjami. Tylko do odczytu. Trzymane jako sekret: taki link otwiera kalendarz każdemu, kto go ma.",
+  "Subscription links (ICS or webcal) from Google, iCloud, Outlook, ...: paste one and press +, once per calendar. Read-only. Kept secret: such a link opens the calendar to anyone who has it.": "Linki subskrypcji (ICS lub webcal) z Google, iCloud, Outlooka, ...: wklej jeden i naciśnij +, osobno dla każdego kalendarza. Tylko do odczytu. Trzymane jako sekret: taki link otwiera kalendarz każdemu, kto go ma.",
   "Add calendar links in System settings, or connect Home Assistant.": "Dodaj linki do kalendarzy w ustawieniach systemu albo połącz Home Assistant.",
   "{n} min": "{n} min",
   "{n} s": "{n} s",
@@ -171,7 +171,7 @@
   "Refresh": "Odświeżanie",
   "Check connection": "Sprawdź połączenie",
   "What the board watches is set by Claude or Codex: ask in the terminal.": "To, co obserwuje tablica, ustawia Claude albo Codex: zapytaj w terminalu.",
-  "Paste subscription links (ICS or webcal), separated by spaces. Google: calendar settings -> \"Secret address in iCal format\". iCloud: share the calendar as a public calendar. Outlook: publish a calendar -> ICS.": "Wklej linki subskrypcji (ICS lub webcal), oddzielone spacjami. Google: ustawienia kalendarza -> \"Adres prywatny w formacie iCal\". iCloud: udostępnij kalendarz jako publiczny. Outlook: opublikuj kalendarz -> ICS.",
+  "Paste a subscription link (ICS or webcal) and press +, once per calendar. Google: calendar settings -> \"Secret address in iCal format\". iCloud: share the calendar as a public calendar. Outlook: publish a calendar -> ICS.": "Wklej link subskrypcji (ICS lub webcal) i naciśnij +, osobno dla każdego kalendarza. Google: ustawienia kalendarza -> \"Adres prywatny w formacie iCal\". iCloud: udostępnij kalendarz jako publiczny. Outlook: opublikuj kalendarz -> ICS.",
   "{n} links": {
     "one": "{n} link",
     "few": "{n} linki",

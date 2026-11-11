@@ -27,7 +27,7 @@ Read-only on purpose: it never switches anything in Home Assistant.
 At the top, under **Connected accounts**, the **Home Assistant** card takes the address (e.g.
 `http://homeassistant.local:8123`) and a long-lived access token (Home Assistant -> your profile ->
 Security). Connect checks it right away and the card then shows the version and what the board watches.
-The **Calendars** card takes subscription links (ICS or webcal, separated by spaces): Google's "Secret
+The **Calendars** card takes subscription links (ICS or webcal), one per row with [+] and [x]: Google's "Secret
 address in iCal format", an iCloud public calendar, an Outlook published calendar. They are read-only,
 need no Home Assistant, and are kept as a secret because such a link opens the calendar to anyone who has
 it; the card lists each calendar by name with what it has today.

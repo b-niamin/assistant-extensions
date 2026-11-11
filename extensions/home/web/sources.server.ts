@@ -87,7 +87,7 @@ async function calendarsCard(ctx: ExtensionContext): Promise<SourceStatus> {
     return {
       ...card,
       help: t(
-        'Paste subscription links (ICS or webcal), separated by spaces. Google: calendar settings -> "Secret address in iCal format". iCloud: share the calendar as a public calendar. Outlook: publish a calendar -> ICS.'
+        'Paste a subscription link (ICS or webcal) and press +, once per calendar. Google: calendar settings -> "Secret address in iCal format". iCloud: share the calendar as a public calendar. Outlook: publish a calendar -> ICS.'
       )
     };
   }
