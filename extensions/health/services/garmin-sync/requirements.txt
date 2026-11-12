@@ -2,5 +2,5 @@
 garmy==2.0.0
 curl_cffi>=0.6
 cryptography>=42
-psycopg[binary]>=3.1
+psycopg[binary]>=3.3.8
 pytest>=8.0
