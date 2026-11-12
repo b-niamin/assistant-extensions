@@ -5,7 +5,7 @@ Back to the [README](../README.md).
 With the core installer (fresh machine):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/b-niamin/assistant/main/install.sh | sudo sh -s -- health gym home
+curl -fsSL https://raw.githubusercontent.com/b-niamin/assistant/main/install.sh | sudo sh -s -- health gym home monitor
 ```
 
 Into a running instance, from its checkout:

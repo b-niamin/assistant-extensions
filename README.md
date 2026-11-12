@@ -15,23 +15,31 @@ Extensions for [Beni Assistant](https://github.com/b-niamin/assistant).
 
 <table>
   <tr>
-    <td width="33%" valign="top">
+    <td width="50%" valign="top">
       <a href="docs/screenshots/health.png"><img src="docs/screenshots/health.png" alt="Training &amp; Health: readiness, sleep, HRV, Body Battery and more" /></a>
       <h3><a href="extensions/health">Training &amp; Health</a></h3>
       Sleep, HRV, Body Battery, readiness and activities with route, laps and charts, synced from Garmin.<br />
       <sub><code>health</code> · native · per profile · needs a Garmin Connect account</sub>
     </td>
-    <td width="33%" valign="top">
+    <td width="50%" valign="top">
       <a href="docs/screenshots/gym.png"><img src="docs/screenshots/gym.png" alt="Gym Tracker: this week, plans and a recovery map" /></a>
       <h3><a href="extensions/gym">Gym Tracker</a></h3>
       Workout plans, sets and weights, progress charts and a body map of trained muscles.<br />
       <sub><code>gym</code> · onefile · per profile</sub>
     </td>
-    <td width="33%" valign="top">
+  </tr>
+  <tr>
+    <td valign="top">
       <a href="docs/screenshots/home.png"><img src="docs/screenshots/home.png" alt="Home: weather, lights, doors and windows, today's calendar" /></a>
       <h3><a href="extensions/home">Home</a></h3>
       Lights on, open doors and windows, camera alerts, weather with warnings and today's calendar.<br />
       <sub><code>home</code> · native · shared · needs Home Assistant</sub>
+    </td>
+    <td valign="top">
+      <a href="docs/screenshots/monitor.png"><img src="docs/screenshots/monitor.png" alt="System monitor: CPU, memory, temperature, network, disks and their history" /></a>
+      <h3><a href="extensions/monitor">System monitor</a></h3>
+      CPU, memory, temperature, disks, network and containers of the machine the assistant runs on, with history.<br />
+      <sub><code>monitor</code> · native · shared</sub>
     </td>
   </tr>
 </table>
@@ -44,6 +52,7 @@ Extensions for [Beni Assistant](https://github.com/b-niamin/assistant).
 | <img src="docs/screenshots/health.png" alt="Training & Health, light"> | <img src="docs/screenshots/health-dark.png" alt="Training & Health, dark"> |
 | <img src="docs/screenshots/gym.png" alt="Gym Tracker, light"> | <img src="docs/screenshots/gym-dark.png" alt="Gym Tracker, dark"> |
 | <img src="docs/screenshots/home.png" alt="Home, light"> | <img src="docs/screenshots/home-dark.png" alt="Home, dark"> |
+| <img src="docs/screenshots/monitor.png" alt="System monitor, light"> | <img src="docs/screenshots/monitor-dark.png" alt="System monitor, dark"> |
 
 An activity in Training & Health:
 
