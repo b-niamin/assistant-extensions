@@ -1,6 +1,6 @@
 /** Pure builders for the dashboard tiles (no DB): turn query rows into $shell TileData. */
 import type { TileData, Translate } from '$shell';
-import { EN } from './i18n';
+import { EN } from '$shell';
 import { specOf, type MetricKey } from './metrics';
 import { deltaVsBaseline, readinessLevel, shortDay, type Point } from './stats';
 

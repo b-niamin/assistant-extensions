@@ -3,7 +3,7 @@ import type { ExtensionContext } from '$shell';
 import { snapshot } from './snapshot.server';
 import { sources } from '../sources.server';
 import { tools } from '../tools.server';
-import { EN } from './i18n';
+import { EN } from '$shell';
 
 function ctx(settings: Record<string, string | number | null>, token: string | null = 'secret-token', links: string | null = null) {
   const kv = new Map<string, string>();

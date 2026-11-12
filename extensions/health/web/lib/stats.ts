@@ -1,6 +1,6 @@
 /** Pure helpers behind the health dashboard figures and charts (no DB, no DOM). */
 import type { Translate } from '$shell';
-import { EN } from './i18n';
+import { EN } from '$shell';
 import type { MetricSpec } from './metrics';
 
 export interface Point {
@@ -41,23 +41,6 @@ export function readinessLevel(score: number | null): Level | null {
   if (score >= 50) return { label: 'Moderate', tone: 'warning' };
   if (score >= 25) return { label: 'Low', tone: 'serious' };
   return { label: 'Poor', tone: 'critical' };
-}
-
-/** Round axis ticks (1, 2, 2.5, 5 × 10^n) covering [min, max]. */
-export function niceTicks(min: number, max: number, count = 4): number[] {
-  if (!Number.isFinite(min) || !Number.isFinite(max)) return [];
-  if (min === max) {
-    min -= 1;
-    max += 1;
-  }
-  const raw = (max - min) / count;
-  const mag = 10 ** Math.floor(Math.log10(raw));
-  const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw) ?? raw;
-  const lo = Math.floor(min / step) * step;
-  const hi = Math.ceil(max / step) * step;
-  const out: number[] = [];
-  for (let v = lo; v <= hi + step / 2; v += step) out.push(Number(v.toFixed(10)));
-  return out;
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

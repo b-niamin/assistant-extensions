@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ago, beni, bytes, diskPct, fillBuckets, hostLine, isStale, metricOf, pct, problems, rangeOf, rate, summarize, uptime } from './monitor';
 import { coarsen, monitorTile } from './tile';
-import { byteTicks, niceTicks } from './ticks';
 import type { Bucket, Latest, Reading } from './types';
 
 const GB = 1024 ** 3;
@@ -109,10 +108,6 @@ describe('history', () => {
   it('averages buckets into coarser ones', () => {
     const h = [bucket(at, 10), bucket(at, 20), bucket(at, null), bucket(at, 30), bucket(at, null)];
     expect(coarsen(h, 2).map((b) => b.cpu)).toEqual([15, 30, null]);
-  });
-  it('puts byte ticks on round units', () => {
-    expect(niceTicks(0, 95)).toEqual([0, 25, 50, 75, 100]);
-    expect(byteTicks(0, 3.5 * 1024 * 1024).map((v) => v / 1024 / 1024)).toEqual([0, 1, 2, 3, 4]);
   });
 });
 

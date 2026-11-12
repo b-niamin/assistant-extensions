@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ago, daysBetween, deltaVsBaseline, niceTicks, readinessLevel, shortDay } from './stats';
+import { ago, daysBetween, deltaVsBaseline, readinessLevel, shortDay } from './stats';
 
 const pts = (vals: (number | null)[]) => vals.map((value, i) => ({ day: `2026-11-${String(i + 1).padStart(2, '0')}`, value }));
 
@@ -29,16 +29,6 @@ describe('readinessLevel', () => {
     expect(readinessLevel(30)?.label).toBe('Low');
     expect(readinessLevel(10)?.tone).toBe('critical');
     expect(readinessLevel(null)).toBeNull();
-  });
-});
-
-describe('niceTicks', () => {
-  it('covers the range with round steps', () => {
-    expect(niceTicks(46, 61)).toEqual([45, 50, 55, 60, 65]);
-    expect(niceTicks(0, 14000)).toEqual([0, 5000, 10000, 15000]);
-  });
-  it('handles a flat series', () => {
-    expect(niceTicks(5, 5).length).toBeGreaterThan(1);
   });
 });
 

@@ -1,6 +1,6 @@
 /** The dashboard tile from a snapshot, pure (spec 003: data only, the shell renders it). */
 import type { TileData, Translate } from '$shell';
-import { EN } from './i18n';
+import { EN } from '$shell';
 import type { Snapshot } from './types';
 import { condition } from './weather';
 

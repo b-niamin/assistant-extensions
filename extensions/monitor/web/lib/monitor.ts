@@ -1,7 +1,7 @@
 /** Pure helpers of the monitor page, tile and tools: units, thresholds, Beni, ranges. */
 import type { TileTone, Translate } from '$shell';
 import type { Mood } from '$shell/ui';
-import { EN } from './i18n';
+import { EN } from '$shell';
 import type { Bucket, Disk, Latest, Metric, Range, Reading } from './types';
 
 export const RANGES: Range[] = ['1h', '24h', '7d', '30d'];

@@ -1,6 +1,6 @@
 /** Turns the sync bookkeeping into the Garmin card of the settings panel. Pure, so it is unit-tested. */
 import type { SourceStatus, SourceSync, Translate } from '$shell';
-import { EN } from './i18n';
+import { EN } from '$shell';
 
 export interface SyncOverview {
   account: { status: string; connectedAt: string | null } | null;

@@ -1,6 +1,6 @@
 /** The dashboard tile from the latest reading and a day of history, pure (spec 003: data only). */
 import type { TileData, TileKpi, Translate } from '$shell';
-import { EN } from './i18n';
+import { EN } from '$shell';
 import { celsius, cpuTone, diskPct, memPct, memTone, problems, uptime } from './monitor';
 import type { Bucket, Latest } from './types';
 

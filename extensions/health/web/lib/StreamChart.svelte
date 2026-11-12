@@ -1,8 +1,8 @@
 <script lang="ts">
+  import { niceTicks } from '$shell';
   import { useT } from '$shell/ui';
   import { hms } from './format';
   import { paceText, type Series } from './activity';
-  import { niceTicks } from './stats';
 
   /**
    * One stream of an activity over time (heart rate, pace, elevation, ...): 2px line over a 10 % wash,

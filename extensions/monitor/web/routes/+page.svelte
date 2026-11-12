@@ -1,8 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { DataOf } from '$shell';
-  import { Mascot, useT } from '$shell/ui';
-  import Chart from '../lib/Chart.svelte';
+  import { byteTicks, type DataOf } from '$shell';
+  import { EmptyState, LineChart, Mascot, useT } from '$shell/ui';
   import {
     ago,
     beni,
@@ -122,13 +121,11 @@
   </header>
 
   {#if !v.latest || !r}
-    <div class="card empty">
-      <Mascot mood="idle" size={88} label={t('Beni is waiting')} />
-      <div>
-        <h2>{t('No readings yet')}</h2>
+    <div class="card">
+      <EmptyState title={t('No readings yet')} mascotLabel={t('Beni is waiting')}>
         <p>{t("This extension reads the machine through a small background service, the collector, which the assistant's worker starts within seconds of the install.")}</p>
         <p class="muted">{t('The first reading comes within a minute. If none comes, see System settings -> Worker: the worker comes with the assistant from 12 November 2026 on.')}</p>
-      </div>
+      </EmptyState>
     </div>
   {:else}
     {#if v.stale}
@@ -223,15 +220,16 @@
             {/each}
           </nav>
         </div>
-        <Chart
-          {times}
-          {lines}
+        <LineChart
+          labels={times}
+          series={lines.map((l) => ({ ...l, label: t(l.label) }))}
           format={fmt}
           label={t(METRIC_LABELS[v.metric])}
           ceil={v.metric === 'cpu' || v.metric === 'memory' ? 100 : null}
           floor={v.metric === 'temp' ? null : 0}
-          bytes={v.metric === 'net' || v.metric === 'disk'}
-          {timeFormat}
+          ticks={v.metric === 'net' || v.metric === 'disk' ? (lo, hi) => byteTicks(lo, hi, 4) : undefined}
+          xLabel={timeFormat}
+          step={10}
         />
       </section>
 
@@ -366,19 +364,6 @@
   .facts dd {
     margin: 0;
     font-weight: 600;
-  }
-  .empty {
-    display: flex;
-    gap: var(--space-5);
-    align-items: flex-start;
-  }
-  .empty > div {
-    display: grid;
-    gap: var(--space-3);
-    max-width: 60ch;
-  }
-  .empty h2 {
-    margin: 0;
   }
   .banner {
     padding: var(--space-2) var(--space-4);
@@ -566,9 +551,6 @@
     }
   }
   @media (max-width: 520px) {
-    .empty {
-      flex-direction: column;
-    }
     .facts {
       width: 100%;
     }

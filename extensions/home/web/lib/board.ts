@@ -1,7 +1,7 @@
 /** What the board says, pure: Beni's mood and line, short labels, "x min ago". */
 import type { Translate } from '$shell';
 import type { Mood } from '$shell/ui';
-import { EN } from './i18n';
+import { EN } from '$shell';
 import type { Group } from './home';
 import type { Snapshot } from './types';
 

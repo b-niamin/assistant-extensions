@@ -1,11 +1,9 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import type { DataOf } from '$shell';
-  import { countUp, lineFor, Mascot, moodFor, saveOnChoose, todayIn, useT } from '$shell/ui';
-  import LineChart from '../lib/LineChart.svelte';
+  import { scaledTicks, type DataOf } from '$shell';
+  import { countUp, LineChart, lineFor, Mascot, moodFor, saveOnChoose, Sparkline, todayIn, useT } from '$shell/ui';
   import MetricIcon from '../lib/MetricIcon.svelte';
   import { hueOf } from '../lib/look';
-  import Sparkline from '../lib/Sparkline.svelte';
   import { formatValue, METRICS, specOf, type MetricSpec } from '../lib/metrics';
   import { ago, daysBetween, deltaVsBaseline, readinessLevel, shortDay } from '../lib/stats';
   import { hms, km, pace, sportLabel } from '../lib/format';
@@ -115,7 +113,7 @@
       <div class="pipwrap"><Mascot {mood} size={76} label={t('Beni says: {line}', { line: pipSays })} /></div>
       <p class="bubble">{pipSays}</p>
     </div>
-    <Sparkline points={data.trends['training_readiness'] ?? []} height={48} />
+    <Sparkline values={(data.trends['training_readiness'] ?? []).map((p) => p.value)} height={48} />
     <span class="meta">{t('Last 14 days')} {asOf(readiness?.day) ? `· ${asOf(readiness?.day)}` : ''}</span>
   </div>
 
@@ -135,7 +133,7 @@
         <span class="tilehead"><MetricIcon metric={key} size={26} /><span class="eyebrow">{t(s.label)}</span></span>
         <strong class="value">{formatValue(s, r?.value ?? null, t.locale)}</strong>
         {@render delta(s, key)}
-        <Sparkline points={data.trends[key] ?? []} />
+        <Sparkline values={(data.trends[key] ?? []).map((p) => p.value)} />
         {#if asOf(r?.day)}<span class="meta">{asOf(r?.day)}</span>{/if}
       </a>
     {/each}
@@ -176,7 +174,18 @@
   </div>
 
   {#key `${data.metric}-${data.days}`}
-    <LineChart points={data.series} format={fmt} {tick} label={t(spec.label)} tickScale={spec.format === 'duration' ? 3600 : 1} />
+    <LineChart
+      labels={data.series.map((p) => p.day)}
+      series={[{ label: t(spec.label), values: data.series.map((p) => p.value) }]}
+      format={fmt}
+      {tick}
+      label={t(spec.label)}
+      column={t('Day')}
+      xLabel={(day, long) => shortDay(day, long, t.locale)}
+      ticks={spec.format === 'duration' ? (lo, hi) => scaledTicks(lo, hi, 3600) : undefined}
+      height={260}
+      pad={{ left: 44, right: 56 }}
+    />
   {/key}
 </section>
 

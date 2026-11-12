@@ -13,7 +13,7 @@ import { forecast, geocode, type Place } from './weather.server';
 import type { Snapshot } from './types';
 import { readConfig, type HomeConfig } from './config';
 import { feedUrls, parseIcs, todayFromIcs, type IcsCalendar } from './ics';
-import { EN } from './i18n';
+import { EN } from '$shell';
 
 export type { Snapshot };
 

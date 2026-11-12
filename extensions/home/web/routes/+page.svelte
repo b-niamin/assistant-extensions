@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { DataOf } from '$shell';
-  import { Mascot, useT } from '$shell/ui';
+  import { EmptyState, Mascot, useT } from '$shell/ui';
   import { ago, beni, contactsLabel, countdown, lightsLabel } from '../lib/board';
   import ForecastChart from '../lib/ForecastChart.svelte';
   import type { Snapshot } from '../lib/types';
@@ -237,12 +237,10 @@
 
   {#if nothingSet}
     <div class="empty">
-      <Mascot mood="idle" size={88} label={t('Beni is waiting')} />
-      <div>
-        <h1>{t('Nothing to watch yet')}</h1>
+      <EmptyState title={t('Nothing to watch yet')} level={1} mascotLabel={t('Beni is waiting')}>
         <p class="muted">{t('Add your Home Assistant address and token, and a weather location, in System settings.')}</p>
-        <a class="btn btn-primary go" href={SETTINGS}>{t('Open settings')}</a>
-      </div>
+        <a class="btn btn-primary" href={SETTINGS}>{t('Open settings')}</a>
+      </EmptyState>
     </div>
   {:else}
     <h1 class="sr">{t('Home')}</h1>
@@ -810,24 +808,7 @@
   }
 
   .empty {
-    display: flex;
-    gap: var(--space-5);
-    align-items: center;
     padding: var(--space-7) var(--space-6);
-  }
-  .empty h1 {
-    margin: 0 0 var(--space-2);
-    font-size: 1.375rem;
-  }
-  .empty p {
-    margin: 0;
-    max-width: 46ch;
-  }
-  .go {
-    display: inline-flex;
-    align-items: center;
-    margin-top: var(--space-4);
-    text-decoration: none;
   }
 
   @media (max-width: 820px) {

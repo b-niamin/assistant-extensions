@@ -3,7 +3,7 @@
  * time zone. Pure: the fetch lives in ha.server.ts.
  */
 import type { Translate } from '$shell';
-import { EN } from './i18n';
+import { EN } from '$shell';
 
 export interface HaEvent {
   summary?: string;

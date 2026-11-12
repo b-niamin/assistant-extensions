@@ -7,7 +7,7 @@
  */
 import type { Translate } from '$shell';
 import { localDay, offsetMinutes, type CalendarEvent } from './calendar';
-import { EN } from './i18n';
+import { EN } from '$shell';
 
 interface Prop {
   value: string;

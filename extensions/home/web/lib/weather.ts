@@ -5,7 +5,7 @@
  */
 import type { Translate } from '$shell';
 import type { WeatherWarning } from './home';
-import { EN } from './i18n';
+import { EN } from '$shell';
 
 export interface Hour {
   /** Local time at the place, "2026-11-11T18:00" (Open-Meteo with timezone=auto). */
