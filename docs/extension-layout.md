@@ -4,15 +4,16 @@ What a folder in [`extensions/`](../extensions) or [`inspirations/`](../inspirat
 
 ```
 <id>/
-  extension.json       manifest (id, name, kind native|onefile, scope profile|shared, settings, services)
+  extension.json       manifest (id, name, kind native|onefile, scope profile|shared, settings,
+                       services and jobs: background work the core's worker runs, spec 002)
   README.md AGENTS.md  rules for AI agents (CLAUDE.md: `@AGENTS.md`)
   web/routes/**        native: SvelteKit routes, mounted at /<id>
   web/lib/**           components, helpers, *.test.ts (run by the core's vitest)
   web/tiles.server.ts  dashboard tiles
   web/tools.server.ts  MCP tools for Claude, native and onefile (a read-only overview, one tool per write)
   db/migrations/*.sql  additive SQL for schema <id>; tables named secret_* are for its service only
-  compose.yml          background services (paths relative to the core checkout)
-  services/<name>/     their code
+  services/<name>/     background work's code (Python with requirements.txt, or Node), run by the worker
+  compose.yml          only for what the worker cannot run (another image, a device): needs install.sh
   app.html             onefile: one self-contained HTML file
   i18n/<lang>.json     translations: English text -> that language (spec 007); onefile apps list
                        the languages they speak in the manifest's "languages"

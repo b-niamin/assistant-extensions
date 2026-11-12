@@ -2,11 +2,26 @@
   "id": "health",
   "name": "Training & Health",
   "description": "Garmin: sleep, HRV, Body Battery, readiness, activities",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "kind": "native",
   "scope": "profile",
   "accessory": "headband",
   "shell": 1,
   "schema": "health",
-  "services": ["garmin-sync"]
+  "services": [
+    {
+      "name": "garmin-sync",
+      "run": [
+        "python",
+        "-m",
+        "sync",
+        "loop"
+      ],
+      "keys": [
+        "TOKEN_ENCRYPTION_KEY",
+        "DEFAULT_PROFILE"
+      ],
+      "description": "Syncs Garmin Connect every 30 minutes and runs the syncs asked for in System settings"
+    }
+  ]
 }

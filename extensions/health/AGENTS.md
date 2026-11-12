@@ -25,16 +25,20 @@ Every table is keyed by `profile_id` (read with `psql "$CLAUDE_RO_DATABASE_URL"`
 | `health.connected_accounts` | which profiles have a Garmin login (`connected`, `reconnect`, `disconnected`), mirrored by garmin-sync without the secret |
 | `health.secret_garmin_tokens` | encrypted Garmin logins; only the `garmin-sync` service can read it |
 
-Look at the raw JSON (`data`, `raw`) before assuming a field name. Logs: `/logs/garmin-sync.log`.
+Look at the raw JSON (`data`, `raw`) before assuming a field name. Logs: `/worker/logs/health.garmin-sync.log`
+(before 0.5.0: `/logs/garmin-sync.log`).
 
 ## garmin-sync
 
 `services/garmin-sync/` (Python, garmy + curl_cffi: Garmin blocks plain HTTP clients by TLS fingerprint).
 `garmin_core/` is the Garmin boundary and the token store, `sync/` the CLI, engine and Postgres writes;
 put new logic in `sync/`. Each pass runs as a fresh process, so edits go live on the next tick
-(`SYNC_INTERVAL_MINUTES`, 30). Tests: `cd services/garmin-sync && python3 -m pytest -q`.
+(`SYNC_INTERVAL_MINUTES`, 30). It runs in the assistant's worker (manifest `services`, spec 002
+"Background work"), as the extension's own user with `DATABASE_URL` (role `ext_health_svc`) and
+`TOKEN_ENCRYPTION_KEY`; the worker restarts it when its files change. Tests:
+`cd services/garmin-sync && python3 -m pytest -q`.
 
-- Login, once per profile: `docker compose exec -it garmin-sync python -m sync login [--profile <id>]`
+- Login, once per profile, on the host: `docker compose exec -it worker ext-run health garmin-sync python -m sync login [--profile <id>]`
   (email, password via getpass, MFA code). The password is never stored, only the encrypted token.
 - `python -m sync backfill [--since 2020-01-01]`: full history, resumable. The first one after a login is
   queued by itself (5 years back, stops after a year without data); older data is asked for in System

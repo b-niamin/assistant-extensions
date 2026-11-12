@@ -126,14 +126,13 @@
       <Mascot mood="idle" size={88} label={t('Beni is waiting')} />
       <div>
         <h2>{t('No readings yet')}</h2>
-        <p>{t('This extension reads the machine through a small background service, monitor-collector. It starts with the stack once it is part of it:')}</p>
-        <pre><code>sudo ./beni.sh install</code></pre>
-        <p class="muted">{t('Run it in the assistant folder on the machine. On Synology, then rebuild the project in Container Manager. The first reading comes within a minute.')}</p>
+        <p>{t("This extension reads the machine through a small background service, the collector, which the assistant's worker starts within seconds of the install.")}</p>
+        <p class="muted">{t('The first reading comes within a minute. If none comes, see System settings -> Worker: the worker comes with the assistant from 12 November 2026 on.')}</p>
       </div>
     </div>
   {:else}
     {#if v.stale}
-      <p class="banner status serious">{t('No new reading since {time}. The collector may have stopped: check /logs/monitor-collector.log.', { time: timeFormat(v.latest.at, true) })}</p>
+      <p class="banner status serious">{t('No new reading since {time}. The collector may have stopped: see System settings -> Worker.', { time: timeFormat(v.latest.at, true) })}</p>
     {/if}
     {#if r.host.vm}
       <p class="banner status">{t('These are the figures of the Linux virtual machine Docker runs in on this Mac ({vm}), not of macOS itself.', { vm: r.host.vm === 'orbstack' ? 'OrbStack' : 'Docker Desktop' })}</p>
@@ -380,14 +379,6 @@
   }
   .empty h2 {
     margin: 0;
-  }
-  pre {
-    margin: 0;
-    padding: var(--space-2) var(--space-3);
-    background: var(--surface-2);
-    border-radius: var(--radius-sm);
-    font-family: var(--mono);
-    overflow-x: auto;
   }
   .banner {
     padding: var(--space-2) var(--space-4);

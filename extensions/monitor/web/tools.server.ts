@@ -29,7 +29,7 @@ export const tools: ExtTool[] = [
         if (!l) {
           return {
             reading: null,
-            note: 'No reading yet: the monitor-collector service is not running. The owner starts it once on the host with `sudo ./beni.sh install` (it adds the extension\'s compose.yml to the stack).'
+            note: 'No reading yet: the collector is not running. It runs in the assistant\'s worker (System settings -> Worker), which needs the assistant from 2026-11-12 or newer; /worker/logs/monitor.collector.log says why it stopped.'
           };
         }
         const r = l.data;

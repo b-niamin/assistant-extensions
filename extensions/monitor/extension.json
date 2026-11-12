@@ -2,11 +2,41 @@
   "id": "monitor",
   "name": "System monitor",
   "description": "The machine the assistant runs on: CPU, memory, temperature, disks, network and containers, sampled every 30 seconds",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "kind": "native",
   "scope": "shared",
   "accessory": "wrench",
   "shell": 1,
   "schema": "monitor",
-  "services": ["monitor-collector"]
+  "services": [
+    {
+      "name": "collector",
+      "dir": "services/collector",
+      "run": [
+        "python",
+        "-m",
+        "collector",
+        "loop"
+      ],
+      "host": [
+        "proc",
+        "sys"
+      ],
+      "description": "Reads the machine every 30 seconds"
+    }
+  ],
+  "jobs": [
+    {
+      "name": "prune",
+      "dir": "services/collector",
+      "run": [
+        "python",
+        "-m",
+        "collector",
+        "prune"
+      ],
+      "cron": "17 3 * * *",
+      "description": "Drops readings older than 30 days"
+    }
+  ]
 }

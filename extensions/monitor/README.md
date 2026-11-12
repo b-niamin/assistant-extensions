@@ -18,9 +18,10 @@ readings stop.
 
 ## How it reads the machine
 
-A small background service, `monitor-collector` (`compose.yml`), reads the host's `/proc` and `/sys`,
-mounted read-only, every 30 seconds and writes to the `monitor` schema. It never gets the Docker socket
-and drops to user `nobody` before reading anything, so it cannot see other processes' environment.
+A small background service, the collector, reads the host's `/proc` and `/sys` every 30 seconds and
+writes to the `monitor` schema. It runs in the assistant's worker, which mounts them read-only, as the
+extension's own user, so it cannot see other processes' environment; it never gets the Docker socket. A
+nightly job drops readings older than 30 days.
 Container names come from what each container runs (the assistant's own services get their compose
 names).
 
@@ -34,17 +35,12 @@ models show none.
 
 ## Starting it
 
-The service joins the stack once, on the machine, in the assistant folder:
+Nothing to do: `ext install monitor` is enough, the assistant's worker starts the collector within
+seconds (System settings -> Worker shows it, its nightly `prune` run and what it reads). Needs an
+assistant from 2026-11-12 or newer (with the worker); monitor 1.0.0 ran its own container.
 
-```sh
-sudo ./beni.sh install
-```
-
-On Synology, then rebuild the project in Container Manager. Optional `.env` values:
-`MONITOR_INTERVAL_SECONDS` (30) and `MONITOR_KEEP_DAYS` (30). Log: `/logs/monitor-collector.log`.
-
-To see what it reads on a host without the database:
-`docker compose run --rm monitor-collector python -m collector once`.
+To see what it reads on a host without the database, on the host:
+`docker compose exec worker ext-run monitor collector python -m collector once`.
 
 ## Tools for Claude
 

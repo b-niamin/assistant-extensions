@@ -13,7 +13,7 @@ Into a running instance, from its checkout:
 ```sh
 docker compose exec terminal node scripts/ext.mjs available
 docker compose exec terminal node scripts/ext.mjs install health
-./install.sh        # once, for an extension with a compose.yml (starts its service)
+# background work (health's garmin-sync, the monitor's collector) starts in the worker by itself
 ```
 
 `ext install` copies `extensions/<id>/` into the instance's `extensions/<id>/` and records this repo's

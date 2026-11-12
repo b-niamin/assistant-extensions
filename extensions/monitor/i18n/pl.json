@@ -29,14 +29,21 @@
   "{d} d {h} h": "{d} d {h} h",
   "{h} h {m} min": "{h} h {m} min",
   "{m} min": "{m} min",
-  "{n} cores": { "one": "{n} rdzeń", "few": "{n} rdzenie", "many": "{n} rdzeni", "other": "{n} rdzenia" },
-  "{n} sensors": { "one": "{n} czujnik", "few": "{n} czujniki", "many": "{n} czujników", "other": "{n} czujnika" },
+  "{n} cores": {
+    "one": "{n} rdzeń",
+    "few": "{n} rdzenie",
+    "many": "{n} rdzeni",
+    "other": "{n} rdzenia"
+  },
+  "{n} sensors": {
+    "one": "{n} czujnik",
+    "few": "{n} czujniki",
+    "many": "{n} czujników",
+    "other": "{n} czujnika"
+  },
   "Up for": "Czas pracy",
   "Reading": "Odczyt",
   "No readings yet": "Jeszcze brak odczytów",
-  "This extension reads the machine through a small background service, monitor-collector. It starts with the stack once it is part of it:": "To rozszerzenie czyta maszynę przez małą usługę w tle, monitor-collector. Startuje razem ze stosem, gdy jest jego częścią:",
-  "Run it in the assistant folder on the machine. On Synology, then rebuild the project in Container Manager. The first reading comes within a minute.": "Uruchom to w folderze asystenta na tej maszynie. Na Synology potem przebuduj projekt w Container Manager. Pierwszy odczyt pojawi się w ciągu minuty.",
-  "No new reading since {time}. The collector may have stopped: check /logs/monitor-collector.log.": "Brak nowego odczytu od {time}. Kolektor mógł stanąć: zajrzyj do /logs/monitor-collector.log.",
   "These are the figures of the Linux virtual machine Docker runs in on this Mac ({vm}), not of macOS itself.": "To liczby maszyny wirtualnej z Linuksem, w której Docker działa na tym Macu ({vm}), a nie samego macOS.",
   "The power supply dipped below what the board needs since the last start.": "Od ostatniego startu zasilanie spadło poniżej tego, czego potrzebuje płytka.",
   "The CPU was throttled since the last start.": "Od ostatniego startu procesor zwalniał.",
@@ -85,5 +92,8 @@
   "CPU, last 24 h": "Procesor, ostatnie 24 h",
   "disk {pct} %": "dysk {pct} %",
   "up {time}": "pracuje {time}",
-  "No reading since {time}": "Brak odczytu od {time}"
+  "No reading since {time}": "Brak odczytu od {time}",
+  "This extension reads the machine through a small background service, the collector, which the assistant's worker starts within seconds of the install.": "To rozszerzenie czyta maszynę przez małą usługę w tle, kolektor, którą worker asystenta uruchamia w kilka sekund po instalacji.",
+  "The first reading comes within a minute. If none comes, see System settings -> Worker: the worker comes with the assistant from 12 November 2026 on.": "Pierwszy odczyt pojawi się w ciągu minuty. Jeśli go nie ma, zajrzyj do Ustawień systemu -> Worker: worker jest w asystencie od 12 listopada 2026.",
+  "No new reading since {time}. The collector may have stopped: see System settings -> Worker.": "Brak nowego odczytu od {time}. Kolektor mógł stanąć: zajrzyj do Ustawień systemu -> Worker."
 }

@@ -365,7 +365,7 @@ def container_name(procs: list[Proc]) -> str:
     known = [
         ("live-reload.mjs", "web"), ("watch-extensions.sh", "ext-migrate"), ("backup.sh", "backup"),
         ("-m sync", "garmin-sync"), ("-m collector", "monitor-collector"), ("ttyd", "terminal"),
-        ("chromium", "browser"), ("postgres", "db"),
+        ("chromium", "browser"), ("postgres", "db"), ("/opt/worker/worker.py", "worker"),
     ]
     for needle, name in known:
         if needle in cmds:

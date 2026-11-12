@@ -39,7 +39,6 @@
   "Garmin no longer accepts the login: sign in again.": "Garmin nie przyjmuje już logowania: zaloguj się ponownie.",
   "Garmin asked to slow down; the next pass tries again.": "Garmin poprosił o zwolnienie; kolejne przejście spróbuje ponownie.",
   "The sync was cut off (the service restarted); it resumes on the next pass.": "Synchronizacja została przerwana (usługa się zrestartowała); wznowi się przy kolejnym przejściu.",
-  "The sync service is not picking up requests. It restarts itself after its next scheduled pass; to restart it now, run in the assistant folder: docker compose restart garmin-sync": "Usługa synchronizacji nie odbiera zleceń. Zrestartuje się sama po kolejnym zaplanowanym przejściu; żeby zrestartować ją teraz, uruchom w folderze asystenta: docker compose restart garmin-sync",
   "Fetching history": "Pobieranie historii",
   "Syncing": "Synchronizacja",
   "Fetching the last days": "Pobieranie ostatnich dni",
@@ -186,5 +185,6 @@
   "Other": "Inne",
   "Cross country skiing ws": "Narciarstwo biegowe",
   "Resort skiing snowboarding ws": "Narciarstwo zjazdowe",
-  "Multi sport": "Multisport"
+  "Multi sport": "Multisport",
+  "The sync service is not picking up requests. Restart it in System settings -> Worker (Training & Health · garmin-sync).": "Usługa synchronizacji nie odbiera zleceń. Zrestartuj ją w Ustawieniach systemu -> Worker (Trening i zdrowie · garmin-sync)."
 }

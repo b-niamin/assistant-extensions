@@ -55,7 +55,7 @@ describe('describeSync', () => {
     const silent = new Date(NOW - STUCK_MS - 60_000).toISOString();
     const s = describeSync({ ...base, pending: waiting(STUCK_MS + 1000), serviceAt: silent }, NOW);
     expect(s.state).toBe('failed');
-    expect(s.error).toMatch(/restart garmin-sync/);
+    expect(s.error).toMatch(/System settings -> Worker/);
     expect(describeSync({ ...base, pending: waiting(STUCK_MS + 1000), serviceAt: null }, NOW).state).toBe('failed');
     // A loop that still ticks is busy with something else: keep waiting.
     expect(describeSync({ ...base, pending: waiting(STUCK_MS + 1000) }, NOW).state).toBe('queued');

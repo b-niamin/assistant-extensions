@@ -7,7 +7,7 @@ import type { ExtSources } from '$shell';
 import { syncOverview } from './lib/sync.server';
 import { describeSync, garminSource, longDay, olderLimit } from './lib/sync';
 
-const LOGIN = 'docker compose exec -it garmin-sync python -m sync login';
+const LOGIN = 'docker compose exec -it worker ext-run health garmin-sync python -m sync login';
 
 export const sources: ExtSources = {
   async list(ctx) {
