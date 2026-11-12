@@ -214,7 +214,7 @@
     letter-spacing: -0.01em;
   }
   .sub {
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     color: var(--ink-3);
   }
   .effect {
@@ -226,7 +226,7 @@
     font-size: 0.875rem;
   }
   .effect .status {
-    font-weight: 600;
+    font-weight: var(--weight-bold);
     text-transform: capitalize;
   }
   .grid {
@@ -284,7 +284,7 @@
     align-items: center;
     gap: 6px;
     margin: var(--space-2) 0 0;
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     color: var(--ink-3);
   }
   .dot {
@@ -337,8 +337,8 @@
     border-bottom: none;
   }
   th {
-    font-size: 0.75rem;
-    font-weight: 500;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
     color: var(--ink-3);
     border-bottom-color: var(--axis);
   }
@@ -352,12 +352,12 @@
     margin: 0 0 var(--space-3);
   }
   .journal dt {
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     color: var(--ink-3);
   }
   .journal dd {
     margin: 0;
-    font-weight: 600;
+    font-weight: var(--weight-bold);
   }
   section.card {
     margin-bottom: var(--space-3);

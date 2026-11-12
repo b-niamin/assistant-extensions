@@ -265,12 +265,14 @@
     margin: 0 0 var(--space-1);
   }
   .sync {
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
     color: var(--ink-2);
     text-decoration: none;
   }
-  .sync:hover {
-    color: var(--ink);
+  @media (hover: hover) {
+    .sync:hover {
+      color: var(--ink);
+    }
   }
 
   /* Overview: one hero figure, then a row of stat tiles. */
@@ -299,10 +301,12 @@
       box-shadow 200ms;
   }
   @media (prefers-reduced-motion: no-preference) {
-    .hero:hover,
-    .tile:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+    @media (hover: hover) {
+      .hero:hover,
+      .tile:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+      }
     }
   }
   .hero {
@@ -374,9 +378,11 @@
   .tile .value + :global(*) {
     margin-bottom: var(--space-2);
   }
-  .hero:hover,
-  .tile:hover {
-    border-color: var(--axis);
+  @media (hover: hover) {
+    .hero:hover,
+    .tile:hover {
+      border-color: var(--axis);
+    }
   }
   .hero.current,
   .tile[aria-current='true'] {
@@ -395,8 +401,8 @@
     letter-spacing: -0.03em;
   }
   .level {
-    font-size: 0.9375rem;
-    font-weight: 600;
+    font-size: var(--text-base);
+    font-weight: var(--weight-bold);
   }
   .value {
     font-size: 1.625rem;
@@ -405,8 +411,8 @@
     letter-spacing: -0.02em;
   }
   .delta {
-    font-size: 0.8125rem;
-    font-weight: 600;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-bold);
     color: var(--ink-2);
   }
   .delta.good {
@@ -416,11 +422,11 @@
     color: var(--critical);
   }
   .delta .vs {
-    font-weight: 400;
+    font-weight: var(--weight-regular);
     color: var(--ink-3);
   }
   .meta {
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     color: var(--ink-3);
   }
   .hero :global(.spark),
@@ -455,10 +461,10 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    font-size: 1.125rem;
+    font-size: var(--text-lg);
   }
   .trendhead h2 .muted {
-    font-weight: 400;
+    font-weight: var(--weight-regular);
   }
   .summary {
     display: flex;
@@ -467,12 +473,12 @@
     margin: 0;
   }
   .summary dt {
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     color: var(--ink-3);
   }
   .summary dd {
     margin: 0;
-    font-weight: 600;
+    font-weight: var(--weight-bold);
     font-variant-numeric: tabular-nums;
   }
 
@@ -510,8 +516,8 @@
     border-bottom: none;
   }
   th {
-    font-size: 0.75rem;
-    font-weight: 500;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
     color: var(--ink-3);
     border-bottom-color: var(--axis);
   }
@@ -522,21 +528,23 @@
     margin-left: 4px;
   }
   .name {
-    font-weight: 600;
+    font-weight: var(--weight-bold);
     color: var(--ink);
     text-decoration: none;
   }
   tr.link {
     cursor: pointer;
   }
-  tr.link:hover .name {
-    color: var(--accent-ink);
-    text-decoration: underline;
+  @media (hover: hover) {
+    tr.link:hover .name {
+      color: var(--accent-ink);
+      text-decoration: underline;
+    }
   }
   .sport {
     display: block;
-    font-weight: 400;
-    font-size: 0.75rem;
+    font-weight: var(--weight-regular);
+    font-size: var(--text-xs);
     color: var(--ink-3);
   }
   .loadcol {
@@ -577,13 +585,15 @@
   tbody tr {
     transition: background 120ms;
   }
-  tbody tr:hover {
-    background: var(--surface-2);
+  @media (hover: hover) {
+    tbody tr:hover {
+      background: var(--surface-2);
+    }
   }
   .loadnum {
     min-width: 2.5ch;
     text-align: right;
-    font-weight: 600;
+    font-weight: var(--weight-bold);
   }
 
   .notice {

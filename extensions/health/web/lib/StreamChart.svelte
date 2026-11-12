@@ -140,13 +140,13 @@
     justify-content: space-between;
     align-items: baseline;
     gap: var(--space-3);
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
   }
   .label {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-weight: 600;
+    font-weight: var(--weight-bold);
   }
   .label::before {
     content: '';

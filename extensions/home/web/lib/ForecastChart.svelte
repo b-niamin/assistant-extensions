@@ -188,21 +188,21 @@
     stroke-width: 2;
   }
   .tick {
-    font-size: 12px;
+    font-size: var(--text-xs);
     fill: var(--ink-3);
     font-variant-numeric: tabular-nums;
   }
   .time {
-    font-size: 13px;
+    font-size: var(--text-sm);
     fill: var(--ink-2);
   }
   .strong {
     fill: var(--ink);
-    font-weight: 600;
+    font-weight: var(--weight-bold);
   }
   .end {
-    font-size: 13px;
-    font-weight: 600;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-bold);
     fill: var(--ink);
   }
   .cross {
@@ -224,7 +224,7 @@
     border-radius: var(--radius-sm);
     background: var(--surface);
     box-shadow: 0 0 0 1px var(--ring), 0 4px 14px rgba(0, 0, 0, 0.08);
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
     white-space: nowrap;
     pointer-events: none;
     font-variant-numeric: tabular-nums;

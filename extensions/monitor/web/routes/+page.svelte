@@ -321,7 +321,7 @@
     margin: 0;
   }
   h1 {
-    font-size: 1.5rem;
+    font-size: var(--text-xl);
     line-height: 1.2;
   }
   h2 {
@@ -358,12 +358,12 @@
     gap: 2px;
   }
   .facts dt {
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
     color: var(--ink-3);
   }
   .facts dd {
     margin: 0;
-    font-weight: 600;
+    font-weight: var(--weight-bold);
   }
   .banner {
     padding: var(--space-2) var(--space-4);
@@ -385,13 +385,13 @@
   }
   .big {
     font-size: 2.25rem;
-    font-weight: 700;
+    font-weight: var(--weight-bold);
     letter-spacing: -0.02em;
     line-height: 1.1;
   }
   .pair {
     font-size: 1.25rem;
-    font-weight: 600;
+    font-weight: var(--weight-bold);
     display: flex;
     gap: var(--space-2);
     align-items: baseline;
@@ -403,7 +403,7 @@
   }
   .sub {
     color: var(--ink-2);
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
   }
   .status {
     font-size: 0.875rem;
@@ -455,7 +455,7 @@
     background: var(--series);
   }
   .sensors {
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
     margin-top: var(--space-1);
   }
   .sensors summary {
@@ -506,7 +506,7 @@
     flex-wrap: wrap;
   }
   .row .muted {
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
   }
   .spacer {
     flex: 1;
@@ -528,7 +528,7 @@
   }
   th {
     color: var(--ink-2);
-    font-weight: 500;
+    font-weight: var(--weight-medium);
   }
   .n {
     text-align: right;
@@ -536,7 +536,7 @@
     padding-left: 12px;
   }
   .hint {
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
     margin-top: var(--space-2);
   }
   .quiet {

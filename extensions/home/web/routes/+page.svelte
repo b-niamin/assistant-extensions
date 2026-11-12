@@ -436,8 +436,10 @@
   .pill summary::-webkit-details-marker {
     display: none;
   }
-  .pill summary:hover {
-    background: var(--surface-2);
+  @media (hover: hover) {
+    .pill summary:hover {
+      background: var(--surface-2);
+    }
   }
   .pill.on summary .glyph {
     color: var(--hue-yellow);
@@ -448,7 +450,7 @@
   }
   .strong {
     color: var(--ink);
-    font-weight: 600;
+    font-weight: var(--weight-bold);
   }
   .pop {
     position: absolute;
@@ -477,7 +479,7 @@
     gap: var(--space-4);
   }
   .small {
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
     margin-top: var(--space-2) !important;
   }
   .when {
@@ -490,14 +492,14 @@
     color: var(--ink-2);
   }
   .clock {
-    font-size: 1.125rem;
+    font-size: var(--text-lg);
   }
   .refresh {
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
     color: var(--ink-3);
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
     font-variant-numeric: tabular-nums;
   }
   .track {
@@ -569,16 +571,16 @@
   }
   .deg {
     font-size: clamp(5.5rem, 12vw, 9.5rem);
-    font-weight: 700;
+    font-weight: var(--weight-bold);
   }
   .o {
     font-size: clamp(3rem, 6vw, 5rem);
-    font-weight: 700;
+    font-weight: var(--weight-bold);
     margin-top: 0.08em;
   }
   .cond {
-    font-size: 1.5rem;
-    font-weight: 500;
+    font-size: var(--text-xl);
+    font-weight: var(--weight-medium);
     margin-top: var(--space-3) !important;
   }
   .sub {
@@ -586,7 +588,7 @@
     margin-top: var(--space-1) !important;
   }
   .place {
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
     margin-top: var(--space-1) !important;
   }
   .periods {
@@ -615,7 +617,7 @@
     font-size: 0.875rem;
   }
   .periods .muted {
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
   }
   .quiet {
     display: grid;
@@ -636,7 +638,7 @@
     background: none;
     padding: 4px 2px;
     color: var(--ink-3);
-    font-weight: 600;
+    font-weight: var(--weight-bold);
     border-bottom: 2px solid transparent;
   }
   .tabs button[aria-pressed='true'] {
@@ -651,7 +653,7 @@
   }
   .mid {
     font-size: 4rem;
-    font-weight: 700;
+    font-weight: var(--weight-bold);
     letter-spacing: -0.03em;
     line-height: 1;
   }
@@ -659,18 +661,18 @@
     display: grid;
     justify-items: center;
     gap: 2px;
-    font-weight: 500;
+    font-weight: var(--weight-medium);
   }
   .hours {
     width: 100%;
     border-collapse: collapse;
   }
   .hours th {
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--ink-3);
-    font-weight: 500;
+    font-weight: var(--weight-medium);
     text-align: left;
     padding: 0 0 var(--space-2);
     border-bottom: 1px solid var(--ink-3);
@@ -688,7 +690,7 @@
   }
   .big {
     font-size: 1.25rem;
-    font-weight: 700;
+    font-weight: var(--weight-bold);
   }
 
   /* Today and the weather's fine print. */
@@ -731,13 +733,13 @@
     font-size: 0.875rem;
   }
   .etitle {
-    font-weight: 500;
+    font-weight: var(--weight-medium);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
   .eloc {
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -749,10 +751,10 @@
   }
   .events li.live .etime {
     color: var(--accent-ink);
-    font-weight: 600;
+    font-weight: var(--weight-bold);
   }
   .more {
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
   }
   .facts {
     display: grid;
@@ -765,7 +767,7 @@
     gap: var(--space-4);
   }
   .facts dt {
-    font-weight: 500;
+    font-weight: var(--weight-medium);
   }
   .facts dd {
     margin: 0;
@@ -800,7 +802,7 @@
     align-items: baseline;
   }
   .tag {
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     color: var(--ink-3);
     border: 1px solid var(--ring);
     border-radius: 999px;
