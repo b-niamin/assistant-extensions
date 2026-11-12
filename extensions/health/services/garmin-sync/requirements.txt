@@ -1,6 +1,6 @@
 # garmy pinned exactly: garmin_core/garmy_client.py is coupled to its shapes (open-vitals spec 096).
 garmy==2.0.0
-curl_cffi>=0.6
+curl_cffi>=0.17.0
 cryptography>=42
 psycopg[binary]>=3.1
 pytest>=8.0
