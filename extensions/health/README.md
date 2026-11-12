@@ -11,8 +11,9 @@ Kind `native`, scope `profile`, schema `health`.
 
 ```sh
 node scripts/ext.mjs install health     # in the assistant checkout (or the app's terminal)
-# garmin-sync starts in the worker within seconds (System settings -> Worker). Then, on the host, once:
-docker compose exec -it worker ext-run health garmin-sync python -m sync login   # the password is never stored
+# garmin-sync starts in the worker within seconds (System settings -> Worker). Then, in the app's terminal, once
+# (or the button in System settings -> Training & Health, which runs it there):
+ext-run health garmin-sync python -m sync login   # the password is never stored
 ```
 
 `--profile <id>` picks the profile to connect (default: the first one). Every connected profile is

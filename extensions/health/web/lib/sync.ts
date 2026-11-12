@@ -122,12 +122,12 @@ export function garminSource(o: SyncOverview, today: string, loginCommand: strin
   const state = status === 'reconnect' ? 'reconnect' : status === 'connected' ? 'connected' : 'not_connected';
   const src: SourceStatus = { id: 'garmin', name: 'Garmin Connect', state };
   if (state === 'not_connected') {
-    src.help = t('Sign in once in the terminal (on the server, in the assistant folder). Your password is never stored, only an encrypted login.');
+    src.help = t('Sign in once: the button runs the login in the terminal at the bottom, which asks for your Garmin email, password and code. The password is never stored, only an encrypted login.');
     src.command = loginCommand;
     return src;
   }
   if (state === 'reconnect') {
-    src.help = t('Garmin no longer accepts the saved login. Sign in again in the terminal:');
+    src.help = t('Garmin no longer accepts the saved login. Sign in again: the button runs the login in the terminal at the bottom.');
     src.command = loginCommand;
   }
   if (o.account?.connectedAt) src.account = t('Connected on {day}', { day: day(o.account.connectedAt) });

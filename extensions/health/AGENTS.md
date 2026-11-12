@@ -37,7 +37,8 @@ put new logic in `sync/`. Each pass runs as a fresh process, so edits go live on
 `TOKEN_ENCRYPTION_KEY`; the worker restarts it when its files change. Tests:
 `cd services/garmin-sync && python3 -m pytest -q`.
 
-- Login, once per profile, on the host: `docker compose exec -it worker ext-run health garmin-sync python -m sync login [--profile <id>]`
+- Login, once per profile, in the app's terminal: `ext-run health garmin-sync python -m sync login [--profile <id>]`
+  (on the host: `docker compose exec -it worker ext-run ...`)
   (email, password via getpass, MFA code). The password is never stored, only the encrypted token.
 - `python -m sync backfill [--since 2020-01-01]`: full history, resumable. The first one after a login is
   queued by itself (5 years back, stops after a year without data); older data is asked for in System

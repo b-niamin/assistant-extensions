@@ -7,14 +7,15 @@ import { todayIn, type ExtSources } from '$shell';
 import { syncOverview } from './lib/sync.server';
 import { describeSync, garminSource, longDay, olderLimit } from './lib/sync';
 
-const LOGIN = 'docker compose exec -it worker ext-run health garmin-sync python -m sync login';
+// Run by the panel's button in the app's terminal; ext-run reaches the worker (shell 4).
+const login = (profile: string) => `ext-run health garmin-sync python -m sync login --profile ${profile}`;
 
 export const sources: ExtSources = {
   async list(ctx) {
     const p = ctx.dataProfileId!;
     const o = await ctx.db((sql) => syncOverview(sql, p));
     const today = todayIn();
-    const garmin = garminSource(o, today, LOGIN, Date.now(), ctx.t);
+    const garmin = garminSource(o, today, login(p), Date.now(), ctx.t);
     if (garmin.state !== 'not_connected') garmin.sync = describeSync(o, Date.now(), ctx.t);
     return [
       garmin,
