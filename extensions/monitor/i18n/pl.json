@@ -1,6 +1,5 @@
 {
   "System monitor": "Monitor systemu",
-  "The machine the assistant runs on: CPU, memory, temperature, disks, network and containers, sampled every 30 seconds": "Maszyna, na której działa asystent: procesor, pamięć, temperatura, dyski, sieć i kontenery, odczyt co 30 sekund",
   "System": "System",
   "This machine": "Ta maszyna",
   "Beni says: {line}": "Beni mówi: {line}",
@@ -91,5 +90,6 @@
   "No reading since {time}": "Brak odczytu od {time}",
   "This extension reads the machine through a small background service, the collector, which the assistant's worker starts within seconds of the install.": "To rozszerzenie czyta maszynę przez małą usługę w tle, kolektor, którą worker asystenta uruchamia w kilka sekund po instalacji.",
   "The first reading comes within a minute. If none comes, see System settings -> Worker: the worker comes with the assistant from 12 November 2026 on.": "Pierwszy odczyt pojawi się w ciągu minuty. Jeśli go nie ma, zajrzyj do Ustawień systemu -> Worker: worker jest w asystencie od 12 listopada 2026.",
-  "No new reading since {time}. The collector may have stopped: see System settings -> Worker.": "Brak nowego odczytu od {time}. Kolektor mógł stanąć: zajrzyj do Ustawień systemu -> Worker."
+  "No new reading since {time}. The collector may have stopped: see System settings -> Worker.": "Brak nowego odczytu od {time}. Kolektor mógł stanąć: zajrzyj do Ustawień systemu -> Worker.",
+  "CPU, memory, temperature, disks, network and containers of the machine the assistant runs on: NAS, mini PC, Raspberry Pi or Mac.": "Procesor, pamięć, temperatura, dyski, sieć i kontenery maszyny, na której działa asystent: NAS, mini PC, Raspberry Pi albo Mac."
 }

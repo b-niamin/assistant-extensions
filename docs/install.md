@@ -19,5 +19,5 @@ docker compose exec terminal node scripts/ext.mjs install health
 `ext install` copies `extensions/<id>/` into the instance's `extensions/<id>/` and records this repo's
 commit; `ext update <id>` takes a newer one.
 
-`catalog.json` lists both kinds for the core's System settings → Extend the system; add an entry there
-when you add a folder.
+`catalog.json` lists both kinds for the core's System settings → Extend the system; `node
+scripts/build-catalog.mjs` remakes it from the folders when you add or change one.

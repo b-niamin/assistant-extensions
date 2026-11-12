@@ -1,23 +1,6 @@
 {
   "extensions": [
     {
-      "id": "health",
-      "name": "Training & Health",
-      "description": "Garmin sleep, HRV, Body Battery, readiness and activities, synced every 30 minutes.",
-      "kind": "native",
-      "scope": "profile",
-      "service": true,
-      "needs": "A Garmin Connect account",
-      "accessory": "stethoscope",
-      "i18n": {
-        "pl": {
-          "name": "Trening i zdrowie",
-          "description": "Sen, HRV, Body Battery, gotowość i aktywności z Garmina, synchronizowane co 30 minut.",
-          "needs": "Konto Garmin Connect"
-        }
-      }
-    },
-    {
       "id": "gym",
       "name": "Gym Tracker",
       "description": "Plan workouts, log sets and weights, see your progress and the muscles you trained.",
@@ -28,6 +11,23 @@
         "pl": {
           "name": "Dziennik treningowy",
           "description": "Planuj treningi, zapisuj serie i ciężary, śledź postępy i mięśnie, które pracowały."
+        }
+      }
+    },
+    {
+      "id": "health",
+      "name": "Training & Health",
+      "description": "Garmin sleep, HRV, Body Battery, readiness and activities, synced every 30 minutes.",
+      "kind": "native",
+      "scope": "profile",
+      "service": true,
+      "needs": "A Garmin Connect account",
+      "accessory": "headband",
+      "i18n": {
+        "pl": {
+          "name": "Trening i zdrowie",
+          "description": "Sen, HRV, Body Battery, gotowość i aktywności z Garmina, synchronizowane co 30 minut.",
+          "needs": "Konto Garmin Connect"
         }
       }
     },

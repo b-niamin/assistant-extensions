@@ -29,14 +29,13 @@ The manifest's fields and limits, the `$shell` SDK and the tools contract are in
 
 ## `catalog.json`
 
-What "Extend the system" in the app and `ext available` list. One entry per folder in `extensions/`
-(CI checks they match):
+What "Extend the system" in the app and `ext available` list. Never edited by hand: `node
+scripts/build-catalog.mjs` makes it from every folder in `extensions/` (CI fails when it is stale):
 
 | Field | What |
 | --- | --- |
-| `id`, `name`, `description`, `kind`, `scope` | as in the extension's manifest |
-| `accessory` | what Beni wears on its card |
-| `service` | `true` when it brings background work (the worker runs it) |
-| `needs` | what the owner needs before it works, e.g. "A Garmin Connect account" |
-| `i18n.<lang>` | `name`, `description`, `needs` in that language |
+| `id`, `name`, `description`, `kind`, `scope`, `accessory` | the manifest's |
+| `needs` | the manifest's optional `needs`: what the owner needs before it works, e.g. "A Garmin Connect account" |
+| `service` | `true` when the manifest has `services` or `jobs` (the worker runs them) |
+| `i18n.<lang>` | `name`, `description`, `needs` from the extension's `i18n/<lang>.json` |
 

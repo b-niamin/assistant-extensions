@@ -1,8 +1,9 @@
 {
   "id": "home",
   "name": "Home",
-  "description": "Home Assistant at a glance: lights, doors and windows, camera alerts, weather and today's calendar",
-  "version": "1.5.1",
+  "description": "A calm board for the house: lights, doors and windows, camera alerts, weather with warnings and today's calendar, from Home Assistant.",
+  "needs": "Home Assistant with a long-lived access token",
+  "version": "1.5.2",
   "kind": "native",
   "scope": "shared",
   "accessory": "bulb",

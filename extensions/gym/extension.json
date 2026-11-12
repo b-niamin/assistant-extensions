@@ -1,8 +1,8 @@
 {
   "id": "gym",
   "name": "Gym Tracker",
-  "description": "Plan workouts, log sets and weights, track progress and see which muscles you trained on a body map.",
-  "version": "1.4.1",
+  "description": "Plan workouts, log sets and weights, see your progress and the muscles you trained.",
+  "version": "1.4.2",
   "kind": "onefile",
   "scope": "profile",
   "accessory": "headband",

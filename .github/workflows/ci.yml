@@ -1,5 +1,5 @@
 # Checks every push and pull request (audit report T2): each extension against the core on GitHub main
-# (ext check, vitest, svelte-check), the Python services' tests, and catalog.json against the folders.
+# (ext check, vitest, svelte-check), the Python services' tests, and that catalog.json is made from the folders.
 name: CI
 on:
   push:
@@ -28,8 +28,8 @@ jobs:
           node-version: 26
           cache: npm
           cache-dependency-path: .core/apps/web/package-lock.json
-      - name: Catalog matches the folders
-        run: node scripts/check-catalog.mjs
+      - name: catalog.json is made from the extensions
+        run: node scripts/build-catalog.mjs --check
       - run: npm ci --no-audit --no-fund
         working-directory: .core/apps/web
       - name: ext check (manifests, imports, routes, translations)

@@ -1,8 +1,9 @@
 {
   "id": "health",
   "name": "Training & Health",
-  "description": "Garmin: sleep, HRV, Body Battery, readiness, activities",
-  "version": "0.7.0",
+  "description": "Garmin sleep, HRV, Body Battery, readiness and activities, synced every 30 minutes.",
+  "needs": "A Garmin Connect account",
+  "version": "0.7.1",
   "kind": "native",
   "scope": "profile",
   "accessory": "headband",

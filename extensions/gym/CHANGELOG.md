@@ -3,6 +3,10 @@
 Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/) as described in ARTIFACTS-DEVELOPMENT.md.
 
+## 1.4.2 - 2026-11-12
+
+The manifest's description is the store listing's too (catalog.json is made from it). The app is unchanged.
+
 ## 1.4.0 - 2026-11-11
 
 Tools for Claude through the assistant's MCP server (`web/tools.server.ts`). The app itself is unchanged.

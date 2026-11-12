@@ -1,8 +1,8 @@
 {
   "id": "monitor",
   "name": "System monitor",
-  "description": "The machine the assistant runs on: CPU, memory, temperature, disks, network and containers, sampled every 30 seconds",
-  "version": "1.3.0",
+  "description": "CPU, memory, temperature, disks, network and containers of the machine the assistant runs on: NAS, mini PC, Raspberry Pi or Mac.",
+  "version": "1.3.1",
   "kind": "native",
   "scope": "shared",
   "accessory": "wrench",

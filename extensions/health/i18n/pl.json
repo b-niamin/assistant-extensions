@@ -1,6 +1,5 @@
 {
   "Training & Health": "Trening i zdrowie",
-  "Garmin: sleep, HRV, Body Battery, readiness, activities": "Garmin: sen, HRV, Body Battery, gotowość, aktywności",
   "Readiness & HRV": "Gotowość i HRV",
   "Running": "Bieganie",
   "Resting heart rate": "Tętno spoczynkowe",
@@ -185,5 +184,7 @@
   "Multi sport": "Multisport",
   "The sync service is not picking up requests. Restart it in System settings -> Worker (Training & Health · garmin-sync).": "Usługa synchronizacji nie odbiera zleceń. Zrestartuj ją w Ustawieniach systemu -> Worker (Trening i zdrowie · garmin-sync).",
   "Last Garmin sync {when}": "Ostatnia synchronizacja z Garminem {when}",
-  "Garmin synced {when}, some data skipped": "Garmin zsynchronizowany {when}, część danych pominięta"
+  "Garmin synced {when}, some data skipped": "Garmin zsynchronizowany {when}, część danych pominięta",
+  "A Garmin Connect account": "Konto Garmin Connect",
+  "Garmin sleep, HRV, Body Battery, readiness and activities, synced every 30 minutes.": "Sen, HRV, Body Battery, gotowość i aktywności z Garmina, synchronizowane co 30 minut."
 }

@@ -1,6 +1,5 @@
 {
   "Home": "Dom",
-  "Home Assistant at a glance: lights, doors and windows, camera alerts, weather and today's calendar": "Home Assistant w skrócie: światła, drzwi i okna, alerty z kamer, pogoda i dzisiejszy kalendarz",
   "Home Assistant address": "Adres Home Assistant",
   "e.g. http://homeassistant.local:8123": "np. http://homeassistant.local:8123",
   "Long-lived access token": "Token długoterminowy",
@@ -211,5 +210,7 @@
   "Home Assistant did not answer in time": "Home Assistant nie odpowiedział na czas",
   "ended": "zakończone",
   "New alert: {names}": "Nowy alert: {names}",
-  "Calendar at {host} is not on the internet: only public calendar links work": "Kalendarz pod {host} nie jest w internecie: działają tylko publiczne linki do kalendarzy"
+  "Calendar at {host} is not on the internet: only public calendar links work": "Kalendarz pod {host} nie jest w internecie: działają tylko publiczne linki do kalendarzy",
+  "Home Assistant with a long-lived access token": "Home Assistant z tokenem długoterminowym",
+  "A calm board for the house: lights, doors and windows, camera alerts, weather with warnings and today's calendar, from Home Assistant.": "Spokojna tablica domu: światła, drzwi i okna, alerty z kamer, pogoda z ostrzeżeniami i dzisiejszy kalendarz, z Home Assistant."
 }
