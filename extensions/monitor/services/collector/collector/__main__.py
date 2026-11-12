@@ -10,7 +10,8 @@ import json
 import os
 import sys
 import time
-from datetime import datetime, timezone
+
+from beni import env_int, log
 
 from . import sample
 
@@ -24,10 +25,6 @@ DISKS = {
 }
 
 
-def log(msg: str) -> None:
-    print(f"{datetime.now(timezone.utc).isoformat(timespec='seconds')} {msg}", flush=True)
-
-
 def once() -> None:
     _, _, st = sample.take(PROC, SYS, DISKS, sample.State())
     time.sleep(2)
@@ -35,22 +32,13 @@ def once() -> None:
     print(json.dumps({"snapshot": snap, "sample": row}, indent=2))
 
 
-def drop_root() -> None:
-    """Never read the machine as root: the host's /proc is mounted, and root could read other processes'
-    environment (secrets). The worker already runs it as the extension's own user; started as root in a
-    container of its own, it becomes nobody."""
-    if os.getuid() == 0:
-        os.setgroups([])
-        os.setgid(65534)
-        os.setuid(65534)
-
-
 def loop() -> None:
-    drop_root()
+    # The worker runs it as the extension's own user, never root (root could read other processes'
+    # environment through the host's /proc).
     from .store import Store
 
-    interval = max(5, int(os.environ.get("MONITOR_INTERVAL_SECONDS", "30")))
-    store = Store(os.environ["DATABASE_URL"])
+    interval = env_int("MONITOR_INTERVAL_SECONDS", 30, minimum=5)
+    store = Store()
     log(f"collector: every {interval} s, proc={PROC} sys={SYS}")
     _, _, state = sample.take(PROC, SYS, DISKS, sample.State())
     time.sleep(2)
@@ -73,11 +61,10 @@ def loop() -> None:
 
 
 def prune() -> None:
-    drop_root()
     from .store import Store
 
-    keep = max(1, int(os.environ.get("MONITOR_KEEP_DAYS", "30")))
-    n = Store(os.environ["DATABASE_URL"]).prune(keep)
+    keep = env_int("MONITOR_KEEP_DAYS", 30, minimum=1)
+    n = Store().prune(keep)
     log(f"pruned {n} samples older than {keep} days")
 
 

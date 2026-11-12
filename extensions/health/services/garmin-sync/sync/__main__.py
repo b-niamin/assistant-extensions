@@ -19,11 +19,11 @@ import datetime as _dt
 import getpass
 import json
 import logging
-import os
 import subprocess
 import sys
 import time
 
+from beni import env, env_int, logger
 from garmin_core.auth import GarminAuth
 from garmin_core.errors import InvalidCredentials, MfaRequired
 from garmin_core.metrics import MetricsService
@@ -36,7 +36,7 @@ log = logging.getLogger("garmin-sync")
 
 
 def _env(name: str) -> str:
-    v = os.environ.get(name)
+    v = env(name)
     if not v:
         sys.exit(f"missing env {name}")
     return v
@@ -92,7 +92,7 @@ def _pass(profile: str, kind: str = "incremental", since: _dt.date | None = None
     if since:
         args += ["--since", since.isoformat()]
     # A pass that hangs (Garmin never answering) must not stop the loop for good.
-    limit = int(os.environ.get("SYNC_PASS_TIMEOUT_S", "7200" if kind == "backfill" else "1200"))
+    limit = env_int("SYNC_PASS_TIMEOUT_S", 7200 if kind == "backfill" else 1200, minimum=60)
     try:
         rc = subprocess.call(args, timeout=limit)
     except subprocess.TimeoutExpired:
@@ -103,7 +103,7 @@ def _pass(profile: str, kind: str = "incremental", since: _dt.date | None = None
 
 
 def cmd_loop(_: argparse.Namespace) -> int:
-    minutes = max(5, int(os.environ.get("SYNC_INTERVAL_MINUTES", "30")))
+    minutes = env_int("SYNC_INTERVAL_MINUTES", 30, minimum=5)
     _, store = _deps()
     due: dict[str, float] = {}  # profile -> monotonic time of its next scheduled pass
     try:
@@ -140,13 +140,13 @@ def cmd_loop(_: argparse.Namespace) -> int:
 
 
 def main() -> int:
-    logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"), format="%(asctime)s %(levelname)s %(name)s %(message)s")
+    logger("garmin-sync")  # the worker's log format, LOG_LEVEL
     p = argparse.ArgumentParser(prog="python -m sync")
     sub = p.add_subparsers(dest="cmd", required=True)
     for name in ("login", "status", "run", "backfill"):
         sp = sub.add_parser(name)
         # Default: DEFAULT_PROFILE, else the first profile (the one made in /setup).
-        sp.add_argument("--profile", default=os.environ.get("DEFAULT_PROFILE") or None)
+        sp.add_argument("--profile", default=env("DEFAULT_PROFILE") or None)
         if name == "backfill":
             sp.add_argument("--since", help="YYYY-MM-DD (default: 5 years back)")
     sub.add_parser("loop")

@@ -15,11 +15,12 @@ Rules of the shell's `AGENTS.md` and `specs/002-extensions.md` apply. In short: 
   their memory from the cgroup files, their names from what they run (`read.container_name`).
 - It runs in the assistant's worker (manifest `services`: `collector`, with `host: ["proc", "sys"]`;
   `jobs`: `prune`, nightly), as the extension's own user, never root: as root it could read
-  `/proc/<pid>/environ` of host processes (`drop_root()` makes it `nobody` if it is ever started as
-  root). Log: `/worker/logs/monitor.collector.log`; `python -m collector once` prints one reading.
+  `/proc/<pid>/environ` of host processes. Logging, settings and the database login come from the
+  worker's `beni` module. Log: `/worker/logs/monitor.collector.log`;
+  `docker compose exec worker ext-run monitor collector python -m collector once` prints one reading.
 - Web: `web/lib/data.server.ts` reads, `web/lib/monitor.ts` (units, thresholds, Beni, problems,
-  buckets) and `web/lib/tile.ts` are pure and tested in `monitor.test.ts`. `web/lib/Chart.svelte` draws one
-  or two series over time. The page polls `/monitor/state` every 30 s.
+  buckets) and `web/lib/tile.ts` are pure and tested in `monitor.test.ts`. The chart is the shell's `LineChart`
+  (`$shell/ui`). The page polls `/monitor/state` every 30 s.
 
 ## Data
 

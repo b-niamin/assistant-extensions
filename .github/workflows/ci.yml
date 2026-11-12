@@ -47,14 +47,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [health/services/garmin-sync, monitor/services/collector]
+        include:
+          - service: health/services/garmin-sync
+            modules: sync.__main__ sync.store
+          - service: monitor/services/collector
+            modules: collector.__main__ collector.store
     defaults:
       run:
         working-directory: extensions/${{ matrix.service }}
+    env:
+      # `import beni`: the worker puts docker/worker/lib on every unit's path.
+      PYTHONPATH: ${{ github.workspace }}/.core/docker/worker/lib
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          repository: b-niamin/assistant
+          path: .core
       - uses: actions/setup-python@v7
         with:
           python-version: '3.15'
-      - run: pip install -r requirements.txt pytest
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Imports (as the worker starts them)
+        run: python -c "import importlib, sys; [importlib.import_module(m) for m in sys.argv[1:]]" ${{ matrix.modules }}
       - run: python -m pytest -q

@@ -1,6 +1,7 @@
-# garmy pinned exactly: garmin_core/garmy_client.py is coupled to its shapes (open-vitals spec 096).
+# Exact versions: the worker builds the venv from this file, so a run never picks up a new release on
+# its own; Dependabot proposes the bumps. Test tools are in requirements-dev.txt (not installed here).
+# garmy: garmin_core/garmy_client.py is coupled to its shapes (open-vitals spec 096).
 garmy==2.0.0
-curl_cffi>=0.17
-cryptography>=50.0.2
-psycopg[binary]>=3.3.9
-pytest>=9.2
+curl_cffi==0.17.0
+cryptography==50.0.2
+psycopg[binary]==3.3.9

@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 import psycopg
+from beni import connect
 from psycopg.types.json import Jsonb
 
 SAMPLE_COLS = ("cpu_pct", "load1", "mem_used", "mem_total", "swap_used", "temp_c",
@@ -11,14 +12,13 @@ SAMPLE_COLS = ("cpu_pct", "load1", "mem_used", "mem_total", "swap_used", "temp_c
 
 
 class Store:
-    def __init__(self, dsn: str) -> None:
-        self._dsn = dsn
+    def __init__(self) -> None:
         self._c: psycopg.Connection | None = None
 
     def _conn(self) -> psycopg.Connection:
         # One connection for the life of the process; reopened after the database restarts.
         if self._c is None or self._c.closed:
-            self._c = psycopg.connect(self._dsn, autocommit=True)
+            self._c = connect()
         return self._c
 
     def write(self, snapshot: dict[str, Any], sample: dict[str, Any] | None) -> None:

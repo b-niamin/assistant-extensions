@@ -1,2 +1,2 @@
-psycopg[binary]>=3.3.9
-pytest>=9.2
+# Exact versions (Dependabot proposes the bumps); test tools are in requirements-dev.txt.
+psycopg[binary]==3.3.9
