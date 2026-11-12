@@ -25,8 +25,7 @@ Every table is keyed by `profile_id` (read with `psql "$CLAUDE_RO_DATABASE_URL"`
 | `health.connected_accounts` | which profiles have a Garmin login (`connected`, `reconnect`, `disconnected`), mirrored by garmin-sync without the secret |
 | `health.secret_garmin_tokens` | encrypted Garmin logins; only the `garmin-sync` service can read it |
 
-Look at the raw JSON (`data`, `raw`) before assuming a field name. Logs: `/worker/logs/health.garmin-sync.log`
-(before 0.5.0: `/logs/garmin-sync.log`).
+Look at the raw JSON (`data`, `raw`) before assuming a field name. Logs: `/worker/logs/health.garmin-sync.log`.
 
 ## garmin-sync
 

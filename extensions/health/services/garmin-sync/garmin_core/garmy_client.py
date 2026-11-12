@@ -123,30 +123,6 @@ def make_auth_client() -> Any:
     return auth
 
 
-# Files garmy's default TokenFileManager wrote before make_auth_client disabled it.
-_GARMY_TOKEN_FILES = ("oauth1_token.json", "oauth2_token.json")
-
-
-def purge_disk_token_cache(home: Path | None = None) -> int:
-    """Delete plaintext token files an earlier sidecar let garmy leave in ``~/.garmy``.
-
-    Called once at startup. Returns how many files were removed (the only thing
-    worth logging: the paths and contents are not).
-    """
-    directory = (home or Path.home()) / ".garmy"
-    removed = 0
-    for name in _GARMY_TOKEN_FILES:
-        path = directory / name
-        try:
-            path.unlink()
-            removed += 1
-        except FileNotFoundError:
-            continue
-        except OSError:
-            logger.warning("Could not remove a stale garmy token file.")
-    return removed
-
-
 def make_api_client(auth: Any) -> Any:
     """Construct a garmy APIClient bound to an authenticated AuthClient."""
     if APIClient is None:  # pragma: no cover - guarded for local dev only
