@@ -129,5 +129,11 @@ html = shell.replace('/*@CSS@*/', css).replace('/*@JS@*/', js)
 page = ('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n'
         + html.replace('<div class="wrap">', '</head>\n<body>\n<div class="wrap">', 1) + '\n</body>\n</html>\n')
+# No plate calculator: its quick action on the home screen and the "Plates" button on an exercise are gone.
+page = must(page, '.qa{display:grid;grid-template-columns:repeat(4,1fr);', '.qa{display:grid;grid-template-columns:repeat(3,1fr);')
+page = must(page, '["plates-free",t("qaPlates"),IC.plate,true],', '')
+page = must(page, '${l&&BAR.has(l.id)&&u!=="s"?`<button class="tool" data-act="plates" data-ex="${i}">${esc(t("plates"))}</button>`:""}\n        ', '')
+page = must(page, '"Changes labels and plates. Numbers you logged are not converted.","Zmienia opisy i talerze. Zapisane liczby nie są przeliczane."',
+            '"Changes labels. Numbers you logged are not converted.","Zmienia opisy. Zapisane liczby nie są przeliczane."')
 out.write_text(page, encoding='utf-8')
 print(f'{out.name}: {len(page):,} bytes')

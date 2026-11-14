@@ -130,7 +130,7 @@ nav.tabs .live{position:absolute;top:6px;right:calc(50% - 18px);width:8px;height
 .hero-goal{display:flex;flex-direction:column;align-items:flex-end;gap:6px;font-size:13px;color:var(--hero-mut)}
 .hero .stepper{background:var(--sunk);color:var(--g-ink)}
 
-.qa{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:2px 0 14px}
+.qa{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:2px 0 14px}
 .qa-b{display:flex;flex-direction:column;align-items:center;gap:7px;transition:transform .15s var(--ease)}
 .qa-b:active{transform:scale(.93)}
 .qa-b:disabled{opacity:.4;cursor:default}
@@ -818,7 +818,7 @@ const S={
  upTo2:["up to 2 days","do 2 dni"],d23:["2–3 days","2–3 dni"],ready:["ready","gotowe"],over2w:["over 2 weeks","ponad 2 tyg."],
  /* settings */
  sGeneral:["General","Ogólne"],sLang:["Language","Język"],sUnit:["Weight unit","Jednostka ciężaru"],
- sUnitHint:["Changes labels and plates. Numbers you logged are not converted.","Zmienia opisy i talerze. Zapisane liczby nie są przeliczane."],
+ sUnitHint:["Changes labels. Numbers you logged are not converted.","Zmienia opisy. Zapisane liczby nie są przeliczane."],
  sSound:["Rest timer sound","Dźwięk po przerwie"],sSoundHint:["A short beep when the rest is over","Krótki sygnał, gdy przerwa się skończy"],
  sWake:["Keep screen on","Nie wygaszaj ekranu"],sWakeHint:["While a workout is in progress, if the browser allows it","Podczas treningu, jeśli przeglądarka na to pozwala"],
  sData:["Your data","Twoje dane"],sDataHint:["Stored only in this browser. Export a backup now and then.","Zapisane tylko w tej przeglądarce. Co jakiś czas zrób kopię."],
@@ -1128,7 +1128,7 @@ function renderHome(){
   const td=today(); const days=new Set(done.map(w=>w.date)); const wd=WD();
   let wk=""; for(let i=0;i<7;i++){ const d=new Date(mon); d.setDate(mon.getDate()+i); const s=ds(d); wk+=`<div class="hd ${days.has(s)?"has":""} ${s===td?"today":""} ${s>td?"future":""}"><span>${wd[i]}</span><b>${d.getDate()}</b></div>`; }
   const ps=plans(); const last=done[0];
-  const qa=[["start",t("qaStart"),IC.play,true],["repeat",t("qaRepeat"),IC.rep,!!last],["plates-free",t("qaPlates"),IC.plate,true],["go-lib",t("qaLib"),IC.book,true]];
+  const qa=[["start",t("qaStart"),IC.play,true],["repeat",t("qaRepeat"),IC.rep,!!last],["go-lib",t("qaLib"),IC.book,true]];
   const wa=weekAgo();
   const waEx=wa?(wa.exercises||[]).filter(e=>valid(e).length):[];
   $("#view").innerHTML=`<div class="col-a">
@@ -1200,7 +1200,6 @@ function renderWorkout(){
       ${prev&&prev.note&&!ex.note?`<div class="prevnote">${esc(t("lastNote"))}<i>${esc(prev.note)}</i></div>`:""}
       <div class="ex-foot"><button class="link" data-act="set-add" data-ex="${i}">${esc(t("addSet"))}</button>
         ${ex.noteOpen||ex.note?"":`<button class="tool" data-act="note" data-ex="${i}">${esc(t("note"))}</button>`}
-        ${l&&BAR.has(l.id)&&u!=="s"?`<button class="tool" data-act="plates" data-ex="${i}">${esc(t("plates"))}</button>`:""}
         <button class="tool" data-act="ex-type" data-ex="${i}">${esc(u==="s"?t("measureW"):t("measureT"))}</button></div></article>`;
   });
   h+=`<button class="btn btn-line btn-block" data-act="ex-add" style="margin:4px 0 10px">${esc(t("addEx"))}</button>`;

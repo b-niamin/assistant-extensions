@@ -3,6 +3,10 @@
 Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/) as described in ARTIFACTS-DEVELOPMENT.md.
 
+## 1.4.4 - 2026-11-14
+
+- No plate calculator: the "Plates" quick action on the home screen and the "Plates" button on an exercise are gone.
+
 ## 1.4.3 - 2026-11-14
 
 - A fresh install starts empty. The app no longer fills itself with example plans and about eight weeks of made-up
