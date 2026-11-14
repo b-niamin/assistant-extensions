@@ -1808,7 +1808,6 @@ function toast(m,kind){const tt=$("#toast");tt.textContent=m;tt.classList.toggle
 
 /* ---------- start ---------- */
 load(); initLang();
-if(!settings().seeded&&![...docs.keys()].some(k=>k!=="settings")){ makeSample().forEach((v,k)=>docs.set(k,v)); saveSettings({seeded:true}); persist(); }
 applyStatic(); render(); tickRest();
 })();
 

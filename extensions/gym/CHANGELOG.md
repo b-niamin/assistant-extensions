@@ -3,6 +3,11 @@
 Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/) as described in ARTIFACTS-DEVELOPMENT.md.
 
+## 1.4.3 - 2026-11-14
+
+- A fresh install starts empty. The app no longer fills itself with example plans and about eight weeks of made-up
+  workouts on first open; "Load example data" in Settings still adds them on request.
+
 ## 1.4.2 - 2026-11-12
 
 The manifest's description is the store listing's too (catalog.json is made from it). The app is unchanged.

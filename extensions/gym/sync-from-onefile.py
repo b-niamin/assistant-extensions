@@ -114,6 +114,9 @@ app = must(app, 'function initLang(){ const s=settings().lang; if(s) lang=s; els
            'const SHELL_LANG=["en","pl"].includes(window.assistantLang)?window.assistantLang:null;\n'
            'function initLang(){ const s=SHELL_LANG||settings().lang; if(s) lang=s; else {')
 
+# A fresh install starts empty: no example plans and workouts on first open ("Load example data" stays in Settings).
+app = must(app, 'if(!settings().seeded&&![...docs.keys()].some(k=>k!=="settings")){ makeSample().forEach((v,k)=>docs.set(k,v)); saveSettings({seeded:true}); persist(); }\n', '')
+
 body_json = json.dumps(json.loads(rd('body.json')), separators=(',', ':'))
 js = app.replace('/*@LIB@*/', rd('lib.js')).replace('/*@I18N@*/', i18n).replace('/*@BODY@*/null', body_json)
 if '/*@IMG@*/null' in js:
