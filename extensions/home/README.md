@@ -14,8 +14,9 @@ distractions, a handful of answers:
   The board refreshes itself (30 s to 5 min) and right away when a tablet wakes.
 - **Alerts**: sensors you pick (a camera's person detection, the doorbell) show up at the bottom while on
   and for a few minutes after.
-- **Today** from calendar subscription links (ICS / webcal: Google, iCloud, Outlook) and your Home
-  Assistant calendars.
+- **Today** from the shared calendar: your Home Assistant calendars, and with the **Calendar** app also its
+  entries, subscribed calendars (Google, iCloud, Outlook) and what other apps put on it (workouts, activities).
+  Home's Home Assistant calendars show up in the Calendar app's month too.
 
 Beni wears its bulb in the top bar and keeps watch: asleep when the house is quiet at night, on its toes
 on an alert, tired when it cannot reach Home Assistant. Full screen (top right) also keeps the screen on.
@@ -27,10 +28,7 @@ Read-only on purpose: it never switches anything in Home Assistant.
 At the top, under **Connected accounts**, the **Home Assistant** card takes the address (e.g.
 `http://homeassistant.local:8123`) and a long-lived access token (Home Assistant -> your profile ->
 Security). Connect checks it right away and the card then shows the version and what the board watches.
-The **Calendars** card takes subscription links (ICS or webcal), one per row with [+] and [x]: Google's "Secret
-address in iCal format", an iCloud public calendar, an Outlook published calendar. They are read-only,
-need no Home Assistant, and are kept as a secret because such a link opens the calendar to anyone who has
-it; the card lists each calendar by name with what it has today.
+Calendar subscription links (ICS or webcal) are added in the **Calendar** app's settings.
 Below, under Settings, the **weather location**: `Warszawa` or `52.23, 21.01`; empty = the home location
 set in Home Assistant.
 

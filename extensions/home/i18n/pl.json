@@ -7,7 +7,6 @@
   "Weather location": "Miejsce dla pogody",
   "Alert sensors": "Czujniki alertów",
   "How long an alert stays after the sensor goes quiet.": "Jak długo alert zostaje po tym, jak czujnik ucichnie.",
-  "Calendars": "Kalendarze",
   "Home Assistant": "Home Assistant",
   "Temperature and precipitation over the next 24 hours. Use the arrow keys to read each hour.": "Temperatura i opady w ciągu najbliższych 24 godzin. Strzałkami odczytasz każdą godzinę.",
   "dry for 24 h": "sucho przez 24 h",
@@ -155,9 +154,6 @@
   "Home Assistant sent no states": "Home Assistant nie przysłał stanów",
   "Address": "Adres",
   "A place (Warszawa) or coordinates (52.23, 21.01). Empty: the home location set in Home Assistant.": "Miejscowość (Warszawa) albo współrzędne (52.23, 21.01). Puste: lokalizacja domu ustawiona w Home Assistant.",
-  "Calendar links": "Linki do kalendarzy",
-  "Subscription links (ICS or webcal) from Google, iCloud, Outlook, ...: paste one and press +, once per calendar. Read-only. Kept secret: such a link opens the calendar to anyone who has it.": "Linki subskrypcji (ICS lub webcal) z Google, iCloud, Outlooka, ...: wklej jeden i naciśnij +, osobno dla każdego kalendarza. Tylko do odczytu. Trzymane jako sekret: taki link otwiera kalendarz każdemu, kto go ma.",
-  "Add calendar links in System settings, or connect Home Assistant.": "Dodaj linki do kalendarzy w ustawieniach systemu albo połącz Home Assistant.",
   "{n} min": "{n} min",
   "{n} s": "{n} s",
   "Home Assistant rejected the token. Paste a new long-lived access token.": "Home Assistant odrzucił token. Wklej nowy token długoterminowy.",
@@ -170,24 +166,7 @@
   "Refresh": "Odświeżanie",
   "Check connection": "Sprawdź połączenie",
   "What the board watches is set by Claude or Codex: ask in the terminal.": "To, co obserwuje tablica, ustawia Claude albo Codex: zapytaj w terminalu.",
-  "Paste a subscription link (ICS or webcal) and press +, once per calendar. Google: calendar settings -> \"Secret address in iCal format\". iCloud: share the calendar as a public calendar. Outlook: publish a calendar -> ICS.": "Wklej link subskrypcji (ICS lub webcal) i naciśnij +, osobno dla każdego kalendarza. Google: ustawienia kalendarza -> \"Adres prywatny w formacie iCal\". iCloud: udostępnij kalendarz jako publiczny. Outlook: opublikuj kalendarz -> ICS.",
-  "{n} links": {
-    "one": "{n} link",
-    "few": "{n} linki",
-    "many": "{n} linków",
-    "other": "{n} linku"
-  },
-  ", {n} not loading": ", {n} się nie wczytuje",
-  "{n} events today": {
-    "one": "{n} wydarzenie dziś",
-    "few": "{n} wydarzenia dziś",
-    "many": "{n} wydarzeń dziś",
-    "other": "{n} wydarzenia dziś"
-  },
-  "nothing today": "dziś nic",
   "Unknown action.": "Nieznana akcja.",
-  "No calendar links yet.": "Nie ma jeszcze linków do kalendarzy.",
-  "Calendars: {list}.": "Kalendarze: {list}.",
   "Saved. Add both the address and the token to connect.": "Zapisano. Dodaj adres i token, żeby połączyć.",
   "Connected to Home Assistant{where}: {lights}, {contacts}.": "Połączono z Home Assistant{where}: {lights}, {contacts}.",
   "{n} lights": {
@@ -202,15 +181,12 @@
     "many": "{n} drzwi lub okien",
     "other": "{n} drzwi lub okna"
   },
-  "Calendar at {host} answered {status}": "Kalendarz pod {host} odpowiedział {status}",
-  "Calendar at {host} is too large": "Kalendarz pod {host} jest za duży",
-  "Calendar at {host} is not a calendar": "Pod {host} nie ma kalendarza",
-  "Calendar at {host} did not answer in time": "Kalendarz pod {host} nie odpowiedział na czas",
-  "Calendar at {host} failed: {error}": "Kalendarz pod {host} nie działa: {error}",
   "Home Assistant did not answer in time": "Home Assistant nie odpowiedział na czas",
   "ended": "zakończone",
   "New alert: {names}": "Nowy alert: {names}",
-  "Calendar at {host} is not on the internet: only public calendar links work": "Kalendarz pod {host} nie jest w internecie: działają tylko publiczne linki do kalendarzy",
   "Home Assistant with a long-lived access token": "Home Assistant z tokenem długoterminowym",
-  "A calm board for the house: lights, doors and windows, camera alerts, weather with warnings and today's calendar, from Home Assistant.": "Spokojna tablica domu: światła, drzwi i okna, alerty z kamer, pogoda z ostrzeżeniami i dzisiejszy kalendarz, z Home Assistant."
+  "A calm board for the house: lights, doors and windows, camera alerts, weather with warnings and today's calendar, from Home Assistant.": "Spokojna tablica domu: światła, drzwi i okna, alerty z kamer, pogoda z ostrzeżeniami i dzisiejszy kalendarz, z Home Assistant.",
+  "Install the Calendar app or connect Home Assistant.": "Zainstaluj aplikację Kalendarz albo połącz Home Assistanta.",
+  "The calendar did not answer in time": "Kalendarz nie odpowiedział na czas",
+  "{name} did not answer": "{name} nie odpowiada"
 }

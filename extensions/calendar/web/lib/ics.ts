@@ -1,13 +1,11 @@
 /**
- * Calendar subscriptions (iCalendar / ICS links from Google, iCloud, Outlook, ...), read-only and
- * independent of Home Assistant: parse a feed and pick what happens today in the house's time zone.
+ * Calendar subscriptions (iCalendar / ICS links from Google, iCloud, Outlook, ...), read-only: parse a feed
+ * and list its occurrences in a range, in the owner's time zone.
  * Handles all-day and timed events, TZID / UTC / floating times, and the usual recurrences (RRULE with
  * DAILY/WEEKLY/MONTHLY/YEARLY, INTERVAL, BYDAY, BYMONTHDAY, BYMONTH, COUNT, UNTIL), EXDATE and moved
- * occurrences (RECURRENCE-ID). Pure: the fetch lives in snapshot.server.ts.
+ * occurrences (RECURRENCE-ID). Pure: the fetch lives in feeds.server.ts.
  */
-import type { Translate } from '$shell';
-import { localDay, offsetMinutes, type CalendarEvent } from './calendar';
-import { EN } from '$shell';
+import { dayIn, offsetIn, type CalendarEntry, type CalendarRange } from '$shell';
 
 interface Prop {
   value: string;
@@ -100,8 +98,8 @@ export function toEpoch(t: IcsTime, houseTz: string): number {
   const naive = Date.UTC(t.y, t.m - 1, t.d) + (t.secs ?? 0) * 1000;
   if (t.tz === 'UTC') return naive;
   const tz = t.tz && validZone(t.tz) ? t.tz : houseTz;
-  const first = naive - offsetMinutes(tz, new Date(naive)) * 60_000;
-  return naive - offsetMinutes(tz, new Date(first)) * 60_000;
+  const first = naive - offsetIn(new Date(naive), tz) * 60_000;
+  return naive - offsetIn(new Date(first), tz) * 60_000;
 }
 
 /** "2026-11-11" for an ICS time's own date. */
@@ -240,87 +238,75 @@ function matchesRule(ev: IcsEvent, rule: Record<string, string>, day: number): b
   }
 }
 
-/** Does the rule produce an occurrence on `day`, honouring UNTIL and COUNT (counted from the start)? */
-function occursOn(ev: IcsEvent, rule: Record<string, string>, day: number, houseTz: string): boolean {
-  if (!matchesRule(ev, rule, day)) return false;
-  if (rule.UNTIL) {
-    const u = parseTime({ value: rule.UNTIL, params: {} });
-    if (u) {
-      const occStart = toEpoch({ ...fromDayNum(day), secs: ev.start.secs, tz: ev.start.tz }, houseTz);
-      if (occStart > toEpoch(u.secs === null ? { ...u, secs: 86399 } : u, houseTz)) return false;
-    }
-  }
-  if (rule.COUNT) {
-    const count = Number(rule.COUNT);
-    let n = 0;
-    const startDay = dayNum(ev.start.y, ev.start.m, ev.start.d);
-    // Bounded: a COUNT rule is short in practice; give up (no occurrence) past ~30 years.
-    for (let x = startDay; x <= day && x - startDay < 11000; x++) {
-      if (matchesRule(ev, rule, x)) n++;
-      if (n > count) return false;
-    }
-    return n <= count && n > 0;
-  }
-  return true;
-}
-
-/** The events of one feed that touch today (house zone), as board events. */
-export function todayFromIcs(cal: IcsCalendar, calendar: string, houseTz: string, now = new Date(), t: Translate = EN): CalendarEvent[] {
-  const today = localDay(houseTz, now);
-  const [ty, tm, td] = today.split('-').map(Number);
-  const todayNum = dayNum(ty, tm, td);
-  const dayStart = toEpoch({ y: ty, m: tm, d: td, secs: 0, tz: houseTz }, houseTz);
-  const dayEnd = toEpoch({ ...fromDayNum(todayNum + 1), secs: 0, tz: houseTz }, houseTz);
+/** Occurrences of one feed that overlap the range, as calendar entries (ids: uid and the occurrence's day). */
+export function occurrences(cal: IcsCalendar, range: CalendarRange, max = 2000): CalendarEntry[] {
+  const tz = range.timeZone;
+  const from = range.from.getTime();
+  const to = range.to.getTime();
+  const [fy, fm, fd] = dayIn(range.from, tz).split('-').map(Number);
+  const [ly, lm, ld] = dayIn(new Date(to - 1), tz).split('-').map(Number);
+  const firstNum = dayNum(fy, fm, fd);
+  const lastNum = dayNum(ly, lm, ld);
 
   const moved = new Set(cal.events.filter((e) => e.recurrenceId).map((e) => `${e.uid}|${e.recurrenceId}`));
-  const out: CalendarEvent[] = [];
-  const clock = (ms: number) => new Date(ms).toLocaleTimeString('en-GB', { timeZone: houseTz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  const out: CalendarEntry[] = [];
 
   const push = (ev: IcsEvent, occ: { y: number; m: number; d: number }) => {
+    const base = {
+      id: `${ev.uid || ev.title}|${dayKey(occ)}`.slice(0, 200),
+      title: ev.title,
+      ...(ev.location ? { location: ev.location } : {})
+    };
     if (ev.start.secs === null) {
-      // All-day: covers its days in any zone.
       const first = dayNum(occ.y, occ.m, occ.d);
       const days = Math.max(1, Math.round(ev.duration / 86400));
-      if (todayNum < first || todayNum >= first + days) return;
-      out.push({ title: ev.title, calendar, allDay: true, start: `${today}T00:00:00`, end: `${today}T23:59:59`, when: t('All day'), location: ev.location });
+      if (first > lastNum || first + days <= firstNum) return;
+      out.push({ ...base, start: dayKey(occ), end: dayKey(fromDayNum(first + days)) });
       return;
     }
-    const start = toEpoch({ ...occ, secs: ev.start.secs, tz: ev.start.tz }, houseTz);
+    const start = toEpoch({ ...occ, secs: ev.start.secs, tz: ev.start.tz }, tz);
     const end = start + ev.duration * 1000;
-    if (!(start < dayEnd && (end > dayStart || (ev.duration === 0 && start >= dayStart)))) return;
-    const startsToday = localDay(houseTz, new Date(start)) === today;
-    out.push({
-      title: ev.title,
-      calendar,
-      allDay: false,
-      start: new Date(start).toISOString(),
-      end: new Date(end).toISOString(),
-      when: !startsToday ? t('until {time}', { time: clock(end) }) : end > start ? `${clock(start)}–${clock(end)}` : clock(start),
-      location: ev.location
-    });
+    if (!(start < to && (end > from || (ev.duration === 0 && start >= from)))) return;
+    out.push({ ...base, start: new Date(start).toISOString(), end: new Date(end).toISOString() });
   };
 
   for (const ev of cal.events) {
+    if (out.length >= max) break;
     if (ev.cancelled) continue;
     if (!ev.rrule || ev.recurrenceId) {
       push(ev, ev.start);
       continue;
     }
-    // An occurrence that touches today starts on today or, if long, up to a few days before (any zone).
+    const rule = ev.rrule;
+    const startNum = dayNum(ev.start.y, ev.start.m, ev.start.d);
+    // An occurrence that overlaps the range starts in it or, if long, a few days before (any zone).
     const span = Math.ceil(ev.duration / 86400) + 1;
-    for (let x = todayNum - span; x <= todayNum + 1; x++) {
+    const lo = Math.max(startNum, firstNum - span);
+    const hi = lastNum + 1;
+    const until = rule.UNTIL ? parseTime({ value: rule.UNTIL, params: {} }) : null;
+    const untilMs = until ? toEpoch(until.secs === null ? { ...until, secs: 86399 } : until, tz) : Infinity;
+    const count = rule.COUNT ? Number(rule.COUNT) : Infinity;
+    // With COUNT, occurrences are numbered from the first one; bounded at ~30 years.
+    let n = 0;
+    for (let x = Number.isFinite(count) ? startNum : lo; x <= hi && x - startNum < 11000; x++) {
+      if (!matchesRule(ev, rule, x)) continue;
+      if (++n > count) break;
+      if (x < lo) continue;
       const occ = fromDayNum(x);
+      if (toEpoch({ ...occ, secs: ev.start.secs ?? 0, tz: ev.start.tz }, tz) > untilMs) break;
       const k = dayKey(occ);
       if (ev.exdates.includes(k) || moved.has(`${ev.uid}|${k}`)) continue;
-      if (occursOn(ev, ev.rrule, x, houseTz)) push(ev, occ);
+      push(ev, occ);
+      if (out.length >= max) break;
     }
   }
   // The same event listed twice (feeds do that) shows once.
   const seen = new Set<string>();
   return out.filter((e) => {
     const k = `${e.title}|${e.start}`;
-    if (seen.has(k)) return false;
+    if (seen.has(k) || seen.has(`id:${e.id}`)) return false;
     seen.add(k);
+    seen.add(`id:${e.id}`);
     return true;
   });
 }

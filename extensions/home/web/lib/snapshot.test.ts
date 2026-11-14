@@ -1,19 +1,42 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ExtensionContext } from '$shell';
+import type { CalendarQuery, ExtensionContext, SharedEntry } from '$shell';
+import { calendar } from '../calendar.server';
 import { snapshot } from './snapshot.server';
 import { sources } from '../sources.server';
 import { tools } from '../tools.server';
 import { EN } from '$shell';
 
-function ctx(settings: Record<string, string | number | null>, token: string | null = 'secret-token', links: string | null = null) {
+/** `other`: entries another app (the calendar) puts on the shared calendar. */
+function ctx(settings: Record<string, string | number | null>, token: string | null = 'secret-token', other: SharedEntry[] = []) {
   const kv = new Map<string, string>();
-  return {
+  const c = {
     kv,
     ctx: {
       t: EN,
       lang: 'en',
       settings: { all: async () => settings, get: async (n: string) => settings[n] ?? null },
-      secrets: { get: async (name: string) => (name === 'calendar_links' ? links : token) },
+      secrets: { get: async () => token },
+      // The shell's shared calendar, as far as these tests need it: home's own entries, and the others.
+      calendar: {
+        entries: async (q: CalendarQuery) => {
+          const range = { from: new Date(q.from), to: new Date(q.to), timeZone: 'Europe/Warsaw' };
+          const sources = [{ extension: 'home', name: 'Home', count: 0 } as { extension: string; name: string; count: number; error?: 'error' }];
+          let own: SharedEntry[] = [];
+          try {
+            own = (await calendar.entries(c.ctx, range)).map((e) => ({
+              ...e,
+              allDay: e.start.length === 10,
+              start: e.start.length === 10 ? e.start : new Date(e.start).toISOString(),
+              end: e.start.length === 10 ? e.end! : new Date(e.end!).toISOString(),
+              source: { extension: 'home', name: 'Home' }
+            }));
+          } catch {
+            sources[0].error = 'error';
+          }
+          if (other.length) sources.push({ extension: 'calendar', name: 'Calendar', count: other.length });
+          return { entries: [...own, ...other], sources };
+        }
+      },
       kv: {
         all: async () => Object.fromEntries(kv),
         get: async (k: string) => kv.get(k) ?? null,
@@ -22,6 +45,7 @@ function ctx(settings: Record<string, string | number | null>, token: string | n
       }
     } as unknown as ExtensionContext
   };
+  return c;
 }
 
 const hours = Array.from({ length: 48 }, (_, i) => new Date(Date.UTC(2026, 10, 11) + i * 3600_000).toISOString().slice(0, 16));
@@ -48,13 +72,9 @@ function fakeFetch(opts: { haDown?: boolean; badToken?: boolean; auth?: string[]
         ]);
       if (url.pathname === '/api/calendars') return Response.json([{ entity_id: 'calendar.family', name: 'Family' }]);
       if (url.pathname === '/api/calendars/calendar.family') {
-        const day = url.searchParams.get('start')!.slice(0, 10);
+        const day = new Date(Date.parse(url.searchParams.get('start')!) + 3600_000).toISOString().slice(0, 10);
         return Response.json([{ summary: 'Dentist', start: { dateTime: `${day}T15:30:00+01:00` }, end: { dateTime: `${day}T16:00:00+01:00` } }]);
       }
-    }
-    if (url.host === 'cal.example') {
-      const day = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Warsaw' }).replace(/-/g, '');
-      return new Response(`BEGIN:VCALENDAR\r\nX-WR-CALNAME:School\r\nBEGIN:VEVENT\r\nUID:1\r\nSUMMARY:Parents' evening\r\nDTSTART;VALUE=DATE:${day}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`);
     }
     if (url.host === 'api.open-meteo.com') {
       expect(url.searchParams.get('latitude')).toBe('52.23');
@@ -86,7 +106,8 @@ describe('snapshot', () => {
 
   it('keeps the weather when Home Assistant is down', async () => {
     vi.stubGlobal('fetch', fakeFetch({ haDown: true }));
-    const { ctx: c } = ctx({ url: 'http://ha.local:8123', location: '52.23, 21.01' });
+    // Another address than the other tests: their calendar is still in the 5-min cache.
+    const { ctx: c } = ctx({ url: 'http://ha.local:8123/down', location: '52.23, 21.01' });
     const s = await snapshot(c);
     expect(s.ha.error).toBe('Home Assistant is unreachable');
     expect(s.calendar.error).toBe('Home Assistant is unreachable');
@@ -137,22 +158,26 @@ describe('tools', () => {
   });
 });
 
-describe('calendar subscriptions', () => {
-  it('merges ICS feeds with Home Assistant calendars, and shows them in their own card', async () => {
+describe('the shared calendar on the board', () => {
+  const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Warsaw' });
+  const evening: SharedEntry = { id: 'e1', title: "Parents' evening", allDay: true, start: today, end: '9999-12-31', kind: 'School', source: { extension: 'calendar', name: 'Calendar' } };
+  it('merges the other apps with Home Assistant calendars', async () => {
     vi.stubGlobal('fetch', fakeFetch());
-    const c = ctx({ url: 'http://ha.local:8123' }, 'secret-token', 'webcal://cal.example/school.ics').ctx;
-    const s = await snapshot(c);
+    const s = await snapshot(ctx({ url: 'http://ha.local:8123' }, 'secret-token', [evening]).ctx);
     expect(s.calendar.events.map((e) => [e.title, e.calendar])).toEqual([
       ["Parents' evening", 'School'],
       ['Dentist', 'Family']
     ]);
-    const cards = await sources.list(c);
-    expect(cards[1]).toMatchObject({ id: 'calendars', state: 'connected', fields: ['calendar_links'], facts: [{ label: 'School', value: '1 event today' }] });
   });
   it('works without Home Assistant', async () => {
     vi.stubGlobal('fetch', fakeFetch());
-    const s = await snapshot(ctx({ location: '52.23, 21.01' }, null, 'https://cal.example/a.ics').ctx);
+    const s = await snapshot(ctx({ location: '52.23, 21.01' }, null, [evening]).ctx);
     expect(s.calendar.configured).toBe(true);
     expect(s.calendar.events.map((e) => e.title)).toEqual(["Parents' evening"]);
+  });
+  it('asks for a calendar when there is none', async () => {
+    vi.stubGlobal('fetch', fakeFetch());
+    const s = await snapshot(ctx({ location: '52.23, 21.01' }, null).ctx);
+    expect(s.calendar.configured).toBe(false);
   });
 });

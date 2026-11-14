@@ -134,7 +134,7 @@
   const pip = $derived(beni(snap, hour, t));
   const alerts = $derived(home?.alerts ?? []);
   const warnings = $derived(snap.weather.warnings);
-  const nothingSet = $derived(!snap.ha.configured && !snap.weather.configured);
+  const nothingSet = $derived(!snap.ha.configured && !snap.weather.configured && !snap.calendar.configured);
   const deg = (v: number | null | undefined) => (v == null ? '–' : `${Math.round(v)}°`);
   const mm = (v: number | null | undefined) =>
     v == null ? '–' : `${new Intl.NumberFormat(t.locale, { maximumFractionDigits: 1 }).format(v)} mm`;
@@ -319,7 +319,7 @@
       <section class="today" aria-label={t("Today's calendar")}>
         <p class="eyebrow">{t('Today')}</p>
         {#if !snap.calendar.configured}
-          <p class="muted">{t('Add calendar links in System settings, or connect Home Assistant.')}</p>
+          <p class="muted">{t('Install the Calendar app or connect Home Assistant.')}</p>
         {:else if snap.calendar.error}
           <p class="muted">{t('Calendar unavailable: {error}.', { error: snap.calendar.error })}</p>
         {:else if events.length}

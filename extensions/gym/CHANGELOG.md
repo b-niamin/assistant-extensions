@@ -3,6 +3,11 @@
 Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/) as described in ARTIFACTS-DEVELOPMENT.md.
 
+## 1.5.0 - 2026-11-14
+
+Workouts on the shared calendar (`web/calendar.server.ts`, shell 5): each one on its day, timed when it was
+started and finished in the app, else all day, with its exercises and sets. Example data stays off it. The app is unchanged.
+
 ## 1.4.4 - 2026-11-14
 
 - No plate calculator: the "Plates" quick action on the home screen and the "Plates" button on an exercise are gone.

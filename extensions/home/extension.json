@@ -3,11 +3,11 @@
   "name": "Home",
   "description": "A calm board for the house: lights, doors and windows, camera alerts, weather with warnings and today's calendar, from Home Assistant.",
   "needs": "Home Assistant with a long-lived access token",
-  "version": "1.5.2",
+  "version": "2.0.0",
   "kind": "native",
   "scope": "shared",
   "accessory": "bulb",
-  "shell": 2,
+  "shell": 5,
   "settings": [
     {
       "name": "url",
@@ -26,13 +26,6 @@
       "label": "Weather location",
       "type": "text",
       "help": "A place (Warszawa) or coordinates (52.23, 21.01). Empty: the home location set in Home Assistant."
-    },
-    {
-      "name": "calendar_links",
-      "label": "Calendar links",
-      "type": "secret",
-      "help": "Subscription links (ICS or webcal) from Google, iCloud, Outlook, ...: paste one and press +, once per calendar. Read-only. Kept secret: such a link opens the calendar to anyone who has it.",
-      "multiple": true
     }
   ]
 }

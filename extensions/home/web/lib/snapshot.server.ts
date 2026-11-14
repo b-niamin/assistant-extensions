@@ -1,19 +1,17 @@
 /**
  * One snapshot of the house for the board, the tile and Claude: Home Assistant states (fresh on every
  * call), weather (Open-Meteo, cached 15 min in the extension's KV so a restart or an outage still shows
- * the last forecast) and today's calendar (cached 5 min in memory). Each part fails on its own.
+ * the last forecast) and today on the shared calendar (core spec 002: the calendar app's entries and
+ * subscriptions, workouts, Home Assistant's calendars through calendar.server.ts, ...). Each part fails on its own.
  */
-import { publicUrl } from './net';
 import type { ExtensionContext, Translate } from '$shell';
-import { normalizeEvents, sortEvents, todayBounds, type CalendarEvent } from './calendar';
+import { boardEvents, sortEvents, todayBounds } from './calendar';
 import { haClient, baseUrl, HaError, type HaClient } from './ha.server';
-import { officialWarnings, parsePatterns, matches, summarize, type HaState } from './home';
+import { officialWarnings, parsePatterns, summarize, type HaState } from './home';
 import { forecastWarnings, parseCoords, type Weather } from './weather';
 import { forecast, geocode, type Place } from './weather.server';
 import type { Snapshot } from './types';
 import { readConfig, type HomeConfig } from './config';
-import { feedUrls, parseIcs, todayFromIcs, type IcsCalendar } from './ics';
-import { EN } from '$shell';
 
 export type { Snapshot };
 
@@ -29,13 +27,11 @@ export async function clientOf(ctx: ExtensionContext, timeoutMs = 6000): Promise
 
 const WEATHER_TTL = 15 * 60_000;
 const WEATHER_MAX_AGE = 6 * 3600_000;
-const CALENDAR_TTL = 5 * 60_000;
 const CONFIG_TTL = 3600_000;
 
 
 type HaConfig = Awaited<ReturnType<HaClient['config']>>;
 let configCache: { key: string; at: number; value: HaConfig } | null = null;
-let calendarCache: { key: string; at: number; events: CalendarEvent[] } | null = null;
 
 /** Error text in the page's language: fixed messages are translated, the rest (from outside) stays as it is. */
 const message = (e: unknown, t: Translate) => (e instanceof HaError || e instanceof Error ? t(e.message) : t('Something went wrong'));
@@ -88,58 +84,6 @@ async function weatherFor(ctx: ExtensionContext, place: Place, cacheOnly: boolea
   throw new Error(ctx.t('No forecast yet'));
 }
 
-async function todaysEvents(ha: HaClient, patterns: RegExp[], tz: string, key: string, t: Translate): Promise<CalendarEvent[]> {
-  const { day, start, end } = todayBounds(tz);
-  const cacheKey = `${key}|${day}|${t.lang}|${patterns.map(String).join(',')}`;
-  if (calendarCache && calendarCache.key === cacheKey && Date.now() - calendarCache.at < CALENDAR_TTL) return calendarCache.events;
-  const cals = (await ha.calendars()).filter((c) => !patterns.length || matches(c.entity_id, patterns));
-  const lists = await Promise.all(
-    cals.map(async (c) => normalizeEvents(await ha.events(c.entity_id, start, end), c.name ?? c.entity_id, tz, day, t))
-  );
-  const events = sortEvents(lists.flat());
-  calendarCache = { key: cacheKey, at: Date.now(), events };
-  return events;
-}
-
-const FEED_TTL = 10 * 60_000;
-const FEED_MAX_BYTES = 5_000_000;
-// In two parts: `ext check`'s text scan would take a star-slash-star as the start of a comment.
-const FEED_ACCEPT = 'text/calendar, text/plain, */' + '*';
-/** A feed problem already worded for the owner (not wrapped again). */
-class FeedError extends Error {}
-const feedCache = new Map<string, { at: number; cal: IcsCalendar }>();
-
-/** The calendar subscription links (System settings -> Home -> Calendars); a secret, as such links grant access. */
-export const feedsOf = async (ctx: ExtensionContext) => feedUrls(await ctx.secrets.get('calendar_links'));
-
-/** One ICS feed, cached 10 min (and served stale when the next fetch fails). */
-export async function loadFeed(url: string, timeoutMs = 8000, t: Translate = EN): Promise<IcsCalendar> {
-  const hit = feedCache.get(url);
-  if (hit && Date.now() - hit.at < FEED_TTL) return hit.cal;
-  const host = new URL(url).host;
-  try {
-    if (!publicUrl(url)) throw new FeedError(t('Calendar at {host} is not on the internet: only public calendar links work', { host }));
-    const res = await fetch(url, { headers: { Accept: FEED_ACCEPT }, signal: AbortSignal.timeout(timeoutMs) });
-    // A redirect must not lead into the stack either.
-    if (res.url && !publicUrl(res.url)) throw new FeedError(t('Calendar at {host} is not on the internet: only public calendar links work', { host }));
-    if (!res.ok) throw new FeedError(t('Calendar at {host} answered {status}', { host, status: res.status }));
-    const text = await res.text();
-    if (text.length > FEED_MAX_BYTES) throw new FeedError(t('Calendar at {host} is too large', { host }));
-    if (!text.includes('BEGIN:VCALENDAR')) throw new FeedError(t('Calendar at {host} is not a calendar', { host }));
-    const cal = parseIcs(text);
-    feedCache.set(url, { at: Date.now(), cal });
-    return cal;
-  } catch (e) {
-    if (hit) return hit.cal;
-    if (e instanceof FeedError) throw e;
-    if (e instanceof Error && e.name === 'TimeoutError') throw new Error(t('Calendar at {host} did not answer in time', { host }));
-    throw new Error(t('Calendar at {host} failed: {error}', { host, error: e instanceof Error ? e.message : String(e) }));
-  }
-}
-
-/** A feed's name: its own (X-WR-CALNAME), else the host. */
-export const feedName = (url: string, cal: IcsCalendar) => cal.name ?? new URL(url).host;
-
 export interface SnapshotOptions {
   /** Tiles have 2.5 s: short HA timeout, weather from the cache only when it has one. */
   quick?: boolean;
@@ -155,7 +99,8 @@ export async function snapshot(ctx: ExtensionContext, opts: SnapshotOptions = {}
   const out: Snapshot = {
     at: new Date().toISOString(),
     refreshSeconds: conf.refresh_seconds,
-    timezone: 'UTC',
+    // Home Assistant's zone, else the forecast's, else the server's (APP_TIMEZONE).
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
     ha: { configured: !!ha },
     weather: { configured: false, warnings: [] },
     calendar: { configured: !!ha, events: [] }
@@ -198,39 +143,28 @@ export async function snapshot(ctx: ExtensionContext, opts: SnapshotOptions = {}
     }
   })();
 
-  const feeds = await feedsOf(ctx);
-  out.calendar.configured = !!ha || feeds.length > 0;
   const calendarPart = (async () => {
     // Without Home Assistant's zone, "today" follows the forecast's: wait for it.
     if (!config?.time_zone) await weatherPart;
-    const errors: string[] = [];
-    const lists = await Promise.all([
-      (async () => {
-        if (!ha) return [];
-        if (out.ha.error) {
-          errors.push(out.ha.error);
-          return [];
-        }
-        try {
-          return await todaysEvents(ha, parsePatterns(conf.calendars), out.timezone, haKey, ctx.t);
-        } catch (e) {
-          errors.push(message(e, ctx.t));
-          return [];
-        }
-      })(),
-      ...feeds.map(async (url) => {
-        try {
-          const cal = await loadFeed(url, opts.quick ? 1800 : 8000, ctx.t);
-          return todayFromIcs(cal, feedName(url, cal), out.timezone, undefined, ctx.t);
-        } catch (e) {
-          errors.push(message(e, ctx.t));
-          return [];
-        }
-      })
-    ]);
-    out.calendar.events = sortEvents(lists.flat());
-    const sources = (ha ? 1 : 0) + feeds.length;
-    if (errors.length && errors.length >= sources) out.calendar.error = errors[0];
+    const { day, start, end } = todayBounds(out.timezone);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      // The tile has 2.5 s in all; the board can wait for a slow calendar.
+      const r = await Promise.race([
+        ctx.calendar.entries({ from: start, to: end }),
+        new Promise<never>((_, reject) => (timer = setTimeout(() => reject(new Error(ctx.t('The calendar did not answer in time'))), opts.quick ? 1500 : 7000)))
+      ]);
+      out.calendar.configured = !!ha || r.sources.some((s) => s.extension !== 'home');
+      out.calendar.events = sortEvents(boardEvents(r.entries, out.timezone, day, ctx.t));
+      const failed = r.sources.filter((s) => s.error);
+      if (failed.length && failed.length === r.sources.length && !out.calendar.events.length)
+        out.calendar.error = out.ha.error ?? ctx.t('{name} did not answer', { name: failed[0].name });
+    } catch (e) {
+      out.calendar.configured = true;
+      out.calendar.error = message(e, ctx.t);
+    } finally {
+      clearTimeout(timer);
+    }
   })();
 
   await Promise.all([weatherPart, calendarPart]);

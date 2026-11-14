@@ -42,6 +42,15 @@ Extensions for [Beni Assistant](https://github.com/b-niamin/assistant).
       <sub><code>monitor</code> · native · shared</sub>
     </td>
   </tr>
+  <tr>
+    <td valign="top">
+      <a href="docs/screenshots/calendar.png"><img src="docs/screenshots/calendar.png" alt="Calendar: a month with own entries, workouts, activities and subscribed calendars" /></a>
+      <h3><a href="extensions/calendar">Calendar</a></h3>
+      One calendar for the house: own entries, subscribed calendars (Google, iCloud, Outlook) and what the other apps put on it.<br />
+      <sub><code>calendar</code> · native · shared</sub>
+    </td>
+    <td valign="top"></td>
+  </tr>
 </table>
 
 <details>
@@ -53,6 +62,7 @@ Extensions for [Beni Assistant](https://github.com/b-niamin/assistant).
 | <img src="docs/screenshots/gym.png" alt="Gym Tracker, light"> | <img src="docs/screenshots/gym-dark.png" alt="Gym Tracker, dark"> |
 | <img src="docs/screenshots/home.png" alt="Home, light"> | <img src="docs/screenshots/home-dark.png" alt="Home, dark"> |
 | <img src="docs/screenshots/monitor.png" alt="System monitor, light"> | <img src="docs/screenshots/monitor-dark.png" alt="System monitor, dark"> |
+| <img src="docs/screenshots/calendar.png" alt="Calendar, light"> | <img src="docs/screenshots/calendar-dark.png" alt="Calendar, dark"> |
 
 An activity in Training & Health:
 
@@ -73,17 +83,22 @@ and `write_data`):
 | `health` | `health__overview`: latest metrics, daily series, recent activities | `health__add_journal_entry` |
 | `gym` | `gym__overview`: plans, this week against the goal, recent workouts with sets | `gym__log_workout`, `gym__save_plan` |
 | `home` | `home__overview`: lights, doors and windows, alerts, weather, today's calendar | `home__configure` (what the board watches; `home__entities` lists ids) |
+| `calendar` | `calendar__overview`: the coming days from every app on the calendar; `calendar__entries` for any range | `calendar__add_entry`, `calendar__update_entry`, `calendar__remove_entry` |
 | `monitor` | `monitor__overview`: CPU, memory, temperature, disks, network, containers now; `monitor__history` | none |
 
 The contract (`web/tools.server.ts`, a read-only `overview`, one tool per write):
 [spec 005](https://github.com/b-niamin/assistant/blob/main/specs/005-claude-tools.md).
+
+Things with a date go on the shared calendar the same way: `web/calendar.server.ts` (gym workouts, health
+activities and Garmin plans, Home Assistant calendars), shown by the Calendar app
+([spec 002, "Calendar entries"](https://github.com/b-niamin/assistant/blob/main/specs/002-extensions.md)).
 
 ## Install
 
 With a new Beni Assistant:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/b-niamin/assistant/main/install.sh | sudo sh -s -- health gym home monitor
+curl -fsSL https://raw.githubusercontent.com/b-niamin/assistant/main/install.sh | sudo sh -s -- health gym home monitor calendar
 ```
 
 In a running instance: **System settings → Extend the system**, or ask Claude *"add the gym tracker"*.

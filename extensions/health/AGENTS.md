@@ -27,6 +27,12 @@ Every table is keyed by `profile_id` (read with `psql "$CLAUDE_RO_DATABASE_URL"`
 
 Look at the raw JSON (`data`, `raw`) before assuming a field name. Logs: `/worker/logs/health.garmin-sync.log`.
 
+## On the shared calendar
+
+`web/calendar.server.ts` (shell 5, core spec 002 "Calendar entries") puts every activity (`a:<id>`, start +
+duration, links to its page) and every planned event (`p:<id>`, timed when `time_local` is set, else all
+day) on the calendar extension's month, for the viewing profile. Read live, nothing copied.
+
 ## garmin-sync
 
 `services/garmin-sync/` (Python, garmy + curl_cffi: Garmin blocks plain HTTP clients by TLS fingerprint).

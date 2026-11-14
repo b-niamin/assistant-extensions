@@ -186,5 +186,8 @@
   "Last Garmin sync {when}": "Ostatnia synchronizacja z Garminem {when}",
   "Garmin synced {when}, some data skipped": "Garmin zsynchronizowany {when}, część danych pominięta",
   "A Garmin Connect account": "Konto Garmin Connect",
-  "Garmin sleep, HRV, Body Battery, readiness and activities, synced every 30 minutes.": "Sen, HRV, Body Battery, gotowość i aktywności z Garmina, synchronizowane co 30 minut."
+  "Garmin sleep, HRV, Body Battery, readiness and activities, synced every 30 minutes.": "Sen, HRV, Body Battery, gotowość i aktywności z Garmina, synchronizowane co 30 minut.",
+  "Race": "Zawody",
+  "Planned workout": "Zaplanowany trening",
+  "Garmin note": "Notatka z Garmina"
 }

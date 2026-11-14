@@ -1,16 +1,12 @@
 /**
- * "Connected accounts" in this extension's System settings panel (spec 002): two cards whose settings are
- * typed right in them (`fields`):
- * - Home Assistant: address and token, the connection checked live, and what the board watches (set by
- *   Claude or Codex through home__configure).
- * - Calendars: subscription links (ICS / webcal), read-only and independent of Home Assistant, with each
- *   feed's name and what it has today.
+ * "Connected accounts" in this extension's System settings panel (spec 002): Home Assistant, whose address
+ * and token are typed right in the card (`fields`), the connection checked live, and what the board
+ * watches (set by Claude or Codex through home__configure). Calendar subscriptions live in the Calendar app.
  */
 import type { ExtensionContext, ExtSources, SourceStatus, Translate } from '$shell';
 import { HaError } from './lib/ha.server';
 import { isContact, lightsOf, matches, parsePatterns } from './lib/home';
-import { todayFromIcs, type IcsCalendar } from './lib/ics';
-import { clientOf, configOf, feedName, feedsOf, loadFeed } from './lib/snapshot.server';
+import { clientOf, configOf } from './lib/snapshot.server';
 
 const every = (s: number, t: Translate) => (s % 60 === 0 ? t('{n} min', { n: s / 60 }) : t('{n} s', { n: s }));
 const reason = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -72,58 +68,14 @@ async function homeAssistantCard(ctx: ExtensionContext): Promise<SourceStatus> {
   };
 }
 
-/** The house's zone for "today": Home Assistant's when connected, else the server's. */
-async function houseZone(ctx: ExtensionContext): Promise<string> {
-  const client = await clientOf(ctx, 2500);
-  const tz = client ? await client.ha.config().then((c) => c.time_zone, () => undefined) : undefined;
-  return tz || Intl.DateTimeFormat().resolvedOptions().timeZone;
-}
-
-async function calendarsCard(ctx: ExtensionContext): Promise<SourceStatus> {
-  const t = ctx.t;
-  const card: SourceStatus = { id: 'calendars', name: t('Calendars'), state: 'not_connected', fields: ['calendar_links'] };
-  const urls = await feedsOf(ctx);
-  if (!urls.length) {
-    return {
-      ...card,
-      help: t(
-        'Paste a subscription link (ICS or webcal) and press +, once per calendar. Google: calendar settings -> "Secret address in iCal format". iCloud: share the calendar as a public calendar. Outlook: publish a calendar -> ICS.'
-      )
-    };
-  }
-  const [tz, results] = await Promise.all([
-    houseZone(ctx),
-    Promise.allSettled(urls.map(async (u) => ({ u, cal: await loadFeed(u, 3000, t) })))
-  ]);
-  const ok: { u: string; cal: IcsCalendar }[] = [];
-  const failed: string[] = [];
-  for (const r of results) r.status === 'fulfilled' ? ok.push(r.value) : failed.push(reason(r.reason));
-  return {
-    ...card,
-    state: ok.length ? 'connected' : 'reconnect',
-    account: t.n(urls.length, '{n} link', '{n} links') + (failed.length ? t(', {n} not loading', { n: failed.length }) : ''),
-    help: failed[0],
-    facts: ok.slice(0, 6).map(({ u, cal }) => {
-      const k = todayFromIcs(cal, '', tz).length;
-      return { label: feedName(u, cal), value: k ? t.n(k, '{n} event today', '{n} events today') : t('nothing today') };
-    })
-  };
-}
-
 export const sources: ExtSources = {
   async list(ctx) {
-    return Promise.all([homeAssistantCard(ctx), calendarsCard(ctx)]);
+    return [await homeAssistantCard(ctx)];
   },
 
-  async act(ctx, source, action) {
+  async act(ctx, _source, action) {
     const t = ctx.t;
     if (action !== 'check' && action !== 'saved') throw new Error(t('Unknown action.'));
-    if (source === 'calendars') {
-      const card = await calendarsCard(ctx);
-      if (card.state !== 'connected') throw new Error(card.help ?? t('No calendar links yet.'));
-      const list = card.facts?.map((f) => `${f.label} (${f.value})`).join(', ');
-      return t('Calendars: {list}.', { list }) + (card.help ? ` ${card.help}.` : '');
-    }
     const p = await probe(ctx);
     if (!p) return t('Saved. Add both the address and the token to connect.');
     const where = [p.version, p.place ? `(${p.place})` : ''].filter(Boolean).join(' ');

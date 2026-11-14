@@ -5,7 +5,7 @@ import type { Snapshot } from './types';
 import { condition } from './weather';
 
 export function homeTile(s: Snapshot, t: Translate = EN): TileData {
-  if (!s.ha.configured && !s.weather.configured) {
+  if (!s.ha.configured && !s.weather.configured && !s.calendar.configured) {
     return { empty: { message: t('Connect Home Assistant in System settings.'), action: { label: t('Connect'), href: '/settings/extensions/home' } } };
   }
   const home = s.ha.home;

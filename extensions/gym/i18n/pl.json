@@ -1,4 +1,12 @@
 {
   "Gym Tracker": "Dziennik treningowy",
-  "Plan workouts, log sets and weights, see your progress and the muscles you trained.": "Planuj treningi, zapisuj serie i ciężary, śledź postępy i mięśnie, które pracowały."
+  "Plan workouts, log sets and weights, see your progress and the muscles you trained.": "Planuj treningi, zapisuj serie i ciężary, śledź postępy i mięśnie, które pracowały.",
+  "Workout": "Trening",
+  "in progress": "w trakcie",
+  "{n} sets": {
+    "one": "{n} seria",
+    "few": "{n} serie",
+    "many": "{n} serii",
+    "other": "{n} serii"
+  }
 }

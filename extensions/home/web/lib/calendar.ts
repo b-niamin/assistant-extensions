@@ -1,8 +1,9 @@
 /**
- * Today's events from Home Assistant calendars (GET /api/calendars/<entity>?start=&end=), in the house's
- * time zone. Pure: the fetch lives in ha.server.ts.
+ * Calendars, pure: Home Assistant's events (GET /api/calendars/<entity>?start=&end=) as entries of the
+ * shared calendar (core spec 002), and today's entries of the shared calendar as the board shows them, in
+ * the house's time zone. The fetches live in ha.server.ts and calendar.server.ts.
  */
-import type { Translate } from '$shell';
+import type { CalendarEntry, SharedEntry, Translate } from '$shell';
 import { EN } from '$shell';
 
 export interface HaEvent {
@@ -63,23 +64,50 @@ export function todayBounds(tz: string, now = new Date()): { day: string; start:
 const clock = (iso: string, tz: string) =>
   new Date(iso).toLocaleTimeString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 
-export function normalizeEvents(events: HaEvent[], calendar: string, tz: string, day: string, t: Translate = EN): CalendarEvent[] {
-  const out: CalendarEvent[] = [];
+/** Home Assistant events of one calendar as shared-calendar entries (days stay days, times keep their offset). */
+export function haEntries(events: HaEvent[], entity: string, name: string): CalendarEntry[] {
+  const out: CalendarEntry[] = [];
   for (const e of events) {
-    const title = (e.summary ?? '').trim() || t('(no title)');
-    if (e.start?.date) {
-      const endDay = e.end?.date ?? e.start.date;
-      // All-day events end the day after (exclusive); keep those that cover today.
-      if (!(e.start.date <= day && endDay > day)) continue;
-      out.push({ title, calendar, allDay: true, start: `${day}T00:00:00`, end: `${day}T23:59:59`, when: t('All day'), location: e.location });
-    } else if (e.start?.dateTime) {
-      const start = e.start.dateTime;
-      const end = e.end?.dateTime ?? start;
-      if (!Number.isFinite(Date.parse(start))) continue;
-      const startsToday = localDay(tz, new Date(start)) === day;
-      const when = startsToday ? `${clock(start, tz)}–${clock(end, tz)}` : t('until {time}', { time: clock(end, tz) });
-      out.push({ title, calendar, allDay: false, start, end, when, location: e.location || undefined });
+    const title = (e.summary ?? '').trim() || '(no title)';
+    const start = e.start?.date ?? e.start?.dateTime;
+    if (!start) continue;
+    const end = e.start?.date ? e.end?.date : e.end?.dateTime;
+    out.push({
+      id: `${entity}|${start}|${title}`.slice(0, 200),
+      title,
+      start,
+      ...(end ? { end } : {}),
+      kind: name.slice(0, 30),
+      ...(e.location ? { location: e.location } : {}),
+      href: '/home'
+    });
+  }
+  return out;
+}
+
+/** Today's entries of the shared calendar as board events: "All day", "09:30–10:15" or "until 06:00". */
+export function boardEvents(entries: SharedEntry[], tz: string, day: string, t: Translate = EN): CalendarEvent[] {
+  const out: CalendarEvent[] = [];
+  for (const e of entries) {
+    const calendar = e.kind ?? e.source.name;
+    const location = e.location || undefined;
+    if (e.allDay) {
+      if (!(e.start <= day && e.end > day)) continue;
+      out.push({ title: e.title, calendar, allDay: true, start: `${day}T00:00:00`, end: `${day}T23:59:59`, when: t('All day'), location });
+      continue;
     }
+    const startDay = localDay(tz, new Date(e.start));
+    const endDay = localDay(tz, new Date(Math.max(Date.parse(e.start), Date.parse(e.end) - 1)));
+    if (startDay > day || endDay < day) continue;
+    const when =
+      startDay !== day
+        ? endDay === day
+          ? t('until {time}', { time: clock(e.end, tz) })
+          : t('All day')
+        : e.end === e.start
+          ? clock(e.start, tz)
+          : `${clock(e.start, tz)}–${clock(e.end, tz)}`;
+    out.push({ title: e.title, calendar, allDay: false, start: e.start, end: e.end, when, location });
   }
   return out;
 }

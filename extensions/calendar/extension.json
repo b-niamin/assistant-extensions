@@ -1,0 +1,20 @@
+{
+  "id": "calendar",
+  "name": "Calendar",
+  "description": "One calendar for the house: your own entries, subscribed calendars (Google, iCloud, Outlook) and what the other apps put on it, like workouts and activities.",
+  "version": "1.0.0",
+  "kind": "native",
+  "scope": "shared",
+  "accessory": "pencil",
+  "shell": 5,
+  "schema": "calendar",
+  "settings": [
+    {
+      "name": "links",
+      "label": "Calendar links",
+      "type": "secret",
+      "help": "Subscription links (ICS or webcal) from Google, iCloud, Outlook, ...: paste one and press +, once per calendar. Read-only. Kept secret: such a link opens the calendar to anyone who has it.",
+      "multiple": true
+    }
+  ]
+}

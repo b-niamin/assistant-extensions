@@ -1,13 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { feedUrls, parseIcs, todayFromIcs } from './ics';
+import { feedUrls, occurrences, parseIcs } from './ics';
 
 const TZ = 'Europe/Warsaw';
-const NOW = new Date('2026-11-11T16:00:00Z'); // Wednesday, 17:00 in Warsaw
 
 const feed = (...events: string[]) =>
   ['BEGIN:VCALENDAR', 'VERSION:2.0', 'X-WR-CALNAME:Family', ...events.flatMap((e) => ['BEGIN:VEVENT', e, 'END:VEVENT']), 'END:VCALENDAR'].join('\r\n');
 
-const today = (text: string) => todayFromIcs(parseIcs(text), 'Family', TZ, NOW).map((e) => [e.title, e.when]);
+// Wednesday 11 Nov 2026 in Warsaw: 10 Nov 23:00Z .. 11 Nov 23:00Z
+const DAY = { from: new Date('2026-11-10T23:00:00Z'), to: new Date('2026-11-11T23:00:00Z'), timeZone: TZ };
+const clock = (iso: string) => new Date(iso).toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
+const when = (e: { start: string; end?: string }) =>
+  e.start.length === 10 ? 'All day' : e.end && e.end !== e.start ? `${clock(e.start)}–${clock(e.end)}` : clock(e.start);
+const today = (text: string) => occurrences(parseIcs(text), DAY).map((e) => [e.title, when(e)]);
 
 describe('parseIcs', () => {
   it('reads the calendar name, unfolds lines and unescapes text', () => {
@@ -23,7 +27,7 @@ describe('parseIcs', () => {
   });
 });
 
-describe('todayFromIcs', () => {
+describe('occurrences', () => {
   it('keeps timed events of today in the house zone, from UTC, TZID and floating times', () => {
     expect(
       today(
@@ -82,6 +86,32 @@ describe('todayFromIcs', () => {
   });
   it('skips cancelled events', () => {
     expect(today(feed('UID:a\r\nSUMMARY:Nope\r\nSTATUS:CANCELLED\r\nDTSTART:20261111T140000Z'))).toEqual([]);
+  });
+});
+
+describe('occurrences over a range', () => {
+  it('lists every occurrence of a month with stable ids and all-day ends', () => {
+    const month = { from: new Date('2026-10-31T23:00:00Z'), to: new Date('2026-11-30T23:00:00Z'), timeZone: TZ };
+    const list = occurrences(
+      parseIcs(
+        feed(
+          'UID:w\r\nSUMMARY:Gym\r\nDTSTART;TZID=Europe/Warsaw:20260902T180000\r\nDTEND;TZID=Europe/Warsaw:20260902T190000\r\nRRULE:FREQ=WEEKLY;BYDAY=MO,WE',
+          'UID:t\r\nSUMMARY:Trip\r\nDTSTART;VALUE=DATE:20261030\r\nDTEND;VALUE=DATE:20261103',
+          'UID:c\r\nSUMMARY:Five\r\nDTSTART:20261020T080000Z\r\nRRULE:FREQ=WEEKLY;COUNT=5'
+        )
+      ),
+      month
+    );
+    const gym = list.filter((e) => e.title === 'Gym');
+    expect(gym).toHaveLength(9);
+    expect(gym[0]).toEqual({ id: 'w|2026-11-02', title: 'Gym', start: '2026-11-02T17:00:00.000Z', end: '2026-11-02T18:00:00.000Z' });
+    expect(list.find((e) => e.title === 'Trip')).toMatchObject({ start: '2026-10-30', end: '2026-11-03' });
+    // 20 Oct, 27 Oct, 3, 10, 17 Nov: three of them in November
+    expect(list.filter((e) => e.title === 'Five').map((e) => e.start.slice(0, 10))).toEqual(['2026-11-03', '2026-11-10', '2026-11-17']);
+  });
+  it('stops at the limit', () => {
+    const year = { from: new Date('2026-01-01T00:00:00Z'), to: new Date('2026-12-31T00:00:00Z'), timeZone: TZ };
+    expect(occurrences(parseIcs(feed('UID:d\r\nSUMMARY:Daily\r\nDTSTART:20260101T080000Z\r\nRRULE:FREQ=DAILY')), year, 50)).toHaveLength(50);
   });
 });
 
