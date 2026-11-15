@@ -13,7 +13,7 @@ export async function syncOverview(sql: Sql, profileId: string): Promise<SyncOve
     sql`SELECT finished_at FROM health.sync_runs
         WHERE profile_id = ${profileId} AND status IN ('ok', 'partial') ORDER BY started_at DESC LIMIT 1`,
     sql`SELECT kind, since, started_at, requested_at FROM health.sync_requests
-        WHERE profile_id = ${profileId} AND finished_at IS NULL ORDER BY requested_at LIMIT 1`,
+        WHERE profile_id = ${profileId} AND source = 'garmin' AND finished_at IS NULL ORDER BY requested_at LIMIT 1`,
     sql`SELECT cursor FROM health.sync_state WHERE profile_id = ${profileId} AND source = 'garmin'`,
     sql`SELECT
           (SELECT min(day) FROM health.synced_metric_days WHERE profile_id = ${profileId} AND has_value) AS first_day,

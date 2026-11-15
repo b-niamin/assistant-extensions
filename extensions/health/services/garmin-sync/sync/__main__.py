@@ -5,6 +5,9 @@
   python -m sync run     [--profile alex]           one incremental pass
   python -m sync backfill [--profile alex]  [--since 2020-01-01]
   python -m sync loop                               sync every connected profile, forever
+  python -m sync connect strava|withings [--profile alex] [--app https://...]   sign in to an API source
+  python -m sync disconnect strava|withings [--profile alex]                    forget that login
+  python -m sync connectors                         Strava, Withings and the writes (outbox), forever
 
 `loop` starts each pass as a FRESH process (`python -m sync run`), so code edited in the repo is
 picked up on the next tick without a restart, and a broken edit fails one tick instead of the
@@ -29,7 +32,11 @@ from garmin_core.errors import InvalidCredentials, MfaRequired
 from garmin_core.metrics import MetricsService
 from garmin_core.tokens import PostgresTokenStore
 
+from . import connectors, oauth
+from .cstore import ConnectorStore
 from .engine import Engine
+from .oauth import OAuthStore
+from .outbox import Runner
 from .store import Store
 
 log = logging.getLogger("garmin-sync")
@@ -139,6 +146,94 @@ def cmd_loop(_: argparse.Namespace) -> int:
         time.sleep(TICK_SECONDS)
 
 
+def _oauth() -> tuple[OAuthStore, ConnectorStore]:
+    dsn = _env("DATABASE_URL")
+    return OAuthStore(dsn, _env("TOKEN_ENCRYPTION_KEY")), ConnectorStore(dsn)
+
+
+def cmd_connect(a: argparse.Namespace) -> int:
+    """Sign in to Strava or Withings with the owner's own API app: nothing of it is ever shown again."""
+    oauth_store, cstore = _oauth()
+    p = oauth.PROVIDERS[a.provider]
+    print(f"{p['name']}: create your own API app at {p['apps']} (free, for your own account).")
+    app = (a.app or input("Address of this app (as in your browser, e.g. https://nas.tailnet.ts.net:8443): ")).strip().rstrip("/")
+    if not app.startswith(("https://", "http://")):
+        sys.exit("the address starts with https://")
+    redirect = f"{app}/health/oauth"
+    host = redirect.split("/")[2].split(":")[0]
+    print(f"In the app's settings set the callback {'domain' if a.provider == 'strava' else 'URL'} to: {host if a.provider == 'strava' else redirect}")
+    old = oauth_store.load(a.profile, a.provider) or {}
+    client_id = input(f"Client ID{' [keep ' + old['client_id'] + ']' if old.get('client_id') else ''}: ").strip() or old.get("client_id", "")
+    secret = getpass.getpass("Client secret (hidden; Enter keeps the saved one): ").strip() or old.get("client_secret", "")
+    if not client_id or not secret:
+        sys.exit("both the client ID and the secret are needed")
+    state = oauth.new_state()
+    cstore.add_pending(state, a.profile, a.provider, redirect)
+    print("\nOpen this address, allow access, and come back here:\n")
+    print(oauth.authorize_url(a.provider, client_id, redirect, state), "\n")
+    print("Waiting for the answer (10 minutes). If the page does not open, paste the address you landed on here.")
+    code = _wait_code(cstore, state)
+    if not code:
+        cstore.drop_pending(state)
+        print("No answer: nothing was saved. Run the command again.")
+        return 1
+    client = {"client_id": client_id, "client_secret": secret}
+    try:
+        tokens = oauth.exchange(a.provider, client, code, redirect)
+    except Exception as e:  # noqa: BLE001
+        cstore.drop_pending(state)
+        print(f"{p['name']} did not accept it: {e}")
+        return 1
+    finally:
+        secret = ""  # noqa: F841
+    cstore.drop_pending(state)
+    oauth_store.save(a.profile, a.provider, {**client, "redirect_uri": redirect, **tokens})
+    cstore.account(a.profile, a.provider, "connected", fresh=True)
+    print(f"Connected{' as ' + tokens['account'] if tokens.get('account') else ''}. The first sync starts within a minute.")
+    return 0
+
+
+def _wait_code(cstore: ConnectorStore, state: str) -> str | None:
+    import select
+    import urllib.parse as up
+
+    deadline = time.monotonic() + 600
+    while time.monotonic() < deadline:
+        row = cstore.pending(state)
+        if row and row.get("error"):
+            print(f"Refused: {row['error']}")
+            return None
+        if row and row.get("code"):
+            return row["code"]
+        ready, _, _ = select.select([sys.stdin], [], [], 2)
+        if ready:
+            line = sys.stdin.readline().strip()
+            q = up.parse_qs(up.urlparse(line).query)
+            if q.get("state", [""])[0] == state and q.get("code"):
+                return q["code"][0]
+            if line:
+                print("That address has no code for this sign-in; try again or wait.")
+    return None
+
+
+def cmd_disconnect(a: argparse.Namespace) -> int:
+    oauth_store, cstore = _oauth()
+    oauth_store.clear(a.profile, a.provider)
+    cstore.account(a.profile, a.provider, "disconnected")
+    print(f"{oauth.PROVIDERS[a.provider]['name']}: login removed. Revoke the app's access in that account too.")
+    return 0
+
+
+def cmd_connectors(_: argparse.Namespace) -> int:
+    oauth_store, cstore = _oauth()
+    tokens, _store = _deps()
+    zone = connectors.tz()
+    strava_for = lambda p: connectors.Connectors(cstore, oauth_store, None, zone).client(p, "strava")  # noqa: E731
+    runner = Runner(cstore, MetricsService(tokens), strava_for, zone)
+    connectors.Connectors(cstore, oauth_store, runner, zone).loop()
+    return 0
+
+
 def main() -> int:
     logger("garmin-sync")  # the worker's log format, LOG_LEVEL
     p = argparse.ArgumentParser(prog="python -m sync")
@@ -150,6 +245,13 @@ def main() -> int:
         if name == "backfill":
             sp.add_argument("--since", help="YYYY-MM-DD (default: 5 years back)")
     sub.add_parser("loop")
+    sub.add_parser("connectors")
+    for name in ("connect", "disconnect"):
+        sp = sub.add_parser(name)
+        sp.add_argument("provider", choices=sorted(oauth.PROVIDERS))
+        sp.add_argument("--profile", default=env("DEFAULT_PROFILE") or None)
+        if name == "connect":
+            sp.add_argument("--app", help="this app's address, e.g. https://nas.tailnet.ts.net:8443")
     a = p.parse_args()
     if getattr(a, "profile", "") is None:
         a.profile = Store(_env("DATABASE_URL")).first_profile() or sys.exit("no profile yet: finish /setup first")
@@ -161,6 +263,12 @@ def main() -> int:
         return cmd_run(a)
     if a.cmd == "backfill":
         return cmd_run(a, "backfill")
+    if a.cmd == "connect":
+        return cmd_connect(a)
+    if a.cmd == "disconnect":
+        return cmd_disconnect(a)
+    if a.cmd == "connectors":
+        return cmd_connectors(a)
     return cmd_loop(a)
 
 

@@ -1,12 +1,13 @@
 <script lang="ts">
   import type { DataOf } from '$shell';
-  import { Mascot, useT } from '$shell/ui';
+  import { enhance, Mascot, useT } from '$shell/ui';
   import StreamChart from '../../../lib/StreamChart.svelte';
   import { paceOf, paceText, PACED } from '../../../lib/activity';
   import { hms, km, sportLabel } from '../../../lib/format';
   import type { load } from './+page.server';
 
-  let { data }: { data: DataOf<typeof load> } = $props();
+  let { data, form }: { data: DataOf<typeof load>; form: { error?: string; saved?: boolean } | null } = $props();
+  let editing = $state(false);
   const t = useT();
   const one = (v: number) => new Intl.NumberFormat(t.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v);
 
@@ -85,6 +86,46 @@
   <p class="effect"><span class="status good">{effect}</span> <span class="muted">{t("Garmin's read of what this session trained")}</span></p>
 {/if}
 
+<section class="card naming rise" style:--i="2" aria-labelledby="naming-title">
+  <div class="naming-head">
+    <h2 id="naming-title">{t('Title and description')}</h2>
+    {#if !editing}<button class="btn btn-ghost" type="button" onclick={() => (editing = true)}>{t('Edit')}</button>{/if}
+  </div>
+  {#if editing}
+    <form
+      method="POST"
+      action="?/edit"
+      class="naming-form"
+      use:enhance={() => async ({ update, result }) => {
+        await update({ reset: false });
+        if (result.type === 'success') editing = false;
+      }}
+    >
+      <label>{t('Title')}<input name="title" required maxlength="255" value={data.strava?.name ?? a.name ?? ''} /></label>
+      <label>{t('Description')}<textarea name="description" maxlength="4000" rows="3">{data.strava?.description ?? data.description}</textarea></label>
+      <fieldset>
+        <legend class="sr">{t('Where')}</legend>
+        <label class="check"><input type="checkbox" name="on" value="garmin" checked /> Garmin Connect</label>
+        {#if data.strava}<label class="check"><input type="checkbox" name="on" value="strava" checked /> Strava</label>{/if}
+      </fieldset>
+      {#if form?.error}<p class="error" role="alert">{form.error}</p>{/if}
+      <div class="row">
+        <button class="btn btn-primary">{t('Save')}</button>
+        <button class="btn btn-ghost" type="button" onclick={() => (editing = false)}>{t('Cancel')}</button>
+      </div>
+    </form>
+  {:else}
+    {#if data.description}<p class="desc">{data.description}</p>{/if}
+    <p class="muted">
+      {#if data.strava}{t('On Strava as "{name}".', { name: data.strava.name ?? '' })}{:else}{t('Not on Strava (or Strava is not connected).')}{/if}
+    </p>
+  {/if}
+  {#if form?.saved}<p class="muted" role="status">{t('Queued: the service sends it within a few seconds.')}</p>{/if}
+  {#each data.writes as w, i (i)}
+    <p class="write"><span class="status {w.state === 'done' ? 'good' : w.state === 'failed' ? 'critical' : 'warning'}">{w.line}</span></p>
+  {/each}
+</section>
+
 <div class="grid" class:withmap={!!data.streams.route}>
   {#if data.streams.route}
     {@const r = data.streams.route}
@@ -162,6 +203,56 @@
 {/if}
 
 <style>
+  .naming {
+    display: grid;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+  }
+  .naming-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .naming-head h2 {
+    margin: 0;
+  }
+  .naming-form {
+    display: grid;
+    gap: var(--space-3);
+  }
+  .naming-form label {
+    display: grid;
+    gap: var(--space-1);
+  }
+  .naming-form fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+  .naming-form .check {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+  }
+  .naming .row {
+    display: flex;
+    gap: var(--space-3);
+  }
+  .desc {
+    margin: 0;
+    white-space: pre-line;
+  }
+  .naming .error {
+    color: var(--critical-ink);
+    margin: 0;
+  }
+  .write {
+    margin: 0;
+  }
   .crumbs {
     display: flex;
     justify-content: space-between;

@@ -1,9 +1,9 @@
 {
   "id": "health",
   "name": "Training & Health",
-  "description": "Garmin sleep, HRV, Body Battery, readiness and activities, synced every 30 minutes.",
-  "needs": "A Garmin Connect account",
-  "version": "0.8.0",
+  "description": "Garmin, Strava and Withings in one place: sleep, HRV, readiness, activities and weight, and writes back to them.",
+  "needs": "A Garmin Connect account; Strava and Withings optional",
+  "version": "1.0.0",
   "kind": "native",
   "scope": "profile",
   "accessory": "headband",
@@ -23,6 +23,21 @@
         "DEFAULT_PROFILE"
       ],
       "description": "Syncs Garmin Connect every 30 minutes and runs the syncs asked for in System settings"
+    },
+    {
+      "name": "connectors",
+      "dir": "services/garmin-sync",
+      "run": [
+        "python",
+        "-m",
+        "sync",
+        "connectors"
+      ],
+      "keys": [
+        "TOKEN_ENCRYPTION_KEY",
+        "DEFAULT_PROFILE"
+      ],
+      "description": "Syncs Strava and Withings, and runs the writes to Garmin and Strava (workouts, titles, weight)"
     }
   ]
 }

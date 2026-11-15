@@ -27,6 +27,9 @@ export const calendar: ExtCalendar = {
             FROM health.synced_planned_events
            WHERE profile_id = ${ctx.dataProfileId}
              AND day BETWEEN (${range.from}::timestamptz - interval '1 day')::date AND (${range.to}::timestamptz + interval '1 day')::date
+             -- Workouts this app put on the Garmin calendar are already on the calendar of the app that asked.
+             AND NOT EXISTS (SELECT 1 FROM health.pushed_workouts w WHERE w.profile_id = synced_planned_events.profile_id
+                               AND w.day = synced_planned_events.day AND w.title = synced_planned_events.title)
            ORDER BY day LIMIT 500`
       ])
     );

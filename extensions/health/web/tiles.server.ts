@@ -1,5 +1,7 @@
 /** Dashboard tiles of the health extension (spec 003). Data only: the shell renders them. */
 import type { ExtTile, Sql } from '$shell';
+import { weightTile } from './lib/connectors';
+import { weights } from './lib/connectors.server';
 import { recentSeries } from './lib/health.server';
 import { metricTile, readinessTile, RUN_SPORTS, runningTile, type WeekRow } from './lib/tiles';
 
@@ -55,5 +57,11 @@ export const tiles: ExtTile[] = [
         const s = await recentSeries(sql, ctx.dataProfileId!, ['sleep'], 14);
         return metricTile('sleep', s.sleep, 'violet', today(), ctx.t);
       })
+  },
+  {
+    id: 'weight',
+    title: 'Weight',
+    size: 'md',
+    load: (ctx) => ctx.db(async (sql) => weightTile(await weights(sql, ctx.dataProfileId!, 90), ctx.t))
   }
 ];

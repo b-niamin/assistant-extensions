@@ -4,6 +4,8 @@
  * queues a row in health.sync_requests and the garmin-sync service runs it within seconds.
  */
 import { todayIn, type ExtSources } from '$shell';
+import { providerSource, type Provider } from './lib/connectors';
+import { providerInfo, requestSync, setOption } from './lib/connectors.server';
 import { syncOverview } from './lib/sync.server';
 import { describeSync, garminSource, longDay, olderLimit } from './lib/sync';
 
@@ -17,20 +19,26 @@ export const sources: ExtSources = {
     const today = todayIn();
     const garmin = garminSource(o, today, login(p), Date.now(), ctx.t);
     if (garmin.state !== 'not_connected') garmin.sync = describeSync(o, Date.now(), ctx.t);
-    return [
-      garmin,
-      {
-        id: 'strava',
-        name: 'Strava',
-        state: 'planned',
-        help: ctx.t('Not supported yet. Activities recorded on a Garmin watch already come in through Garmin.')
-      }
-    ];
+    const [strava, withings] = await ctx.db((sql) => Promise.all([providerInfo(sql, p, 'strava'), providerInfo(sql, p, 'withings')]));
+    return [garmin, providerSource('strava', strava, p, ctx.t), providerSource('withings', withings, p, ctx.t)];
   },
 
   async act(ctx, source, action, input) {
-    if (source !== 'garmin') throw new Error(ctx.t('Unknown account.'));
     const p = ctx.dataProfileId!;
+    if (source === 'strava' || source === 'withings') {
+      const provider = source as Provider;
+      if (action === 'sync-now') {
+        await ctx.db((sql) => requestSync(sql, p, provider));
+        return ctx.t('Sync queued: it starts within a few seconds.');
+      }
+      if (provider === 'withings' && (action === 'garmin-on' || action === 'garmin-off')) {
+        const on = action === 'garmin-on';
+        await ctx.db((sql) => setOption(sql, p, 'withings_to_garmin', { on, since: new Date().toISOString() }));
+        return on ? ctx.t('New Withings weigh-ins now go to Garmin too.') : ctx.t('Withings weigh-ins no longer go to Garmin.');
+      }
+      throw new Error(ctx.t('Unknown action.'));
+    }
+    if (source !== 'garmin') throw new Error(ctx.t('Unknown account.'));
     if (action !== 'sync-now' && action !== 'fetch-older') throw new Error(ctx.t('Unknown action.'));
     const kind = action === 'sync-now' ? 'incremental' : 'backfill';
     const since = action === 'fetch-older' ? input.date : undefined;
