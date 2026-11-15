@@ -2,7 +2,7 @@
   "id": "calendar",
   "name": "Calendar",
   "description": "One calendar for the house: your own entries, subscribed calendars (Google, iCloud, Outlook) and what the other apps put on it, like workouts and activities.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "kind": "native",
   "scope": "shared",
   "accessory": "pencil",

@@ -31,17 +31,17 @@
     {
       "id": "health",
       "name": "Training & Health",
-      "description": "Garmin sleep, HRV, Body Battery, readiness and activities, synced every 30 minutes.",
+      "description": "Garmin, Strava and Withings in one place: sleep, HRV, readiness, activities and weight, and writes back to them.",
       "kind": "native",
       "scope": "profile",
       "service": true,
-      "needs": "A Garmin Connect account",
+      "needs": "A Garmin Connect account; Strava and Withings optional",
       "accessory": "headband",
       "i18n": {
         "pl": {
           "name": "Trening i zdrowie",
-          "description": "Sen, HRV, Body Battery, gotowość i aktywności z Garmina, synchronizowane co 30 minut.",
-          "needs": "Konto Garmin Connect"
+          "description": "Garmin, Strava i Withings w jednym miejscu: sen, HRV, gotowość, aktywności i waga, z zapisem z powrotem do nich.",
+          "needs": "Konto Garmin Connect; Strava i Withings opcjonalnie"
         }
       }
     },

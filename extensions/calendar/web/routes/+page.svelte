@@ -15,7 +15,8 @@
   $effect(() => {
     selected = data.selected;
   });
-  let hidden = $state<string[]>([]);
+  // svelte-ignore state_referenced_locally
+  let hidden = $state<string[]>(data.hidden);
   let adding = $state(false);
   let allDay = $state(false);
 
@@ -53,7 +54,13 @@
     const month = day.slice(0, 7);
     if (month === data.month) replaceState(`?m=${month}&d=${day}`, {});
   }
-  const toggle = (id: string) => (hidden = hidden.includes(id) ? hidden.filter((x) => x !== id) : [...hidden, id]);
+  /** Show or hide one app's entries; remembered for this profile (a failed save only loses the memory). */
+  function toggle(id: string) {
+    hidden = hidden.includes(id) ? hidden.filter((x) => x !== id) : [...hidden, id];
+    const body = new FormData();
+    for (const h of hidden) body.append('id', h);
+    fetch('?/hidden', { method: 'POST', body, headers: { accept: 'application/json', 'x-sveltekit-action': 'true' } }).catch(() => {});
+  }
 </script>
 
 <svelte:head><title>{t('Calendar')} · {t('Assistant')}</title></svelte:head>
