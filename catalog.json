@@ -75,6 +75,20 @@
           "description": "Procesor, pamięć, temperatura, dyski, sieć i kontenery maszyny, na której działa asystent: NAS, mini PC, Raspberry Pi albo Mac."
         }
       }
+    },
+    {
+      "id": "training",
+      "name": "Training plan",
+      "description": "Plans and sessions of any sport: runs, rides, the gym. Log sets and weights, see the week, put it on the calendar. Built mostly with Claude.",
+      "kind": "native",
+      "scope": "profile",
+      "accessory": "headband",
+      "i18n": {
+        "pl": {
+          "name": "Plan treningowy",
+          "description": "Plany i treningi w każdej dyscyplinie: bieg, rower, siłownia. Zapisuj serie i ciężary, patrz na tydzień, miej to w kalendarzu. Układane głównie z Claude."
+        }
+      }
     }
   ]
 }
