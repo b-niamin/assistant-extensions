@@ -29,7 +29,7 @@ Rules of the shell's `AGENTS.md` and `specs/002-extensions.md` apply. In short: 
   and the subscriptions with their state.
 - `calendar__entries`: a range (`from`, `to` inclusive, at most 366 days), optionally `sources`.
 - `calendar__add_entry`, `calendar__update_entry`, `calendar__remove_entry`: only the calendar's own entries
-  (`e<n>`). Entries of other apps change in those apps (e.g. `gym__log_workout`).
+  (`e<n>`). Entries of other apps change in those apps (e.g. `training__update_session`).
 
 ## Tests
 

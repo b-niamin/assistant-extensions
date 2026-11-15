@@ -1,5 +1,5 @@
 /** One colour per app on the calendar, the same everywhere: the shell's categorical hues. */
-const FIXED: Record<string, string> = { calendar: 'blue', gym: 'orange', health: 'aqua', home: 'violet' };
+const FIXED: Record<string, string> = { calendar: 'blue', training: 'orange', health: 'aqua', home: 'violet' };
 const REST = ['magenta', 'yellow', 'green', 'red'];
 
 export function hueOf(extension: string): string {

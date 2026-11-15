@@ -1,6 +1,6 @@
 /**
  * Tools for the AI (core spec 005): the shared calendar as `calendar__<tool>`. Reading covers every
- * extension's entries (gym workouts, Garmin activities, subscribed calendars, ...); writing only the
+ * extension's entries (training sessions, Garmin activities, subscribed calendars, ...); writing only the
  * calendar's own entries (ids "e<n>"): the others belong to their extensions and change there.
  */
 import { dayIn, instantIn, nextDay, todayIn, ToolError, type ExtensionContext, type ExtTool } from '$shell';
@@ -41,7 +41,7 @@ export const tools: ExtTool[] = [
     readOnly: true,
     description:
       'The shared calendar for the next `days` days (default 14, max 60) from today in the owner\'s time zone: every entry of every ' +
-      'app that puts things on it (the calendar\'s own entries, subscribed calendars, gym workouts, Garmin activities and planned ' +
+      'app that puts things on it (the calendar\'s own entries, subscribed calendars, training sessions, Garmin activities and planned ' +
       'workouts, Home Assistant calendars, ...), sorted, each with `when` in local time, `source` (the app) and `kind`; which apps ' +
       'contributed and how many entries each; and the subscribed calendars with their state. Ids starting with "e" are the ' +
       'calendar\'s own entries (they can be changed with update_entry / remove_entry).',
@@ -69,7 +69,7 @@ export const tools: ExtTool[] = [
     readOnly: true,
     description:
       'Entries of the shared calendar from `from` to `to` (YYYY-MM-DD, both inclusive, at most 366 days), optionally only from ' +
-      'some apps (`sources`: extension ids such as "calendar", "gym", "health", "home"). Same fields as in overview.',
+      'some apps (`sources`: extension ids such as "calendar", "training", "health", "home"). Same fields as in overview.',
     input: {
       type: 'object',
       properties: {

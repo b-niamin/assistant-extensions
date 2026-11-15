@@ -15,20 +15,6 @@
       }
     },
     {
-      "id": "gym",
-      "name": "Gym Tracker",
-      "description": "Plan workouts, log sets and weights, see your progress and the muscles you trained.",
-      "kind": "onefile",
-      "scope": "profile",
-      "accessory": "headband",
-      "i18n": {
-        "pl": {
-          "name": "Dziennik treningowy",
-          "description": "Planuj treningi, zapisuj serie i ciężary, śledź postępy i mięśnie, które pracowały."
-        }
-      }
-    },
-    {
       "id": "health",
       "name": "Training & Health",
       "description": "Garmin, Strava and Withings in one place: sleep, HRV, readiness, activities and weight, and writes back to them.",

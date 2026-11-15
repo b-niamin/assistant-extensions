@@ -22,10 +22,10 @@ Extensions for [Beni Assistant](https://github.com/b-niamin/assistant).
       <sub><code>health</code> · native · per profile · needs a Garmin Connect account</sub>
     </td>
     <td width="50%" valign="top">
-      <a href="docs/screenshots/gym.png"><img src="docs/screenshots/gym.png" alt="Gym Tracker: this week, plans and a recovery map" /></a>
-      <h3><a href="extensions/gym">Gym Tracker</a></h3>
-      Workout plans, sets and weights, progress charts and a body map of trained muscles.<br />
-      <sub><code>gym</code> · onefile · per profile</sub>
+      <a href="docs/screenshots/training.png"><img src="docs/screenshots/training.png" alt="Training plan: the week, today's workout, plans and best sets" /></a>
+      <h3><a href="extensions/training">Training plan</a></h3>
+      Plans and sessions for any sport, a set-by-set logger for the gym, and the plan on the calendar.<br />
+      <sub><code>training</code> · native · per profile</sub>
     </td>
   </tr>
   <tr>
@@ -49,12 +49,7 @@ Extensions for [Beni Assistant](https://github.com/b-niamin/assistant).
       One calendar for the house: own entries, subscribed calendars (Google, iCloud, Outlook) and what the other apps put on it.<br />
       <sub><code>calendar</code> · native · shared</sub>
     </td>
-    <td valign="top">
-      <a href="docs/screenshots/training.png"><img src="docs/screenshots/training.png" alt="Training plan: the week, today's workout, plans and best sets" /></a>
-      <h3><a href="extensions/training">Training plan</a></h3>
-      Plans and sessions for any sport, a set-by-set logger for the gym, and the plan on the calendar. Replaces Gym Tracker.<br />
-      <sub><code>training</code> · native · per profile</sub>
-    </td>
+    <td valign="top"></td>
   </tr>
 </table>
 
@@ -64,7 +59,7 @@ Extensions for [Beni Assistant](https://github.com/b-niamin/assistant).
 | Light | Dark |
 |---|---|
 | <img src="docs/screenshots/health.png" alt="Training & Health, light"> | <img src="docs/screenshots/health-dark.png" alt="Training & Health, dark"> |
-| <img src="docs/screenshots/gym.png" alt="Gym Tracker, light"> | <img src="docs/screenshots/gym-dark.png" alt="Gym Tracker, dark"> |
+| <img src="docs/screenshots/training.png" alt="Training plan, light"> | <img src="docs/screenshots/training-dark.png" alt="Training plan, phone, dark"> |
 | <img src="docs/screenshots/home.png" alt="Home, light"> | <img src="docs/screenshots/home-dark.png" alt="Home, dark"> |
 | <img src="docs/screenshots/monitor.png" alt="System monitor, light"> | <img src="docs/screenshots/monitor-dark.png" alt="System monitor, dark"> |
 | <img src="docs/screenshots/calendar.png" alt="Calendar, light"> | <img src="docs/screenshots/calendar-dark.png" alt="Calendar, dark"> |
@@ -86,7 +81,6 @@ and `write_data`):
 | Extension | Reads | Writes |
 |---|---|---|
 | `health` | `health__overview`: latest metrics, daily series, recent activities, sources; `health__activities`, `health__writes` | `health__add_journal_entry`, `health__edit_activity`, `health__send_workout`, `health__remove_workout`, `health__add_weight`, `health__copy_weights_to_garmin`, `health__configure`, `health__sync_now` |
-| `gym` | `gym__overview`: plans, this week against the goal, recent workouts with sets | `gym__log_workout`, `gym__save_plan` |
 | `training` | `training__overview`: this week, plans, templates, best sets; `training__list_sessions`, `training__get_session`, `training__garmin_workout` | `training__create_plan`, `training__add_sessions`, `training__update_session`, `training__move_sessions`, `training__delete_sessions`, `training__log_session`, `training__mark_sent`, `training__save_template`, `training__import_gym` and more |
 | `home` | `home__overview`: lights, doors and windows, alerts, weather, today's calendar | `home__configure` (what the board watches; `home__entities` lists ids) |
 | `calendar` | `calendar__overview`: the coming days from every app on the calendar; `calendar__entries` for any range | `calendar__add_entry`, `calendar__update_entry`, `calendar__remove_entry` |
@@ -95,7 +89,7 @@ and `write_data`):
 The contract (`web/tools.server.ts`, a read-only `overview`, one tool per write):
 [spec 005](https://github.com/b-niamin/assistant/blob/main/specs/005-claude-tools.md).
 
-Things with a date go on the shared calendar the same way: `web/calendar.server.ts` (gym workouts, health
+Things with a date go on the shared calendar the same way: `web/calendar.server.ts` (training sessions, health
 activities and Garmin plans, Home Assistant calendars), shown by the Calendar app
 ([spec 002, "Calendar entries"](https://github.com/b-niamin/assistant/blob/main/specs/002-extensions.md)).
 
@@ -104,10 +98,10 @@ activities and Garmin plans, Home Assistant calendars), shown by the Calendar ap
 With a new Beni Assistant:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/b-niamin/assistant/main/install.sh | sudo sh -s -- health gym home monitor calendar
+curl -fsSL https://raw.githubusercontent.com/b-niamin/assistant/main/install.sh | sudo sh -s -- health training home monitor calendar
 ```
 
-In a running instance: **System settings → Extend the system**, or ask Claude *"add the gym tracker"*.
+In a running instance: **System settings → Extend the system**, or ask Claude *"add the training plan"*.
 Command-line install and updates: [docs/install.md](docs/install.md).
 
 ## Write your own

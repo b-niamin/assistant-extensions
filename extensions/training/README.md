@@ -1,7 +1,8 @@
 # Training plan
 
 Assistant extension: training plans and sessions of any sport (running, cycling, swimming, the gym, ...),
-and the gym log. Kind `native`, scope `profile`, schema `training`. Replaces the Gym Tracker.
+and the gym log. Kind `native`, scope `profile`, schema `training`. It took over from the Gym Tracker,
+which is no longer in this repository.
 
 - The week at `/training`: every session per day, today's, active plans, best sets; add a session or start
   one from a template.
