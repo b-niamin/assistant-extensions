@@ -42,14 +42,14 @@ CREATE TABLE IF NOT EXISTS training.sessions (
   activity_ref  text,
   -- When it was put on the watch (Claude, through health__send_workout with ref "training:<id>").
   sent_at       timestamptz,
-  source        text,                            -- 'gym' for history imported from the Gym Tracker
+  source        text,                            -- where it came from, if not typed in (e.g. 'claude')
   created_at    timestamptz NOT NULL DEFAULT now(),
   updated_at    timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS sessions_profile_day_idx ON training.sessions(profile_id, day);
 CREATE INDEX IF NOT EXISTS sessions_plan_idx ON training.sessions(plan_id);
 
--- Reusable workouts ("Full body A"): start a session from one in a tap. Imported gym plans land here.
+-- Reusable workouts ("Full body A"): start a session from one in a tap.
 CREATE TABLE IF NOT EXISTS training.templates (
   id          text PRIMARY KEY,
   profile_id  text NOT NULL REFERENCES core.profiles(id) ON DELETE CASCADE,

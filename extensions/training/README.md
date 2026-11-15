@@ -18,7 +18,3 @@ which is no longer in this repository.
 ```sh
 node scripts/ext.mjs install training
 ```
-
-Moving from the Gym Tracker: ask Claude to "import my Gym Tracker history into the training plan". It reads
-`gym__read_data` and passes it to `training__import_gym` (workouts become strength sessions, plans become
-templates; running it again adds nothing new). Then the Gym Tracker can be removed.

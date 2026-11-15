@@ -59,7 +59,7 @@ Extensions for [Beni Assistant](https://github.com/b-niamin/assistant).
 | Light | Dark |
 |---|---|
 | <img src="docs/screenshots/health.png" alt="Training & Health, light"> | <img src="docs/screenshots/health-dark.png" alt="Training & Health, dark"> |
-| <img src="docs/screenshots/training.png" alt="Training plan, light"> | <img src="docs/screenshots/training-dark.png" alt="Training plan, phone, dark"> |
+| <img src="docs/screenshots/training.png" alt="Training plan, light"> | <img src="docs/screenshots/training-dark.png" alt="Training plan, dark"> |
 | <img src="docs/screenshots/home.png" alt="Home, light"> | <img src="docs/screenshots/home-dark.png" alt="Home, dark"> |
 | <img src="docs/screenshots/monitor.png" alt="System monitor, light"> | <img src="docs/screenshots/monitor-dark.png" alt="System monitor, dark"> |
 | <img src="docs/screenshots/calendar.png" alt="Calendar, light"> | <img src="docs/screenshots/calendar-dark.png" alt="Calendar, dark"> |
@@ -81,7 +81,7 @@ and `write_data`):
 | Extension | Reads | Writes |
 |---|---|---|
 | `health` | `health__overview`: latest metrics, daily series, recent activities, sources; `health__activities`, `health__writes` | `health__add_journal_entry`, `health__edit_activity`, `health__send_workout`, `health__remove_workout`, `health__add_weight`, `health__copy_weights_to_garmin`, `health__configure`, `health__sync_now` |
-| `training` | `training__overview`: this week, plans, templates, best sets; `training__list_sessions`, `training__get_session`, `training__garmin_workout` | `training__create_plan`, `training__add_sessions`, `training__update_session`, `training__move_sessions`, `training__delete_sessions`, `training__log_session`, `training__mark_sent`, `training__save_template`, `training__import_gym` and more |
+| `training` | `training__overview`: this week, plans, templates, best sets; `training__list_sessions`, `training__get_session`, `training__garmin_workout` | `training__create_plan`, `training__add_sessions`, `training__update_session`, `training__move_sessions`, `training__delete_sessions`, `training__log_session`, `training__mark_sent`, `training__save_template` and more |
 | `home` | `home__overview`: lights, doors and windows, alerts, weather, today's calendar | `home__configure` (what the board watches; `home__entities` lists ids) |
 | `calendar` | `calendar__overview`: the coming days from every app on the calendar; `calendar__entries` for any range | `calendar__add_entry`, `calendar__update_entry`, `calendar__remove_entry` |
 | `monitor` | `monitor__overview`: CPU, memory, temperature, disks, network, containers now; `monitor__history` | none |

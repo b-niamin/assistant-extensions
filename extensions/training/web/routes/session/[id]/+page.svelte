@@ -115,7 +115,7 @@
     {#if steps}<p><strong>{t('Workout')}:</strong> {steps}</p>{/if}
     {#if s.distance_m}<p class="muted">{t('Distance')}: {Math.round(s.distance_m / 100) / 10} km</p>{/if}
     <p class="muted small">
-      {#if s.sent_at}{t('On the Garmin watch.')}{:else if data.watchable}{t('Not on the watch yet. Ask Claude: "Send this session to my watch."')}{/if}
+      {#if s.sent_at}{t('On the Garmin watch.')}{:else if data.watchable && s.status === 'planned'}{t('Not on the watch yet. Ask Claude: "Send this session to my watch."')}{/if}
       {#if s.activity_ref}{t('Linked to the activity {id}.', { id: s.activity_ref })}{/if}
     </p>
   {/if}
@@ -154,10 +154,12 @@
         <button type="button" class="btn btn-ghost" onclick={() => addSet(e)}>{t('Add a set')}</button>
       </fieldset>
     {/each}
+    {#if s.sport === 'strength' || log.length}
     <div class="row">
       <input class="grow" placeholder={t('Add an exercise')} aria-label={t('Add an exercise')} bind:value={newExercise} onkeydown={(ev) => ev.key === 'Enter' && (ev.preventDefault(), addExercise())} />
       <button type="button" class="btn" onclick={addExercise}>{t('Add')}</button>
     </div>
+    {/if}
     <div class="row">
       <label>{t('Effort (RPE 0-10)')}
         <select name="rpe" bind:value={rpe}><option value="">–</option>{#each Array.from({ length: 11 }, (_, i) => i) as n (n)}<option value={String(n)}>{n}</option>{/each}</select>

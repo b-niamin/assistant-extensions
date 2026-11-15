@@ -91,5 +91,6 @@
   "Check the fields: {list}.": "Sprawdź pola: {list}.",
   "No such template.": "Nie ma takiego szablonu.",
   "No such session": "Nie ma takiego treningu",
-  "The sets could not be read; reload the page.": "Nie udało się odczytać serii; odśwież stronę."
+  "The sets could not be read; reload the page.": "Nie udało się odczytać serii; odśwież stronę.",
+  "Still to do": "Do zrobienia"
 }

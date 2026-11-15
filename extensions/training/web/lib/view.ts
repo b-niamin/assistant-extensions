@@ -32,7 +32,7 @@ export function weekTile(sessions: Session[], today: string, t: Translate = EN):
   return {
     kpis: [
       { label: t('Done'), value: c.done },
-      { label: t('Planned'), value: c.planned }
+      { label: t('Still to do'), value: thisWeek.filter((s) => s.status === 'planned').length }
     ],
     list: next.map((s) => ({
       label: `${s.title} · ${t(SPORT_LABELS[s.sport])}`,

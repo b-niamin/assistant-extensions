@@ -1,6 +1,6 @@
 /**
  * The training model, pure (no DB): sports, checks of what the tools and forms send, the Garmin workout a
- * session becomes, the Gym Tracker import. The same checks run for Claude (tools) and the page (actions).
+ * session becomes. The same checks run for Claude (tools) and the page (actions).
  */
 import { EN, type Translate } from '$shell';
 
@@ -265,81 +265,7 @@ export function stepsLine(steps: Step[] | null, t: Translate = EN): string {
   return steps.map(one).join(' · ');
 }
 
-// -- Gym Tracker import ------------------------------------------------------------------------------------
 
-interface GymSet {
-  kg?: string;
-  reps?: string;
-  done?: boolean;
-}
-interface GymExercise {
-  name?: string;
-  type?: 't' | 'w';
-  note?: string;
-  sets?: GymSet[];
-}
-interface GymDoc {
-  kind?: string;
-  name?: string;
-  date?: string;
-  done?: boolean;
-  sample?: boolean;
-  planName?: string;
-  startedAt?: number | null;
-  finishedAt?: number | null;
-  exercises?: GymExercise[];
-}
-
-const gymExercises = (list: GymExercise[] | undefined, onlyDone: boolean): Exercise[] =>
-  cleanExercises(
-    (list ?? []).map((e) => ({
-      name: e.name,
-      note: e.note,
-      sets: (e.sets ?? [])
-        .filter((s) => !onlyDone || s.done || Number(s.reps) > 0)
-        .map((s) => (e.type === 't' ? { seconds: s.reps, kg: s.kg, done: onlyDone || s.done } : { reps: s.reps, kg: s.kg, done: onlyDone || s.done }))
-    }))
-  ) ?? [];
-
-/**
- * The Gym Tracker's saved document (gym__read_data, key gym-notebook.v1: {docs: {id: workout | plan}})
- * as training rows: each workout a strength session (done when finished there), each plan a template.
- * Ids keep the gym ids ("gym-<id>"), so importing twice changes nothing. Example data is left out.
- */
-export function fromGym(doc: unknown): { sessions: (SessionInput & { id: string; result: SessionResult | null; source: string })[]; templates: { id: string; name: string; exercises: Exercise[] }[] } {
-  const docs = ((doc && typeof doc === 'object' && 'docs' in doc ? (doc as { docs: unknown }).docs : doc) ?? {}) as Record<string, GymDoc>;
-  const sessions: ReturnType<typeof fromGym>['sessions'] = [];
-  const templates: ReturnType<typeof fromGym>['templates'] = [];
-  for (const [id, d] of Object.entries(docs)) {
-    if (!d || typeof d !== 'object' || d.sample) continue;
-    const safeId = `gym-${String(id).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 60)}`;
-    if (d.kind === 'plan') {
-      const name = str(d.name, 120);
-      if (name) templates.push({ id: safeId, name, exercises: gymExercises(d.exercises, false) });
-      continue;
-    }
-    if (d.kind || !isDay(d.date)) continue;
-    const done = gymExercises(d.exercises, true).filter((e) => e.sets.length);
-    const timed = typeof d.startedAt === 'number' && typeof d.finishedAt === 'number' && d.finishedAt >= d.startedAt;
-    sessions.push({
-      id: safeId,
-      day: d.date,
-      sport: 'strength',
-      title: str(d.planName, 120) || 'Workout',
-      exercises: gymExercises(d.exercises, false),
-      status: d.done ? 'done' : 'planned',
-      duration_min: timed ? Math.max(1, Math.min(1440, Math.round(((d.finishedAt as number) - (d.startedAt as number)) / 60000))) : null,
-      result: d.done || done.length
-        ? {
-            exercises: done,
-            ...(timed ? { started_at: new Date(d.startedAt as number).toISOString(), finished_at: new Date(d.finishedAt as number).toISOString() } : {})
-          }
-        : null,
-      source: 'gym'
-    });
-  }
-  return { sessions, templates };
-}
 
 /** Best set of each exercise over the logged sessions: heaviest kg (then most reps), for progress. */
 export function bests(results: { day: string; exercises: Exercise[] }[]): { name: string; kg: number; reps: number; day: string }[] {

@@ -28,7 +28,6 @@ import {
   addDays,
   bests,
   cleanExercises,
-  fromGym,
   garminWorkout,
   isDay,
   sessionProblems,
@@ -426,29 +425,6 @@ export const tools: ExtTool[] = [
       ctx.db(async (sql) => {
         if (!(await deleteTemplate(sql, p(ctx), String(args.id)))) throw new ToolError(`No template ${args.id}.`);
         return { deleted: args.id };
-      })
-  },
-  {
-    name: 'import_gym',
-    title: 'Import the Gym Tracker history',
-    readOnly: false,
-    description:
-      'Bring the Gym Tracker over: pass its saved document as `data` (gym__read_data, key "gym-notebook.v1", the parsed object). Each ' +
-      'workout becomes a strength session (done when it was finished there), each plan a template. Example data is skipped; importing ' +
-      'twice adds nothing new.',
-    input: { type: 'object', properties: { data: { type: 'object' } }, required: ['data'] },
-    run: (args, ctx) =>
-      ctx.db(async (sql) => {
-        const { sessions, templates: tpls } = fromGym(args.data);
-        if (!sessions.length && !tpls.length) throw new ToolError('No workouts or plans in data: pass the parsed value of "gym-notebook.v1".');
-        const before = (await sql`SELECT count(*)::int AS n FROM training.sessions WHERE profile_id = ${p(ctx)} AND source = 'gym'`)[0].n;
-        for (const s of sessions) await insertSession(sql, p(ctx), s, { id: s.id, result: s.result, source: 'gym' });
-        for (const tpl of tpls) {
-          const [had] = await sql`SELECT 1 AS x FROM training.templates WHERE profile_id = ${p(ctx)} AND id = ${tpl.id}`;
-          if (!had) await saveTemplate(sql, p(ctx), { id: tpl.id, name: tpl.name, sport: 'strength', exercises: tpl.exercises });
-        }
-        const after = (await sql`SELECT count(*)::int AS n FROM training.sessions WHERE profile_id = ${p(ctx)} AND source = 'gym'`)[0].n;
-        return { workouts_in_data: sessions.length, sessions_added: after - before, templates: tpls.length };
       })
   }
 ];

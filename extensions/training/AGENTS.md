@@ -10,8 +10,8 @@ Training & Health through both apps' tools.
 | Table | What |
 |---|---|
 | `training.plans` | a goal over some days: name, goal, sport (NULL = mixed), start_day, end_day, status active/done/archived |
-| `training.sessions` | one session on a day: sport (`SPORTS` in `web/lib/model.ts`), title, time_local, duration_min, distance_m, `steps` (endurance: the step tree `health__send_workout` takes), `exercises` (strength: `[{name, sets: [{reps, kg, seconds}], rest_s, note}]`), status planned/done/skipped, `result` (what was logged: exercises with done sets, rpe, note, started_at, finished_at), `activity_ref` (the real activity, e.g. a Garmin activity id), `sent_at` (on the watch), `source` (`gym` = imported) |
-| `training.templates` | reusable workouts (imported Gym Tracker plans land here) |
+| `training.sessions` | one session on a day: sport (`SPORTS` in `web/lib/model.ts`), title, time_local, duration_min, distance_m, `steps` (endurance: the step tree `health__send_workout` takes), `exercises` (strength: `[{name, sets: [{reps, kg, seconds}], rest_s, note}]`), status planned/done/skipped, `result` (what was logged: exercises with done sets, rpe, note, started_at, finished_at), `activity_ref` (the real activity, e.g. a Garmin activity id), `sent_at` (on the watch), `source` |
+| `training.templates` | reusable workouts |
 
 ## With other apps (through Claude)
 
@@ -21,7 +21,6 @@ Training & Health through both apps' tools.
   were on the watch.
 - Strava/Garmin titles: find the activity with `health__activities`, rename it with
   `health__edit_activity`, link it with `training__log_session {id, status: done, activity_ref}`.
-- Gym Tracker: `gym__read_data` -> `training__import_gym {data}` (idempotent, ids `gym-<id>`).
 
-Pure logic (checks, the Garmin workout, the gym import, bests) is in `web/lib/model.ts` with tests;
+Pure logic (checks, the Garmin workout, bests) is in `web/lib/model.ts` with tests;
 `web/lib/view.ts` has the week and the tile.

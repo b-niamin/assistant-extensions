@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addDays, bests, cleanExercises, exerciseLine, fromGym, garminWorkout, mondayOf, sessionColumns, sessionProblems, stepsLine } from './model';
+import { addDays, bests, cleanExercises, exerciseLine, garminWorkout, mondayOf, sessionColumns, sessionProblems, stepsLine } from './model';
 import { weekOf, weekTile } from './view';
 
 const base = { id: 's1', sport: 'running' as const, title: '5x100 m strides', day: '2026-11-20', description: null, steps: null, exercises: null, duration_min: null, distance_m: null };
@@ -25,22 +25,6 @@ describe('training model', () => {
     expect(gym?.steps).toEqual([{ kind: 'work', durationType: 'lap', note: 'Squat 1x5 @ 80 kg' }]);
     expect(garminWorkout({ ...base, duration_min: 45 })?.steps).toEqual([{ kind: 'work', durationType: 'time', durationValue: 2700 }]);
     expect(stepsLine(steps)).toBe('10 min warm-up · 5 x (100 m work, 1 min recovery)');
-  });
-  it('imports the Gym Tracker: workouts as strength sessions, plans as templates, no example data', () => {
-    const doc = {
-      app: 'gym-notebook',
-      docs: {
-        w1: { date: '2026-11-10', done: true, planName: 'Full body A', startedAt: 1_000_000, finishedAt: 1_000_000 + 45 * 60000, exercises: [{ name: 'Squat', sets: [{ kg: '60', reps: '8', done: true }, { kg: '60', reps: '', done: false }] }] },
-        w2: { date: '2026-11-11', sample: true, exercises: [] },
-        p1: { kind: 'plan', name: 'Full body A', exercises: [{ name: 'Squat', sets: [{ kg: '60', reps: '8' }] }] },
-        st: { kind: 'settings', goal: 3 }
-      }
-    };
-    const { sessions, templates } = fromGym(doc);
-    expect(sessions).toHaveLength(1);
-    expect(sessions[0]).toMatchObject({ id: 'gym-w1', day: '2026-11-10', sport: 'strength', title: 'Full body A', status: 'done', duration_min: 45, source: 'gym' });
-    expect(sessions[0].result?.exercises).toEqual([{ name: 'Squat', sets: [{ reps: 8, kg: 60, done: true }] }]);
-    expect(templates).toEqual([{ id: 'gym-p1', name: 'Full body A', exercises: [{ name: 'Squat', sets: [{ reps: 8, kg: 60 }] }] }]);
   });
   it('finds the best set of each exercise', () => {
     expect(bests([{ day: '2026-11-01', exercises: [{ name: 'Squat', sets: [{ kg: 60, reps: 8 }, { kg: 70, reps: 3 }] }] }, { day: '2026-11-08', exercises: [{ name: 'squat', sets: [{ kg: 70, reps: 5 }] }] }])).toEqual([{ name: 'squat', kg: 70, reps: 5, day: '2026-11-08' }]);
