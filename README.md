@@ -22,9 +22,9 @@ Extensions for [Pingo Assistant](https://github.com/b-niamin/assistant).
       <sub><code>health</code> · native · per profile · needs a Garmin Connect account</sub>
     </td>
     <td width="50%" valign="top">
-      <a href="docs/screenshots/training.png"><img src="docs/screenshots/training.png" alt="Training plan: the week, today's workout, plans and best sets" /></a>
-      <h3><a href="extensions/training">Training plan</a></h3>
-      Plans and sessions for any sport, a set-by-set logger for the gym, and the plan on the calendar.<br />
+      <a href="docs/screenshots/training.png"><img src="docs/screenshots/training.png" alt="Training: the week, today's workouts, the active plan and best sets" /></a>
+      <h3><a href="extensions/training">Training</a></h3>
+      Plans with one active, and workouts made of anything: a run, exercises from the library, the sauna. Sets, rest timer, the calendar.<br />
       <sub><code>training</code> · native · per profile</sub>
     </td>
   </tr>
@@ -59,7 +59,7 @@ Extensions for [Pingo Assistant](https://github.com/b-niamin/assistant).
 | Light | Dark |
 |---|---|
 | <img src="docs/screenshots/health.png" alt="Training & Health, light"> | <img src="docs/screenshots/health-dark.png" alt="Training & Health, dark"> |
-| <img src="docs/screenshots/training.png" alt="Training plan, light"> | <img src="docs/screenshots/training-dark.png" alt="Training plan, dark"> |
+| <img src="docs/screenshots/training.png" alt="Training, light"> | <img src="docs/screenshots/training-dark.png" alt="Training, dark"> |
 | <img src="docs/screenshots/home.png" alt="Home, light"> | <img src="docs/screenshots/home-dark.png" alt="Home, dark"> |
 | <img src="docs/screenshots/monitor.png" alt="System monitor, light"> | <img src="docs/screenshots/monitor-dark.png" alt="System monitor, dark"> |
 | <img src="docs/screenshots/calendar.png" alt="Calendar, light"> | <img src="docs/screenshots/calendar-dark.png" alt="Calendar, dark"> |

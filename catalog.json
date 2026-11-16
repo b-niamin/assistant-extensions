@@ -64,15 +64,15 @@
     },
     {
       "id": "training",
-      "name": "Training plan",
-      "description": "Plans and sessions of any sport: runs, rides, the gym. Log sets and weights, see the week, put it on the calendar. Built mostly with Claude.",
+      "name": "Training",
+      "description": "Training plans with one active, and workouts made of anything: a run, exercises from the library, the sauna. Tick sets, rest timer, the week and the calendar. Built mostly with Claude.",
       "kind": "native",
       "scope": "profile",
       "accessory": "headband",
       "i18n": {
         "pl": {
-          "name": "Plan treningowy",
-          "description": "Plany i treningi w każdej dyscyplinie: bieg, rower, siłownia. Zapisuj serie i ciężary, patrz na tydzień, miej to w kalendarzu. Układane głównie z Claude."
+          "name": "Trening",
+          "description": "Plany treningowe, z jednym aktywnym, i treningi złożone z czego chcesz: bieg, ćwiczenia z biblioteki, sauna. Odhaczanie serii, minutnik przerwy, tydzień i kalendarz. Układane głównie z Claude."
         }
       }
     }

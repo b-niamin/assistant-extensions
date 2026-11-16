@@ -1,8 +1,8 @@
 {
   "id": "training",
-  "name": "Training plan",
-  "description": "Plans and sessions of any sport: runs, rides, the gym. Log sets and weights, see the week, put it on the calendar. Built mostly with Claude.",
-  "version": "1.0.1",
+  "name": "Training",
+  "description": "Training plans with one active, and workouts made of anything: a run, exercises from the library, the sauna. Tick sets, rest timer, the week and the calendar. Built mostly with Claude.",
+  "version": "1.1.0",
   "kind": "native",
   "scope": "profile",
   "accessory": "headband",

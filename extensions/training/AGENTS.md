@@ -9,9 +9,13 @@ Training & Health through both apps' tools.
 
 | Table | What |
 |---|---|
-| `training.plans` | a goal over some days: name, goal, sport (NULL = mixed), start_day, end_day, status active/done/archived |
-| `training.sessions` | one session on a day: sport (`SPORTS` in `web/lib/model.ts`), title, time_local, duration_min, distance_m, `steps` (endurance: the step tree `health__send_workout` takes), `exercises` (strength: `[{name, sets: [{reps, kg, seconds}], rest_s, note}]`), status planned/done/skipped, `result` (what was logged: exercises with done sets, rpe, note, started_at, finished_at), `activity_ref` (the real activity, e.g. a Garmin activity id), `sent_at` (on the watch), `source` |
-| `training.templates` | reusable workouts |
+| `training.plans` | a goal over some days: name, goal, sport (NULL = mixed), start_day, end_day, status active/done/archived, `active` (at most one per profile, a partial unique index) |
+| `training.sessions` | one workout on a day: title, time_local, duration_min, `items` (the workout: cardio and exercise items, see `Item` in `web/lib/model.ts`), `sport` (the main sport, derived), status planned/done/skipped, `result` (rpe, note, started_at, finished_at; ticked sets live in the items), `activity_ref`, `sent_at` (on the watch), `source`. Rows from before 1.1 have `steps`/`exercises` instead of `items`; `itemsOf` reads both |
+| `training.templates` | reusable workouts (`items`) |
+| `training.library` | the profile's own library entries; the built-in ones are in `web/lib/library.ts` |
+
+Visible = of the active plan or of no plan (`sessionsIn(..., { visible: true })`): the week, the
+calendar and the tile. Tools and the plan page see everything.
 
 ## With other apps (through Claude)
 
@@ -22,5 +26,6 @@ Training & Health through both apps' tools.
 - Strava/Garmin titles: find the activity with `health__activities`, rename it with
   `health__edit_activity`, link it with `training__log_session {id, status: done, activity_ref}`.
 
-Pure logic (checks, the Garmin workout, bests) is in `web/lib/model.ts` with tests;
+Pure logic (items, checks, the Garmin workout, bests) is in `web/lib/model.ts`, the library in
+`web/lib/library.ts`, both with tests;
 `web/lib/view.ts` has the week and the tile.

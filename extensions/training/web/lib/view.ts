@@ -1,6 +1,6 @@
 /** Pure helpers for the page and the tile: the week grid, counts, the tile data. */
 import { EN, type TileData, type Translate } from '$shell';
-import { addDays, mondayOf, SPORT_LABELS, type Session } from './model';
+import { addDays, minutesOf, mondayOf, SPORT_LABELS, type Session } from './model';
 
 export interface DayColumn {
   day: string;
@@ -19,7 +19,7 @@ export function weekOf(day: string, sessions: Session[]): DayColumn[] {
 export function weekCounts(sessions: Session[]) {
   const planned = sessions.length;
   const done = sessions.filter((s) => s.status === 'done').length;
-  const minutes = sessions.filter((s) => s.status === 'done').reduce((n, s) => n + (s.duration_min ?? 0), 0);
+  const minutes = sessions.filter((s) => s.status === 'done').reduce((n, s) => n + (minutesOf(s) ?? 0), 0);
   return { planned, done, minutes };
 }
 
@@ -27,7 +27,7 @@ export function weekTile(sessions: Session[], today: string, t: Translate = EN):
   const monday = mondayOf(today);
   const thisWeek = sessions.filter((s) => s.day >= monday && s.day <= addDays(monday, 6));
   const next = sessions.filter((s) => s.status === 'planned' && s.day >= today).slice(0, 4);
-  if (!thisWeek.length && !next.length) return { empty: { message: t('No sessions planned. Ask Claude for a plan, or add one on the page.') } };
+  if (!thisWeek.length && !next.length) return { empty: { message: t('No workouts planned. Ask Claude for a plan, or add one on the page.') } };
   const c = weekCounts(thisWeek);
   return {
     kpis: [

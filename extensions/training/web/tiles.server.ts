@@ -1,4 +1,4 @@
-/** Dashboard tile of the training plan (spec 003): this week, planned against done, and what is next. */
+/** Dashboard tile of Training (spec 003): this week, planned against done, and what is next (active plan and no plan). */
 import { todayIn, type ExtTile } from '$shell';
 import { sessionsIn } from './lib/db.server';
 import { weekTile } from './lib/view';
@@ -13,7 +13,7 @@ export const tiles: ExtTile[] = [
       ctx.db(async (sql) => {
         const today = todayIn();
         const monday = mondayOf(today);
-        const list = await sessionsIn(sql, ctx.dataProfileId!, monday, addDays(monday, 13));
+        const list = await sessionsIn(sql, ctx.dataProfileId!, monday, addDays(monday, 13), { visible: true });
         return weekTile(list, today, ctx.t);
       })
   }
