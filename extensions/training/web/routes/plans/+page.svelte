@@ -37,8 +37,8 @@
       <h2 id="g-{g.state}">{g.title}</h2>
       <div class="list">
         {#each g.plans as pl (pl.id)}
-          <article class="card plan" class:active={pl.active}>
-            <div class="top">
+          <article class="card plancard" class:active={pl.active}>
+            <div class="ptop">
               <a href="/training/plans/{pl.id}"><strong>{pl.name}</strong></a>
               <span class="badge {pl.state}">{pl.state === 'active' ? t('Active') : pl.state === 'waiting' ? t('Waiting') : t('Finished')}</span>
             </div>
@@ -119,24 +119,24 @@
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: var(--space-3);
   }
-  .plan {
+  .plancard {
     display: grid;
     gap: var(--space-2);
     align-content: start;
   }
-  .plan.active {
+  .plancard.active {
     outline: 2px solid var(--accent);
   }
-  .plan p {
+  .plancard p {
     margin: 0;
   }
-  .top {
+  .ptop {
     display: flex;
     justify-content: space-between;
     gap: var(--space-2);
     align-items: baseline;
   }
-  .top a {
+  .ptop a {
     color: var(--ink);
   }
   .badge {

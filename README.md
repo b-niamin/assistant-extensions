@@ -22,7 +22,7 @@ Extensions for [Pingo Assistant](https://github.com/b-niamin/assistant).
       <sub><code>health</code> · native · per profile · needs a Garmin Connect account</sub>
     </td>
     <td width="50%" valign="top">
-      <a href="docs/screenshots/training.png"><img src="docs/screenshots/training.png" alt="Training: the week, today's workouts, the active plan and best sets" /></a>
+      <a href="docs/screenshots/training.png"><img src="docs/screenshots/training.png" alt="Training: the week against a weekly goal, quick start and the week's workouts" /></a>
       <h3><a href="extensions/training">Training</a></h3>
       Plans with one active, and workouts made of anything: a run, exercises from the library, the sauna. Sets, rest timer, the calendar.<br />
       <sub><code>training</code> · native · per profile</sub>

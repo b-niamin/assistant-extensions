@@ -261,12 +261,12 @@ export async function deleteTemplate(sql: Sql, p: string, id: string): Promise<b
 }
 
 /** Logged workouts with exercises, newest first, for progress (bests). */
-export async function doneWorkouts(sql: Sql, p: string, limit = 200): Promise<{ day: string; title: string; items: Item[] }[]> {
+export async function doneWorkouts(sql: Sql, p: string, limit = 200): Promise<{ id: string; day: string; title: string; items: Item[] }[]> {
   const rows = await sql`
     SELECT * FROM training.sessions
      WHERE profile_id = ${p} AND status = 'done' AND (sport = 'strength' OR items IS NOT NULL OR exercises IS NOT NULL)
-     ORDER BY day DESC LIMIT ${limit}`;
-  return rows.map((r) => ({ day: dayText(r.day), title: String(r.title), items: itemsOf(r) }));
+     ORDER BY day DESC, done_at DESC NULLS LAST LIMIT ${limit}`;
+  return rows.map((r) => ({ id: String(r.id), day: dayText(r.day), title: String(r.title), items: itemsOf(r) }));
 }
 
 // -- the library ----------------------------------------------------------------------------------------

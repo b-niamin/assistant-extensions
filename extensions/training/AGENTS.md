@@ -27,5 +27,8 @@ calendar and the tile. Tools and the plan page see everything.
   `health__edit_activity`, link it with `training__log_session {id, status: done, activity_ref}`.
 
 Pure logic (items, checks, the Garmin workout, bests) is in `web/lib/model.ts`, the library in
-`web/lib/library.ts`, both with tests;
+`web/lib/library.ts`, the gym side (last time, records, quick fills, muscles, recovery, plates, photos in
+`web/lib/img/<id>_0|1.webp`) in `web/lib/gym.ts`, all with tests. The look is `web/lib/gym.css` (every
+rule under `.gym`, loaded by `web/routes/+layout.svelte`), the parts in `web/lib/ui/`. The workout page
+saves through the `autosave` action a moment after each change;
 `web/lib/view.ts` has the week and the tile.

@@ -1,918 +1,660 @@
 <script lang="ts">
+  import { deserialize } from '$app/forms';
+  import { goto, replaceState } from '$app/navigation';
+  import { page } from '$app/state';
   import type { DataOf } from '$shell';
-  import { enhance, Mascot, useT, type Mood } from '$shell/ui';
-  import { GROUP_LABELS, GROUPS, itemFrom, libraryById, MUSCLES, searchLibrary, type LibraryEntry } from '../../../lib/library';
+  import { Mascot, useT } from '$shell/ui';
+  import { onMount, tick as settle } from 'svelte';
   import {
-    autoTitle,
-    CARDIO_SPORTS,
-    itemHue,
-    minutesOf,
-    progressOf,
-    SPORT_LABELS,
-    stepLength,
-    targetInput,
-    parseTarget,
-    UNITS,
-    type CardioItem,
-    type ExerciseItem,
-    type Item,
-    type Step
-  } from '../../../lib/model';
+    amount,
+    bestBefore,
+    BAR,
+    clock,
+    confetti,
+    counted,
+    e1rm,
+    factFor,
+    fmtN,
+    fmtShort,
+    isRecord,
+    keyOf,
+    lastPerf,
+    muscleLoad,
+    PAIR,
+    quickOptions,
+    restFor,
+    setsText,
+    type Logged,
+    type Perf
+  } from '../../../lib/gym';
+  import { itemFrom, libraryById, MUSCLES, type LibraryEntry } from '../../../lib/library';
+  import { autoTitle, SPORT_LABELS, stepsLine, type CardioItem, type ExerciseItem, type Item, type SetSpec } from '../../../lib/model';
+  import Blocks from '../../../lib/ui/Blocks.svelte';
+  import ExerciseInfo from '../../../lib/ui/ExerciseInfo.svelte';
+  import LoadBlock from '../../../lib/ui/LoadBlock.svelte';
+  import Picker from '../../../lib/ui/Picker.svelte';
+  import Plates from '../../../lib/ui/Plates.svelte';
+  import RestTimer from '../../../lib/ui/RestTimer.svelte';
+  import Sheet from '../../../lib/ui/Sheet.svelte';
+  import Thumb from '../../../lib/ui/Thumb.svelte';
   import type { load } from './+page.server';
 
-  let { data, form }: { data: DataOf<typeof load>; form: { error?: string; saved?: string } | null } = $props();
+  let { data }: { data: DataOf<typeof load> } = $props();
   const t = useT();
+  const lib = $derived(data.library as LibraryEntry[]);
+  const history = $derived(data.history as Logged[]);
 
-  const s = $derived(data.session);
-  // The page works on a copy of the workout; Save sends it back whole.
-  const copy = () => structuredClone($state.snapshot(data.session.items)) as Item[];
+  // The page works on its own copy and saves it a moment after every change.
   // svelte-ignore state_referenced_locally
-  let items = $state<Item[]>(copy());
-  // svelte-ignore state_referenced_locally
-  let rpe = $state(data.session.result?.rpe != null ? String(data.session.result.rpe) : '');
-  // svelte-ignore state_referenced_locally
-  let note = $state(data.session.result?.note ?? '');
-  // svelte-ignore state_referenced_locally
-  let startedAt = $state(data.session.result?.started_at ?? '');
-  // svelte-ignore state_referenced_locally
-  let title = $state(data.session.title);
-  $effect(() => {
-    void data.session;
-    items = copy();
-    title = data.session.title;
-    rpe = data.session.result?.rpe != null ? String(data.session.result.rpe) : '';
-    note = data.session.result?.note ?? '';
+  const s0 = data.session;
+  let sid = $state(s0.id);
+  let items = $state<Item[]>(structuredClone($state.snapshot(s0.items)) as Item[]);
+  let status = $state(s0.status);
+  let day = $state(s0.day);
+  // A title made from the items is made again as they change; one typed or planned stays.
+  const autoNamed = !s0.title || s0.title === autoTitle(s0.items) || s0.title === 'Workout';
+  let title = $state(autoNamed ? '' : s0.title);
+  let time = $state(s0.time_local ?? '');
+  let planId = $state(s0.plan_id ?? '');
+  let description = $state(s0.description ?? '');
+  let startedAt = $state(s0.result?.started_at ?? '');
+  let finishedAt = $state(s0.result?.finished_at ?? '');
+  let rpe = $state(s0.result?.rpe != null ? String(s0.result.rpe) : '');
+  let note = $state(s0.result?.note ?? '');
+
+  let sync = $state<'saved' | 'saving' | 'error' | ''>('');
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let inflight: Promise<unknown> | null = null;
+  let again = false;
+
+  function fields(): FormData {
+    const f = new FormData();
+    f.set('items', JSON.stringify(items));
+    f.set('day', day);
+    f.set('title', title.trim());
+    f.set('time', time);
+    f.set('plan', planId);
+    f.set('description', description);
+    f.set('started_at', startedAt);
+    f.set('rpe', rpe);
+    f.set('note', note);
+    if (data.template) f.set('template', data.template);
+    return f;
+  }
+  async function post(action: string, f = fields()) {
+    const res = await fetch(`/training/session/${sid}?/${action}`, { method: 'POST', body: f, headers: { accept: 'application/json', 'x-sveltekit-action': 'true' } });
+    const r = deserialize(await res.text());
+    if (r.type === 'success' && r.data && typeof r.data.id === 'string' && r.data.id !== sid) {
+      const was = sid;
+      sid = r.data.id;
+      if (was === 'new') replaceState(`/training/session/${sid}`, {});
+    }
+    return r;
+  }
+  async function flush() {
+    clearTimeout(timer);
+    timer = undefined;
+    if (inflight) {
+      again = true;
+      return inflight;
+    }
+    sync = 'saving';
+    inflight = post('autosave')
+      .then((r) => (sync = r.type === 'success' ? 'saved' : 'error'))
+      .catch(() => (sync = 'error'))
+      .finally(() => {
+        inflight = null;
+        if (again) {
+          again = false;
+          flush();
+        }
+      });
+    return inflight;
+  }
+  function queue() {
+    sync = 'saving';
+    clearTimeout(timer);
+    timer = setTimeout(flush, 500);
+  }
+  onMount(() => {
+    const save = () => timer && flush();
+    addEventListener('pagehide', save);
+    document.addEventListener('visibilitychange', save);
+    if (page.url.searchParams.get('pick') === '1') sheet = { mode: 'pick' };
+    return () => {
+      removeEventListener('pagehide', save);
+      document.removeEventListener('visibilitychange', save);
+      if (timer) flush();
+    };
   });
 
-  let picking = $state(false);
+  // The clock of a workout under way.
+  let now = $state(Date.now());
+  $effect(() => {
+    const iv = setInterval(() => (now = Date.now()), 1000);
+    return () => clearInterval(iv);
+  });
+  const live = $derived(!!startedAt && status === 'planned' && day === data.today);
+  const total = $derived(items.reduce((a, i) => a + (i.kind === 'cardio' ? 1 : i.sets.length), 0));
+  const ticked = $derived(items.reduce((a, i) => a + (i.kind === 'cardio' ? (i.done ? 1 : 0) : i.sets.filter((x) => x.done).length), 0));
+
+  type SheetState =
+    | { mode: 'pick' }
+    | { mode: 'info'; key: string; ref?: string; name: string }
+    | { mode: 'plates'; ex: number | null; kg: number }
+    | { mode: 'summary' }
+    | { mode: 'details' };
+  let sheet = $state<SheetState | null>(null);
   let query = $state('');
-  let group = $state('all');
-  let open = $state<number | null>(null);
-  let confirmDelete = $state(false);
-  let dirty = $state(false);
-
-  const found = $derived(searchLibrary(data.library as LibraryEntry[], query, group, t).slice(0, 60));
-  function add(e: LibraryEntry) {
-    items.push(itemFrom(e));
-    dirty = true;
+  let confirm = $state<string | null>(null);
+  let mapMode = $state<'done' | 'plan'>('done');
+  let fresh = $state<number | null>(null);
+  let pop = $state('');
+  let qo = $state<Record<number, string>>({});
+  let noteOpen = $state<Record<number, boolean>>({});
+  let toast = $state<{ text: string; gold?: boolean } | null>(null);
+  let toastT: ReturnType<typeof setTimeout> | undefined;
+  let fx = $state<HTMLCanvasElement>();
+  let rest = $state<ReturnType<typeof RestTimer>>();
+  function say(text: string, gold = false) {
+    toast = { text, gold };
+    clearTimeout(toastT);
+    toastT = setTimeout(() => (toast = null), 2600);
   }
-  function addFree() {
-    const name = query.trim();
-    if (!name) return;
-    items.push({ kind: 'exercise', name, unit: 'reps', sets: [{ reps: 10 }, { reps: 10 }, { reps: 10 }], rest_s: 90 });
-    query = '';
-    dirty = true;
-  }
-  function move(i: number, d: number) {
-    const j = i + d;
-    if (j < 0 || j >= items.length) return;
-    [items[i], items[j]] = [items[j], items[i]];
-    dirty = true;
-  }
-  function remove(i: number) {
-    items.splice(i, 1);
-    dirty = true;
-  }
-
-  // Rest timer: starts when a set is ticked.
-  let restLeft = $state(0);
-  let restAll = $state(0);
-  let timer: ReturnType<typeof setInterval> | undefined;
-  function startRest(n: number) {
-    restLeft = restAll = n;
-    clearInterval(timer);
-    timer = setInterval(() => {
-      restLeft = Math.max(0, restLeft - 1);
-      if (!restLeft) clearInterval(timer);
-    }, 1000);
-  }
-  function tick(e: ExerciseItem, i: number) {
-    e.sets[i].done = !e.sets[i].done;
-    if (!startedAt) startedAt = new Date().toISOString();
-    if (e.sets[i].done && e.rest_s && e.sets.some((x) => !x.done)) startRest(e.rest_s);
-    dirty = true;
-  }
-  function tickCardio(c: CardioItem) {
-    c.done = !c.done;
-    if (!startedAt) startedAt = new Date().toISOString();
-    dirty = true;
-  }
-  $effect(() => () => clearInterval(timer));
-  const addSet = (e: ExerciseItem) => {
-    const last = e.sets[e.sets.length - 1];
-    e.sets.push(last ? { ...last, done: undefined } : e.unit === 'reps' ? { reps: 10 } : { seconds: e.unit === 'minutes' ? 600 : 30 });
-    dirty = true;
+  const buzz = (p: number | number[]) => {
+    try {
+      navigator.vibrate?.(p);
+    } catch {
+      /* none */
+    }
   };
-  const num = (v: string) => (v.trim() === '' ? undefined : Number(v.replace(',', '.')));
-  const mmss = (n: number) => `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`;
 
-  // Blocks for the watch: the steps of a cardio item, as Garmin takes them.
-  const KINDS = ['warmup', 'work', 'recovery', 'rest', 'cooldown'] as const;
-  const KIND_LABELS: Record<string, string> = { warmup: 'Warm-up', work: 'Work', recovery: 'Recovery', rest: 'Rest', cooldown: 'Cool-down' };
-  const newStep = (kind: string): Step => ({ kind, durationType: 'time', durationValue: kind === 'work' ? 300 : 600 });
-  function lengthInput(st: Step): string {
-    const v = Number(st.durationValue);
-    if (st.durationType === 'time' && v > 0) return mmss(v);
-    if (st.durationType === 'distance' && v > 0) return String(v);
-    return '';
-  }
-  function setLength(st: Step, v: string) {
-    if (st.durationType === 'time') {
-      const m = /^(\d{1,3})(?::([0-5]?\d))?$/.exec(v.trim());
-      st.durationValue = m ? Number(m[1]) * 60 + Number(m[2] ?? 0) : undefined;
-    } else if (st.durationType === 'distance') st.durationValue = num(v);
-    dirty = true;
-  }
-  function setTarget(st: Step, v: string) {
-    const target = parseTarget(v);
-    if (target) st.target = target;
-    else delete st.target;
-    dirty = true;
+  const entryOf = (i: Item) => (i.ref ? libraryById(i.ref, lib) : undefined);
+  const perfs = $derived(items.map((i) => (i.kind === 'exercise' ? lastPerf(history, keyOf(i), sid) : null)));
+  const bests = $derived(items.map((i) => (i.kind === 'exercise' ? bestBefore(history, keyOf(i), sid) : { e1rm: 0, amount: 0 })));
+  const inWorkout = $derived(new Set(items.map((i) => i.ref ?? '')));
+  const longDay = $derived(new Date(`${day}T12:00:00Z`).toLocaleDateString(t.locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }));
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  const shownTitle = $derived(title.trim() || (items.length ? autoTitle(items, t) : t('New workout')));
+  const plan = $derived(data.plans.find((p) => p.id === planId) ?? null);
+
+  // -- adding --------------------------------------------------------------------------------------------
+  async function addPicked(e: LibraryEntry | string) {
+    let it: Item;
+    if (typeof e === 'string') {
+      const found = lib.find((x) => t(x.name).toLowerCase() === e.toLowerCase() || x.name.toLowerCase() === e.toLowerCase());
+      if (found) return addPicked(found);
+      it = { kind: 'exercise', name: e, unit: 'reps', sets: [] };
+    } else it = itemFrom(e);
+    if (it.kind === 'exercise') {
+      const prev = lastPerf(history, keyOf(it), sid);
+      const n = prev ? Math.max(1, prev.sets.length) : it.sets.length || 3;
+      if (prev?.unit && prev.unit !== it.unit && !it.ref) it.unit = prev.unit;
+      it.sets = prev ? Array.from({ length: n }, () => ({})) : it.unit === 'minutes' ? it.sets : Array.from({ length: n }, () => ({}));
+    }
+    items.push(it);
+    fresh = items.length - 1;
+    query = '';
+    sheet = null;
+    queue();
+    await settle();
+    const els = document.querySelectorAll('.gym .ex');
+    els[els.length - 1]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  const prog = $derived(progressOf(items));
-  const mood: Mood = $derived(s.status === 'done' ? 'charged' : s.status === 'skipped' ? 'tired' : prog.done ? 'steady' : 'idle');
-  const longDay = $derived(new Date(`${s.day}T12:00:00Z`).toLocaleDateString(t.locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }));
-  const statusText = $derived(s.status === 'done' ? t('done') : s.status === 'skipped' ? t('skipped') : t('planned'));
-  const minutes = $derived(minutesOf({ duration_min: s.duration_min, items }));
-  const shownTitle = $derived(title.trim() || (items.length ? autoTitle(items, t) : data.isNew ? t('New workout') : s.title));
-  const entryOf = (i: Item) => (i.ref ? libraryById(i.ref, data.library as LibraryEntry[]) : undefined);
-  const unitLabel = (u: string) => (u === 'minutes' ? t('Minutes') : u === 'seconds' ? t('Seconds') : t('Reps'));
+  // -- sets ----------------------------------------------------------------------------------------------
+  const ph = (prev: Perf | null, j: number): SetSpec | null => (prev ? (prev.sets[j] ?? prev.sets[prev.sets.length - 1]) : null);
+  const parse = (v: string) => {
+    const n = Number(v.trim().replace(',', '.'));
+    return v.trim() === '' || !Number.isFinite(n) ? undefined : n;
+  };
+  function setValue(e: ExerciseItem, j: number, f: 'kg' | 'reps' | 'seconds' | 'minutes', v: string) {
+    const n = parse(v);
+    const s = e.sets[j];
+    if (f === 'minutes') s.seconds = n === undefined ? undefined : Math.round(n * 60);
+    else if (f === 'reps') s.reps = n === undefined ? undefined : Math.round(n);
+    else if (f === 'seconds') {
+      s.seconds = n === undefined ? undefined : Math.round(n);
+      if (n) rest?.suggest(Math.round(n));
+    } else s.kg = n;
+    queue();
+  }
+  function tickSet(i: number, j: number) {
+    const e = items[i] as ExerciseItem;
+    const s = e.sets[j];
+    if (!s.done) {
+      const p = ph(perfs[i], j);
+      if (p && p.kg != null && s.kg == null && e.unit === 'reps') s.kg = p.kg;
+      if (p && e.unit === 'reps' && s.reps == null && p.reps) s.reps = p.reps;
+      if (p && e.unit !== 'reps' && s.seconds == null && p.seconds) s.seconds = p.seconds;
+      if (!amount(s, e.unit)) {
+        say(e.unit === 'reps' ? t('Type the number of reps.') : t('Type the time.'));
+        (document.querySelector(`[data-set="${i}-${j}"] input[data-f="amount"]`) as HTMLInputElement | null)?.focus();
+        return;
+      }
+    }
+    s.done = !s.done || undefined;
+    if (!startedAt && status === 'planned') startedAt = new Date().toISOString();
+    let xi = i;
+    if (s.done && e.sets.filter((x) => x.done).length === 1) {
+      // The first ticked set: the exercise moves after the ones already under way.
+      const others = items.filter((_, k) => k !== i);
+      let p = 0;
+      others.forEach((o, k) => {
+        if (o.kind === 'exercise' ? o.sets.some((x) => x.done) : o.done) p = k + 1;
+      });
+      if (p !== i) {
+        others.splice(p, 0, e);
+        items = others;
+        xi = p;
+        qo = {};
+        noteOpen = {};
+      }
+    }
+    queue();
+    if (s.done) {
+      pop = `${xi}-${j}`;
+      buzz(15);
+      rest?.suggest(restFor(e.ref));
+      const others = e.sets.filter((x, k) => k !== j && x.done);
+      const rec =
+        isRecord(e, j, bests[i]) &&
+        others.every((x) => (e.unit !== 'reps' || !s.kg ? amount(x, e.unit) < amount(s, e.unit) : e1rm(x.kg ?? 0, x.reps ?? 0) < e1rm(s.kg ?? 0, s.reps ?? 0)));
+      if (rec) {
+        say(t('New record: {name}, {set}', { name: t(e.name), set: setsText([s], e.unit, t.locale) }), true);
+        if (fx) confetti(fx);
+      } else if (items.every((it) => (it.kind === 'cardio' ? it.done : it.sets.every((x) => x.done)))) say(t('Every set done. You can finish the workout.'));
+      if (xi !== i) settle().then(() => document.querySelectorAll('.gym .ex')[xi]?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    }
+  }
+  function addSet(e: ExerciseItem, i: number) {
+    const l = e.sets[e.sets.length - 1];
+    e.sets.push(l ? { kg: l.kg, reps: l.reps, seconds: l.seconds } : {});
+    pop = `new-${i}-${e.sets.length - 1}`;
+    queue();
+  }
+  function quick(e: ExerciseItem, i: number, id: string) {
+    const prev = perfs[i];
+    if (!prev) return;
+    const o = quickOptions(e, prev).find((x) => x.id === id);
+    if (!o) return;
+    const dn = e.sets.filter((x) => x.done);
+    e.sets = [...dn, ...o.sets.slice(dn.length).map((x) => ({ ...x }))];
+    if (e.sets.length === dn.length) e.sets.push({ ...o.sets[o.sets.length - 1] });
+    qo[i] = id;
+    buzz(10);
+    queue();
+  }
+  const qoLabel = (e: ExerciseItem, o: { id: string; by?: number }, prev: Perf): [string, string] => {
+    if (o.id === 'same') return [t('The same'), t('as {day}', { day: fmtShort(prev.day, t.locale) })];
+    if (o.id === 'kg') return [`+${fmtN(o.by ?? 0, t.locale)} kg`, t('same reps')];
+    if (o.id === 'reps') return [t('+1 rep'), t('same weight')];
+    return [e.unit === 'minutes' ? `+${(o.by ?? 0) / 5} min` : `+${o.by} s`, t('each set')];
+  };
+  function removeItem(i: number) {
+    if (confirm !== `ex${i}`) {
+      confirm = `ex${i}`;
+      return;
+    }
+    items.splice(i, 1);
+    confirm = null;
+    qo = {};
+    noteOpen = {};
+    queue();
+  }
+  function switchUnit(e: ExerciseItem) {
+    e.unit = e.unit === 'reps' ? 'seconds' : 'reps';
+    e.sets = e.sets.map((x) => ({ done: x.done }));
+    queue();
+  }
+  function tickCardio(c: CardioItem, i: number) {
+    c.done = !c.done || undefined;
+    if (!startedAt && status === 'planned') startedAt = new Date().toISOString();
+    if (c.done) {
+      pop = `c${i}`;
+      buzz(15);
+    }
+    queue();
+  }
+
+  // -- finishing -----------------------------------------------------------------------------------------
+  async function finish() {
+    const kept = items
+      .map((i) => (i.kind === 'cardio' ? i : { ...i, sets: i.sets.filter((x) => amount(x, i.unit) > 0) }))
+      .filter((i) => i.kind === 'cardio' || i.sets.length);
+    if (!kept.length) {
+      say(t('Type the reps of at least one set.'));
+      return;
+    }
+    items = kept;
+    clearTimeout(timer);
+    timer = undefined;
+    if (inflight) await inflight;
+    sync = 'saving';
+    const r = await post('finish');
+    if (r.type !== 'success') {
+      sync = 'error';
+      say(r.type === 'failure' && typeof r.data?.error === 'string' ? r.data.error : t('Not saved. Try again.'));
+      return;
+    }
+    sync = 'saved';
+    status = 'done';
+    if (!finishedAt) finishedAt = new Date().toISOString();
+    rest?.stop();
+    sheet = { mode: 'summary' };
+    if (records.length) setTimeout(() => fx && confetti(fx), 250);
+  }
+  async function setStatus(action: 'skip' | 'reopen') {
+    if (timer) await flush();
+    const r = await post(action);
+    if (r.type === 'success') {
+      status = action === 'skip' ? 'skipped' : 'planned';
+      if (action === 'reopen') finishedAt = '';
+      sheet = null;
+    }
+  }
+  let tplName = $state('');
+  let tplSaved = $state(false);
+  async function saveTemplate() {
+    if (!tplName.trim()) return;
+    const f = fields();
+    f.set('template_name', tplName.trim());
+    const r = await post('template', f);
+    if (r.type === 'success') {
+      tplSaved = true;
+      say(t('Saved the template “{name}”', { name: tplName.trim() }));
+    }
+  }
+  async function discard() {
+    if (confirm !== 'discard') {
+      confirm = 'discard';
+      return;
+    }
+    clearTimeout(timer);
+    timer = undefined;
+    rest?.stop();
+    if (sid !== 'new') await fetch(`/training/session/${sid}?/remove`, { method: 'POST', body: new FormData(), headers: { accept: 'application/json', 'x-sveltekit-action': 'true' } });
+    goto(`/training?w=${day}`);
+  }
+
+  // The summary: time, volume, sets, records, muscles.
+  const minutes = $derived(startedAt && finishedAt ? Math.round((Date.parse(finishedAt) - Date.parse(startedAt)) / 60000) : 0);
+  const volume = $derived(items.reduce((a, i) => (i.kind === 'exercise' && i.unit === 'reps' ? a + counted(i).reduce((b, x) => b + (x.kg ?? 0) * (x.reps ?? 0), 0) : a), 0));
+  const setCount = $derived(items.reduce((a, i) => a + (i.kind === 'exercise' ? counted(i).length : 0), 0));
+  const km = $derived(items.reduce((a, i) => a + (i.kind === 'cardio' ? (i.distance_m ?? 0) : 0), 0) / 1000);
+  const records = $derived(
+    items.flatMap((i, k) => {
+      if (i.kind !== 'exercise') return [];
+      const sets = counted(i).map((x) => ({ ...x, done: true }));
+      const ex = { ...i, sets };
+      const top = sets.map((_, j) => j).filter((j) => isRecord(ex, j, bests[k]));
+      if (!top.length) return [];
+      const score = (x: SetSpec) => (i.unit === 'reps' && x.kg ? e1rm(x.kg, x.reps ?? 0) : amount(x, i.unit));
+      const best = top.reduce((a, j) => (score(sets[j]) > score(sets[a]) ? j : a), top[0]);
+      return [{ name: t(i.name), text: setsText([sets[best]], i.unit, t.locale) }];
+    })
+  );
+  const fact = $derived(factFor(volume));
+  const platesFor = (e: ExerciseItem, prev: Perf | null) => {
+    const sv = e.sets.find((x) => !x.done && x.kg) ?? e.sets.find((x) => x.kg);
+    return sv?.kg ?? (prev ? Math.max(...prev.sets.map((x) => x.kg ?? 0)) : 60) ?? 60;
+  };
 </script>
 
 <svelte:head><title>{shownTitle} · {t('Training')}</title></svelte:head>
 
-<nav class="crumbs"><a href="/training?w={s.day}">{t('Training')}</a>{#if data.plan}{' · '}<a href="/training/plans/{data.plan.id}">{data.plan.name}</a>{/if}</nav>
-
-<header class="head rise">
-  <Mascot {mood} size={64} label={t('Pingo in a sweatband')} />
-  <div>
-    <p class="eyebrow">{longDay}{s.time_local ? ` · ${s.time_local}` : ''}{minutes ? ` · ${minutes} min` : ''}</p>
-    <h1>{shownTitle}</h1>
-    {#if !data.isNew}
-      <p class="muted"><span class="status {s.status === 'done' ? 'good' : s.status === 'skipped' ? 'warning' : ''}">{statusText}</span>{#if prog.all}{'\u00a0· '}{t('{done} of {all} done', { done: prog.done, all: prog.all })}{/if}</p>
-    {/if}
+{#if total || live}
+  <div class="bar-live">
+    <div class="clock">{live ? clock(now - Date.parse(startedAt)) : '—'}</div>
+    <div class="prog">
+      <div class="t"><span>{live ? t('workout time') : status === 'done' ? t('saved') : t('plan')}</span><span>{t('{done} of {all}', { done: ticked, all: total })}</span></div>
+      <div class="pb"><i style:width="{total ? Math.round((ticked / total) * 100) : 0}%"></i></div>
+    </div>
+    {#if status === 'done'}<button type="button" class="gbtn ink sm" onclick={() => (sheet = { mode: 'summary' })}>{t('Summary')}</button>{:else}<button type="button" class="gbtn ink sm" onclick={finish}>{t('Finish')}</button>{/if}
   </div>
-</header>
-
-<form
-  method="POST"
-  action="?/save"
-  use:enhance={() => async ({ update, result }) => {
-    await update({ reset: false });
-    if (result.type === 'success') dirty = false;
-  }}
->
-  <input type="hidden" name="items" value={JSON.stringify(items)} />
-  <input type="hidden" name="started_at" value={startedAt} />
-  {#if data.template}<input type="hidden" name="template" value={data.template} />{/if}
-
-  <details class="card rise details" open={data.isNew}>
-    <summary><h2>{t('Details')}</h2><span class="muted small">{[s.day, s.time_local, data.plan?.name].filter(Boolean).join(' · ')}</span></summary>
-    <div class="form">
-      <label class="wide">{t('Title')}<input name="title" maxlength="120" bind:value={title} placeholder={items.length ? autoTitle(items, t) : t('e.g. Run and full body')} /></label>
-      <label>{t('Day')}<input name="day" type="date" required value={s.day} onchange={() => (dirty = true)} /></label>
-      <label>{t('Time (optional)')}<input name="time" type="time" value={s.time_local ?? ''} onchange={() => (dirty = true)} /></label>
-      <label>{t('Plan')}
-        <select name="plan" onchange={() => (dirty = true)}>
-          <option value="">{t('No plan')}</option>
-          {#each data.plans as pl (pl.id)}<option value={pl.id} selected={pl.id === s.plan_id}>{pl.name}{pl.active ? ` (${t('active')})` : ''}</option>{/each}
-        </select>
-      </label>
-      <label>{t('Minutes in all (optional)')}<input name="duration" type="number" min="1" max="1440" value={s.duration_min ?? ''} onchange={() => (dirty = true)} /></label>
-      <label class="wide">{t('Description')}<textarea name="description" rows="2" maxlength="4000" onchange={() => (dirty = true)}>{s.description ?? ''}</textarea></label>
-    </div>
-  </details>
-
-  <section class="card rise" aria-labelledby="items-title">
-    <div class="between">
-      <h2 id="items-title">{t('Workout')}</h2>
-      {#if restLeft}<p class="rest num" role="timer" aria-live="polite">{t('Rest')} {mmss(restLeft)} <button type="button" class="btn btn-ghost" onclick={() => (restLeft = 0, clearInterval(timer))}>{t('Skip')}</button></p>{/if}
-    </div>
-    {#if restLeft}<div class="restbar" aria-hidden="true"><span style:width="{restAll ? (restLeft / restAll) * 100 : 0}%"></span></div>{/if}
-
-    {#each items as it, i (i)}
-      {@const entry = entryOf(it)}
-      <fieldset class="item" style="--hue: var(--hue-{itemHue(it)})">
-        <legend class="sr">{it.kind === 'cardio' ? t(it.name || SPORT_LABELS[it.sport]) : t(it.name)}</legend>
-        <div class="itemhead">
-          <span class="dot" aria-hidden="true"></span>
-          <div class="grow">
-            {#if it.kind === 'cardio'}
-              <strong>{it.name ? t(it.name) : t(SPORT_LABELS[it.sport])}</strong>
-            {:else}
-              <strong>{t(it.name)}</strong>
-              {#if entry?.muscles?.length}<span class="muted small"> · {entry.muscles.map((m) => t(MUSCLES[m])).join(', ')}</span>{/if}
-            {/if}
-          </div>
-          <div class="tools">
-            {#if entry?.description || entry?.cautions}
-              <button type="button" class="btn btn-ghost" aria-expanded={open === i} onclick={() => (open = open === i ? null : i)}>{t('How to')}</button>
-            {/if}
-            <button type="button" class="btn btn-ghost" aria-label={t('Move up')} disabled={i === 0} onclick={() => move(i, -1)}>↑</button>
-            <button type="button" class="btn btn-ghost" aria-label={t('Move down')} disabled={i === items.length - 1} onclick={() => move(i, 1)}>↓</button>
-            <button type="button" class="btn btn-ghost" aria-label={t('Remove')} onclick={() => remove(i)}>✕</button>
-          </div>
-        </div>
-        {#if open === i && entry}
-          <div class="howto small">
-            {#if entry.description}<p>{t(entry.description)}</p>{/if}
-            {#if entry.cautions?.length}
-              <p class="muted">{t('Watch out for')}:</p>
-              <ul>{#each entry.cautions as c (c)}<li>{t(c)}</li>{/each}</ul>
-            {/if}
-          </div>
-        {/if}
-
-        {#if it.kind === 'cardio'}
-          {@const c = it}
-          <div class="cardio">
-            <label class="field sport">{t('Sport')}
-              <select bind:value={c.sport} onchange={() => (dirty = true)}>
-                {#each CARDIO_SPORTS as sp (sp)}<option value={sp}>{t(SPORT_LABELS[sp])}</option>{/each}
-              </select>
-            </label>
-            <label class="field">{t('Time')}
-              <span class="unitbox"><input class="num" inputmode="numeric" placeholder="–" value={c.duration_min ?? ''} oninput={(ev) => ((c.duration_min = num(ev.currentTarget.value)), (dirty = true))} /><span class="unit">min</span></span>
-            </label>
-            <label class="field">{t('Distance')}
-              <span class="unitbox"><input class="num" inputmode="decimal" placeholder="–" value={c.distance_m ? c.distance_m / 1000 : ''} oninput={(ev) => { const v = num(ev.currentTarget.value); c.distance_m = v ? Math.round(v * 1000) : undefined; dirty = true; }} /><span class="unit">km</span></span>
-            </label>
-            <button type="button" class="donebtn" aria-pressed={!!c.done} onclick={() => tickCardio(c)}><span class="check" aria-hidden="true">✓</span>{c.done ? t('Done') : t('Mark done')}</button>
-          </div>
-          <details class="blocks" open={!!c.steps?.length}>
-            <summary class="small">{t('Blocks for the watch')}{c.steps?.length ? ` (${c.steps.length})` : ''}</summary>
-            {#snippet row(st: Step, list: Step[], k: number)}
-              <div class="step">
-                <select aria-label={t('Part')} bind:value={st.kind} onchange={() => (dirty = true)}>
-                  {#each KINDS as kd (kd)}<option value={kd}>{t(KIND_LABELS[kd])}</option>{/each}
-                </select>
-                <select aria-label={t('Length')} bind:value={st.durationType} onchange={() => ((st.durationValue = undefined), (dirty = true))}>
-                  <option value="time">{t('Time')}</option>
-                  <option value="distance">{t('Distance')}</option>
-                  <option value="lap">{t('Until lap')}</option>
-                </select>
-                {#if st.durationType !== 'lap'}
-                  <input class="num" aria-label={st.durationType === 'time' ? t('Time, mm:ss') : t('Metres')} placeholder={st.durationType === 'time' ? 'mm:ss' : 'm'} value={lengthInput(st)} onchange={(ev) => setLength(st, ev.currentTarget.value)} />
-                {:else}<span></span>{/if}
-                <input aria-label={t('Target: pace 4:50-5:10 or heart rate 140-150')} placeholder={t('pace 4:50-5:10 / HR 140-150')} value={targetInput(st.target)} onchange={(ev) => setTarget(st, ev.currentTarget.value)} />
-                <button type="button" class="btn btn-ghost" aria-label={t('Remove')} onclick={() => (list.splice(k, 1), (dirty = true))}>✕</button>
-              </div>
-            {/snippet}
-            {#each c.steps ?? [] as st, k (k)}
-              {#if st.kind === 'repeat'}
-                {@const inner = st.steps as Step[]}
-                <div class="repeat">
-                  <label class="inline">{t('Repeat')}
-                    <input class="num reps" inputmode="numeric" value={st.repeats ?? 2} onchange={(ev) => ((st.repeats = Math.max(1, Math.min(50, Number(ev.currentTarget.value) || 1))), (dirty = true))} />×
-                  </label>
-                  <button type="button" class="btn btn-ghost" aria-label={t('Remove')} onclick={() => (c.steps!.splice(k, 1), (dirty = true))}>✕</button>
-                  {#each inner as s2, k2 (k2)}{@render row(s2, inner, k2)}{/each}
-                  <button type="button" class="btn btn-ghost small" onclick={() => (inner.push(newStep('work')), (dirty = true))}>+ {t('Step')}</button>
-                </div>
-              {:else}
-                {@render row(st, c.steps!, k)}
-              {/if}
-            {/each}
-            <div class="row">
-              <button type="button" class="btn" onclick={() => ((c.steps ??= []).push(newStep(c.steps?.length ? 'work' : 'warmup')), (dirty = true))}>+ {t('Step')}</button>
-              <button type="button" class="btn" onclick={() => ((c.steps ??= []).push({ kind: 'repeat', repeats: 4, steps: [{ kind: 'work', durationType: 'distance', durationValue: 400 }, { kind: 'recovery', durationType: 'time', durationValue: 90 }] }), (dirty = true))}>+ {t('Repeat')}</button>
-            </div>
-            {#if c.steps?.length}<p class="muted small">{c.steps.map((x) => (x.kind === 'repeat' ? `${x.repeats}×` : stepLength(x, t))).join(' · ')}</p>{/if}
-          </details>
-        {:else}
-          {@const e = it}
-          <ol class="sets">
-            <li class="set sethead" class:single={e.unit === 'minutes'} aria-hidden="true">
-              <span></span>{#if e.unit !== 'minutes'}<span>kg</span>{/if}<span>{e.unit === 'reps' ? t('reps') : e.unit === 'seconds' ? 's' : 'min'}</span>
-            </li>
-            {#each e.sets as set, si (si)}
-              <li class="set" class:done={set.done} class:single={e.unit === 'minutes'}>
-                <span class="setno num" aria-hidden="true">{si + 1}</span>
-                {#if e.unit !== 'minutes'}
-                  <span class="unitbox"><input class="num" inputmode="decimal" placeholder="–" aria-label={t('kg, set {n}', { n: si + 1 })} value={set.kg ?? ''} oninput={(ev) => ((set.kg = num(ev.currentTarget.value)), (dirty = true))} /><span class="unit">kg</span></span>
-                {/if}
-                {#if e.unit === 'reps'}
-                  <span class="unitbox"><input class="num" inputmode="numeric" placeholder="–" aria-label={t('reps, set {n}', { n: si + 1 })} value={set.reps ?? ''} oninput={(ev) => ((set.reps = num(ev.currentTarget.value)), (dirty = true))} /><span class="unit">{t('reps')}</span></span>
-                {:else if e.unit === 'seconds'}
-                  <span class="unitbox"><input class="num" inputmode="numeric" placeholder="–" aria-label={t('seconds, set {n}', { n: si + 1 })} value={set.seconds ?? ''} oninput={(ev) => ((set.seconds = num(ev.currentTarget.value)), (dirty = true))} /><span class="unit">s</span></span>
-                {:else}
-                  <span class="unitbox"><input class="num" inputmode="decimal" placeholder="–" aria-label={t('minutes, set {n}', { n: si + 1 })} value={set.seconds ? set.seconds / 60 : ''} oninput={(ev) => { const v = num(ev.currentTarget.value); set.seconds = v ? Math.round(v * 60) : undefined; dirty = true; }} /><span class="unit">min</span></span>
-                {/if}
-                <button type="button" class="tick" aria-pressed={!!set.done} aria-label={t('Set {n} done', { n: si + 1 })} onclick={() => tick(e, si)}>✓</button>
-                <button type="button" class="btn btn-ghost x" aria-label={t('Remove set {n}', { n: si + 1 })} onclick={() => (e.sets.splice(si, 1), (dirty = true))}>✕</button>
-              </li>
-            {/each}
-          </ol>
-          <div class="itemfoot">
-            <button type="button" class="addset" onclick={() => addSet(e)}>+ {t('Set')}</button>
-            {#if !e.ref}
-              <label class="inline small">{t('Counts')}
-                <select bind:value={e.unit} onchange={() => (dirty = true)}>{#each UNITS as u (u)}<option value={u}>{unitLabel(u)}</option>{/each}</select>
-              </label>
-            {/if}
-            {#if e.unit !== 'minutes'}
-              <label class="inline small">{t('Rest')}
-                <select value={String(e.rest_s ?? 0)} onchange={(ev) => ((e.rest_s = Number(ev.currentTarget.value) || undefined), (dirty = true))}>
-                  {#each [0, 30, 45, 60, 90, 120, 180, 240] as r (r)}<option value={String(r)}>{r ? mmss(r) : t('none')}</option>{/each}
-                </select>
-              </label>
-            {/if}
-          </div>
-        {/if}
-      </fieldset>
-    {:else}
-      <p class="muted">{t('Nothing in it yet. Add a run, exercises from the library, the sauna...')}</p>
-    {/each}
-
-    {#if !picking}
-      <button type="button" class="btn btn-primary" onclick={() => (picking = true)}>+ {t('Add to the workout')}</button>
-    {:else}
-      <div class="picker" role="group" aria-label={t('Library')}>
-        <div class="between">
-          <input class="grow" type="search" placeholder={t('Search: name or muscle')} aria-label={t('Search the library')} bind:value={query} />
-          <button type="button" class="btn btn-ghost" onclick={() => (picking = false)}>{t('Close')}</button>
-        </div>
-        <div class="chips" role="radiogroup" aria-label={t('Group')}>
-          {#each ['all', ...GROUPS, 'back_friendly'] as g (g)}
-            <button type="button" class="chip" role="radio" aria-checked={group === g} onclick={() => (group = g)}>
-              {g === 'all' ? t('All') : g === 'back_friendly' ? t('Easy on the back') : t(GROUP_LABELS[g as keyof typeof GROUP_LABELS])}
-            </button>
-          {/each}
-        </div>
-        <ul class="found">
-          {#each found as e (e.id)}
-            <li>
-              <button type="button" class="pick" onclick={() => add(e)}>
-                <span class="dot" style="background: var(--hue-{e.kind === 'cardio' ? 'blue' : e.group === 'recovery' ? 'violet' : 'magenta'})" aria-hidden="true"></span>
-                <span class="grow">
-                  <strong>{t(e.name)}</strong>{#if e.custom}<span class="muted small"> · {t('yours')}</span>{/if}<br />
-                  <span class="muted small">{e.kind === 'cardio' ? t('Cardio: time, distance, blocks') : e.muscles?.length ? e.muscles.map((m) => t(MUSCLES[m])).join(', ') : unitLabel(e.unit ?? 'reps')}</span>
-                </span>
-                <span class="plus" aria-hidden="true">+</span>
-              </button>
-            </li>
-          {:else}
-            <li class="muted small">{t('Nothing found.')}</li>
-          {/each}
-        </ul>
-        {#if query.trim()}
-          <button type="button" class="btn" onclick={addFree}>{t('Add “{name}” as an exercise', { name: query.trim() })}</button>
-        {/if}
-        <p class="muted small">{t('Your own exercises, with a description: ')}<a href="/training/library">{t('the library')}</a>.</p>
-      </div>
-    {/if}
-  </section>
-
-  <section class="card rise" aria-labelledby="how-title">
-    <h2 id="how-title">{data.isNew ? t('Save') : t('How it went')}</h2>
-    {#if !data.isNew}
-      <fieldset class="rpe">
-        <legend>{t('Effort (RPE 0-10)')}</legend>
-        <div class="rpechips">
-          {#each ['', ...Array.from({ length: 11 }, (_, i) => String(i))] as n (n)}
-            <label class="rpechip" class:on={rpe === n}><input type="radio" name="rpe" value={n} bind:group={rpe} />{n === '' ? '–' : n}</label>
-          {/each}
-        </div>
-      </fieldset>
-      <label class="field">{t('Note')}<textarea name="note" rows="2" maxlength="2000" bind:value={note} placeholder={t('How did it feel?')}></textarea></label>
-    {/if}
-    {#if form?.error}<p class="error" role="alert">{form.error}</p>{/if}
-    {#if form?.saved === 'finish'}<p class="muted" role="status">{t('Well done. Saved as done.')}</p>{:else if form?.saved === 'template'}<p class="muted" role="status">{t('Saved, and as a template.')}</p>{:else if form?.saved && !dirty}<p class="muted" role="status">{t('Saved.')}</p>{/if}
-    <div class="row">
-      {#if data.isNew}
-        <button class="btn btn-primary" name="how" value="save">{t('Save the workout')}</button>
-        <button class="btn" name="how" value="finish">{t('Save as done')}</button>
-      {:else}
-        {#if s.status !== 'done'}<button class="btn btn-primary" name="how" value="finish">{t('Finish')}</button>{/if}
-        <button class="btn" name="how" value="save">{dirty ? t('Save changes') : t('Save')}</button>
-        {#if s.status === 'planned'}<button class="btn btn-ghost" name="how" value="skip">{t('Skip')}</button>{:else}<button class="btn btn-ghost" name="how" value="reopen">{t('Back to planned')}</button>{/if}
-      {/if}
-    </div>
-    <details class="tpl">
-      <summary class="small">{t('Save as a template')}</summary>
-      <div class="row">
-        <label class="grow">{t('Template name')}<input name="template_name" maxlength="120" placeholder={t('e.g. Full body A')} /></label>
-        <button class="btn" name="how" value="template">{t('Save as a template')}</button>
-      </div>
-    </details>
-    {#if !data.isNew}
-      <p class="muted small">
-        {#if s.sent_at}{t('On the Garmin watch.')}{:else if data.watchable && s.status === 'planned'}{t('Not on the watch yet. Ask Claude: "Send this workout to my watch."')}{/if}
-        {#if s.activity_ref}{t('Linked to the activity {id}.', { id: s.activity_ref })}{/if}
-      </p>
-    {/if}
-  </section>
-</form>
-
-{#if !data.isNew}
-  <section class="danger">
-    {#if !confirmDelete}
-      <button class="btn btn-ghost" type="button" onclick={() => (confirmDelete = true)}>{t('Delete this workout')}</button>
-    {:else}
-      <form method="POST" action="?/remove" class="row">
-        <span>{t('Delete it for good?')}</span>
-        <button class="btn">{t('Delete')}</button>
-        <button class="btn btn-ghost" type="button" onclick={() => (confirmDelete = false)}>{t('Cancel')}</button>
-      </form>
-    {/if}
-  </section>
 {/if}
 
-<style>
-  .crumbs {
-    margin-bottom: var(--space-3);
-  }
-  .head {
-    display: flex;
-    gap: var(--space-4);
-    align-items: center;
-    margin-bottom: var(--space-5);
-  }
-  .head h1,
-  .head p {
-    margin: 0;
-  }
-  .head h1 {
-    overflow-wrap: anywhere;
-  }
-  .dot {
-    display: inline-block;
-    flex: none;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--hue);
-  }
-  .card {
-    margin-bottom: var(--space-4);
-  }
-  .between {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--space-3);
-  }
-  h2 {
-    margin: 0 0 var(--space-3);
-  }
-  .between h2 {
-    margin: 0;
-  }
-  #items-title {
-    margin-bottom: var(--space-3);
-  }
-  .small {
-    font-size: var(--text-sm);
-  }
-  .sr {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-  }
-  .details summary {
-    display: flex;
-    align-items: baseline;
-    gap: var(--space-3);
-    flex-wrap: wrap;
-    cursor: pointer;
-  }
-  .details summary h2 {
-    margin: 0;
-  }
-  .form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-3);
-    margin-top: var(--space-4);
-  }
-  .form label,
-  .row label,
-  .cardio label {
-    display: grid;
-    gap: var(--space-1);
-  }
-  .form .wide {
-    grid-column: 1 / -1;
-  }
-  @media (max-width: 640px) {
-    .form {
-      grid-template-columns: 1fr;
-    }
-  }
-  .row {
-    display: flex;
-    gap: var(--space-2);
-    align-items: end;
-    flex-wrap: wrap;
-    margin: var(--space-3) 0;
-  }
-  label.inline {
-    display: flex;
-    gap: var(--space-2);
-    align-items: center;
-  }
-  .grow {
-    flex: 1;
-    min-width: 0;
-  }
-  .error {
-    color: var(--critical-ink);
-  }
-  .tools {
-    display: flex;
-    gap: 0;
-  }
-  .item {
-    min-width: 0;
-    border: 1px solid var(--ring);
-    border-left: 4px solid var(--hue);
-    border-radius: var(--radius-sm);
-    padding: var(--space-3) var(--space-4);
-    margin: 0 0 var(--space-3);
-    background: var(--surface);
-  }
-  .itemhead {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-  }
-  .itemhead .dot {
-    display: none;
-  }
-  .field {
-    display: grid;
-    gap: var(--space-1);
-    font-size: var(--text-sm);
-    color: var(--ink-2);
-    min-width: 0;
-  }
-  .field input,
-  .field select,
-  .field textarea {
-    width: 100%;
-    font: inherit;
-    color: var(--ink);
-    font-size: var(--text-base);
-  }
-  .unitbox {
-    position: relative;
-    display: block;
-    min-width: 0;
-  }
-  .unitbox input {
-    width: 100%;
-    padding-right: 2.8rem;
-    text-align: right;
-  }
-  .unit {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--ink-3);
-    font-size: var(--text-sm);
-    pointer-events: none;
-  }
-  .cardio {
-    display: grid;
-    grid-template-columns: minmax(9rem, 12rem) 7.5rem 7.5rem auto;
-    gap: var(--space-3);
-    align-items: end;
-    margin-top: var(--space-3);
-  }
-  @media (max-width: 640px) {
-    .cardio {
-      grid-template-columns: 1fr 1fr;
-    }
-    .cardio .sport,
-    .cardio .donebtn {
-      grid-column: 1 / -1;
-    }
-  }
-  .donebtn {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    justify-self: start;
-    min-height: 34px;
-    padding: 0 14px 0 6px;
-    border: 1px solid var(--ring);
-    border-radius: 999px;
-    background: var(--surface);
-    color: var(--ink-2);
-    cursor: pointer;
-  }
-  .donebtn .check,
-  .tick {
-    display: inline-grid;
-    place-items: center;
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    border: 2px solid var(--ring);
-    color: transparent;
-    font-size: var(--text-sm);
-    font-weight: 600;
-    background: var(--surface);
-  }
-  .donebtn[aria-pressed='true'] {
-    border-color: var(--good);
-    color: var(--good-ink);
-  }
-  .donebtn[aria-pressed='true'] .check,
-  .tick[aria-pressed='true'] {
-    background: var(--good);
-    border-color: var(--good);
-    color: #fff;
-  }
-  .sets {
-    list-style: none;
-    margin: var(--space-3) 0 0;
-    padding: 0;
-    display: grid;
-    gap: var(--space-2);
-    max-width: 30rem;
-  }
-  .set {
-    display: grid;
-    grid-template-columns: 2rem minmax(0, 1fr) minmax(0, 1fr) 2.75rem 2.25rem;
-    gap: var(--space-2);
-    align-items: center;
-    padding: 4px;
-    border-radius: var(--radius-sm);
-    transition: background 0.2s;
-  }
-  .set.single {
-    grid-template-columns: 2rem minmax(0, 12rem) 2.75rem 2.25rem;
-  }
-  .set.done {
-    background: color-mix(in srgb, var(--good) 12%, transparent);
-  }
-  .set.done input {
-    color: var(--good-ink);
-  }
-  .sethead {
-    display: none;
-  }
-  @media (max-width: 640px) {
-    .item {
-      padding: var(--space-3) var(--space-2) var(--space-3) var(--space-3);
-    }
-    .set {
-      grid-template-columns: 1.75rem minmax(0, 1fr) minmax(0, 1fr) 2.5rem 1.75rem;
-      gap: 6px;
-    }
-    .set.single {
-      grid-template-columns: 1.75rem minmax(0, 1fr) 2.5rem 1.75rem;
-    }
-    .sethead {
-      display: grid;
-      padding-bottom: 0;
-      font-size: var(--text-xs);
-      color: var(--ink-3);
-      text-align: right;
-    }
-    .sethead span {
-      padding-right: 10px;
-    }
-    .set .unit {
-      display: none;
-    }
-    .set .unitbox input {
-      padding-right: 10px;
-    }
-  }
-  .setno {
-    display: inline-grid;
-    place-items: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: 50%;
-    background: var(--surface-2);
-    color: var(--ink-2);
-    font-size: var(--text-sm);
-    font-weight: 600;
-  }
-  .tick {
-    width: 2.5rem;
-    height: 2.5rem;
-    justify-self: center;
-    cursor: pointer;
-    padding: 0;
-  }
-  .tick:not([aria-pressed='true']) {
-    color: var(--ink-3);
-    opacity: 0.6;
-  }
-  .x {
-    padding: 0;
-  }
-  .itemfoot {
-    display: flex;
-    gap: var(--space-3);
-    align-items: center;
-    flex-wrap: wrap;
-    margin-top: var(--space-3);
-  }
-  .addset {
-    border: 1px dashed var(--ring);
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--ink-2);
-    padding: 4px 14px;
-    min-height: 34px;
-    cursor: pointer;
-  }
-  @media (hover: hover) {
-    .addset:hover,
-    .donebtn:hover {
-      color: var(--ink);
-      border-color: var(--ink-3);
-    }
-  }
-  .rpe {
-    border: 0;
-    padding: 0;
-    margin: 0 0 var(--space-3);
-  }
-  .rpe legend {
-    font-size: var(--text-sm);
-    color: var(--ink-2);
-    margin-bottom: var(--space-2);
-  }
-  .rpechips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-  .rpechip {
-    display: inline-grid;
-    place-items: center;
-    min-width: 2.25rem;
-    height: 2.25rem;
-    border: 1px solid var(--ring);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    cursor: pointer;
-    font-variant-numeric: tabular-nums;
-  }
-  .rpechip input {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-  }
-  .rpechip.on {
-    background: var(--accent-fill);
-    border-color: var(--accent-fill);
-    color: #fff;
-    font-weight: 600;
-  }
-  .rpechip:has(input:focus-visible) {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-  .blocks[open] {
-    background: var(--surface-2);
-    border-radius: var(--radius-sm);
-    padding: var(--space-2) var(--space-3);
-  }
-  .howto {
-    background: var(--surface-2);
-    border-radius: var(--radius-sm);
-    padding: var(--space-2) var(--space-3);
-    margin: var(--space-2) 0;
-  }
-  .howto p {
-    margin: var(--space-1) 0;
-  }
-  .howto ul {
-    margin: 0;
-    padding-left: var(--space-5);
-  }
-  .step > * {
-    min-width: 0;
-  }
-  .step input,
-  .step select,
-  .row .grow input {
-    width: 100%;
-  }
-  .blocks {
-    margin-top: var(--space-2);
-  }
-  .blocks summary {
-    cursor: pointer;
-    color: var(--ink-2);
-    width: fit-content;
-  }
-  .step {
-    display: grid;
-    grid-template-columns: 8rem 8rem 6rem minmax(8rem, 1fr) auto;
-    gap: var(--space-2);
-    margin: var(--space-2) 0;
-  }
-  @media (max-width: 640px) {
-    .step {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
-  .repeat {
-    border-left: 3px solid var(--hue);
-    padding-left: var(--space-3);
-    margin: var(--space-2) 0;
-  }
-  .repeat > label {
-    display: inline-flex;
-  }
-  .reps {
-    width: 4rem;
-  }
-  .rest {
-    margin: 0;
-    font-size: var(--text-lg);
-    color: var(--accent-ink);
-  }
-  .restbar {
-    height: 4px;
-    border-radius: 2px;
-    background: var(--surface-2);
-    margin: var(--space-2) 0;
-    overflow: hidden;
-  }
-  .restbar span {
-    display: block;
-    height: 100%;
-    background: var(--accent);
-    transition: width 1s linear;
-  }
-  .picker {
-    border: 1px solid var(--ring);
-    border-radius: var(--radius-sm);
-    padding: var(--space-3);
-    margin-top: var(--space-3);
-    display: grid;
-    gap: var(--space-3);
-  }
-  .chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-1);
-  }
-  .chip {
-    border: 1px solid var(--ring);
-    border-radius: 999px;
-    background: var(--surface);
-    color: var(--ink-2);
-    padding: 2px 12px;
-    font-size: var(--text-sm);
-    min-height: 32px;
-  }
-  .chip[aria-checked='true'] {
-    background: var(--ink);
-    border-color: var(--ink);
-    color: var(--page);
-  }
-  .found {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: var(--space-2);
-    max-height: 26rem;
-    overflow: auto;
-  }
-  .pick {
-    width: 100%;
-    display: flex;
-    gap: var(--space-2);
-    align-items: center;
-    text-align: left;
-    padding: var(--space-2);
-    border: 1px solid var(--surface-2);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    color: var(--ink);
-    cursor: pointer;
-  }
-  @media (hover: hover) {
-    .pick:hover {
-      border-color: var(--ring);
-    }
-  }
-  .plus {
-    font-size: var(--text-lg);
-    color: var(--accent-ink);
-  }
-  .tpl summary {
-    cursor: pointer;
-    color: var(--ink-2);
-    width: fit-content;
-  }
-  .danger {
-    margin: var(--space-6) 0;
-  }
-</style>
+<nav class="crumbs"><a class="link" href="/training?w={day}">‹ {t('Training')}</a>{#if plan}{' · '}<a class="link" href="/training/plans/{plan.id}">{plan.name}</a>{/if}</nav>
+<header class="top">
+  <Mascot mood={status === 'done' ? 'charged' : ticked ? 'steady' : 'idle'} size={52} label={t('Pingo in a sweatband')} />
+  <div>
+    <h1>{cap(longDay)}</h1>
+    <div class="sub">{shownTitle}{time ? ` · ${time}` : ''}{status === 'done' ? ` · ${t('done')}` : status === 'skipped' ? ` · ${t('skipped')}` : ''}</div>
+  </div>
+  <span class="sync" role="status">{sync === 'saving' ? t('Saving…') : sync === 'saved' ? t('Saved') : sync === 'error' ? t('Not saved') : ''}</span>
+</header>
+
+<div class="wk-meta">
+  <label>{t('Date')} <input type="date" bind:value={day} onchange={queue} /></label>
+  <span class="wk-acts">
+    <button type="button" class="gbtn line sm" onclick={() => (sheet = { mode: 'details' })}>{t('Details')}</button>
+    <button type="button" class="gbtn line sm danger" onclick={discard}>{confirm === 'discard' ? t('Sure?') : t('Discard')}</button>
+  </span>
+</div>
+
+{#if description}<p class="panel small desc">{description}</p>{/if}
+
+{#if items.some((i) => i.kind === 'exercise')}
+  <details class="panel fold" open>
+    <summary><span class="h2" style:margin="0">{t('Muscles at work')}</span><svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg></summary>
+    <div class="seg">
+      <button type="button" class:on={mapMode === 'done'} onclick={() => (mapMode = 'done')}>{t('Done ({n})', { n: ticked })}</button>
+      <button type="button" class:on={mapMode === 'plan'} onclick={() => (mapMode = 'plan')}>{t('The whole plan ({n})', { n: total })}</button>
+    </div>
+    <LoadBlock load={muscleLoad(items, mapMode, lib)} empty={mapMode === 'done' ? t('Tick the first set and the muscles that worked show up here.') : t('Add exercises to see the muscles.')} />
+  </details>
+{/if}
+
+<div class="exs">
+  {#each items as it, i (it)}
+    {#if it.kind === 'cardio'}
+      {@const c = it}
+      <div class="ex" class:complete={c.done} class:new={fresh === i}>
+        <div class="ex-h">
+          <span class="ex-thb"><Thumb sport={c.sport} cls="exth" /></span>
+          <div class="ex-title">
+            <span class="ex-name">{c.name ? t(c.name) : t(SPORT_LABELS[c.sport])}</span>
+            <span class="ex-tags cardio">{t(SPORT_LABELS[c.sport])}{c.steps?.length ? ` · ${t('{n} blocks', { n: c.steps.length })}` : ''}</span>
+          </div>
+          <div class="ex-act">
+            <button type="button" class="ic" class:confirm={confirm === `ex${i}`} aria-label={t('Remove')} onclick={() => removeItem(i)}>
+              {#if confirm === `ex${i}`}{t('Remove?')}{:else}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" /></svg>{/if}
+            </button>
+          </div>
+          {#if c.steps?.length}<div class="ex-prev">{stepsLine(c.steps, t)}</div>{/if}
+        </div>
+        <div class="cardio-f">
+          <label>{t('time, min')}<input inputmode="numeric" placeholder="0" value={c.duration_min ?? ''} oninput={(ev) => { const n = parse(ev.currentTarget.value); c.duration_min = n ? Math.round(n) : undefined; queue(); }} /></label>
+          <label>{t('distance, km')}<input inputmode="decimal" placeholder="0" value={c.distance_m ? c.distance_m / 1000 : ''} oninput={(ev) => { const n = parse(ev.currentTarget.value); c.distance_m = n ? Math.round(n * 1000) : undefined; queue(); }} /></label>
+          <button type="button" class="chk" class:on={c.done} class:pop={pop === `c${i}`} aria-pressed={!!c.done} aria-label={t('Mark as done')} onclick={() => tickCardio(c, i)}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7" /></svg>
+          </button>
+        </div>
+        <Blocks bind:steps={c.steps} onchange={queue} />
+        {#if noteOpen[i] || c.note}<textarea class="note" placeholder={t('A note, e.g. how it felt')} value={c.note ?? ''} oninput={(ev) => ((c.note = ev.currentTarget.value || undefined), queue())}></textarea>{/if}
+        <div class="ex-foot">{#if !noteOpen[i] && !c.note}<button type="button" class="tool first" onclick={() => (noteOpen[i] = true)}>{t('Note')}</button>{/if}</div>
+      </div>
+    {:else}
+      {@const e = it}
+      {@const entry = entryOf(e)}
+      {@const prev = perfs[i]}
+      {@const pair = !!e.ref && PAIR.has(e.ref) && e.unit === 'reps'}
+      {@const open = e.sets.some((x) => !x.done)}
+      {@const anyPR = e.sets.some((_, j) => isRecord(e, j, bests[i]))}
+      {@const bar = !!e.ref && BAR.has(e.ref) && e.unit === 'reps'}
+      <div class="ex" class:complete={e.sets.length > 0 && !open} class:new={fresh === i}>
+        <div class="ex-h">
+          <button type="button" class="ex-thb" aria-label={t('Details and progress')} onclick={() => (sheet = { mode: 'info', key: keyOf(e), ref: e.ref, name: e.name })}><Thumb ref={e.ref} name={t(e.name)} cls="exth" /></button>
+          <button type="button" class="ex-title" onclick={() => (sheet = { mode: 'info', key: keyOf(e), ref: e.ref, name: e.name })}>
+            <span class="ex-name">{t(e.name)}</span>
+            <span class="ex-tags">{entry?.muscles?.map((m) => t(MUSCLES[m])).join(', ') ?? ''}{#if pair}<span class="pairtag">{t('2 dumbbells, type both')}</span>{/if}{#if anyPR}<span class="pr">{t('Record')}</span>{/if}</span>
+          </button>
+          <div class="ex-act">
+            <button type="button" class="ic" aria-label={t('Details and progress')} onclick={() => (sheet = { mode: 'info', key: keyOf(e), ref: e.ref, name: e.name })}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 7.5v.5" /></svg></button>
+            <button type="button" class="ic" class:confirm={confirm === `ex${i}`} aria-label={t('Remove the exercise')} onclick={() => removeItem(i)}>
+              {#if confirm === `ex${i}`}{t('Remove?')}{:else}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" /></svg>{/if}
+            </button>
+          </div>
+          <div class="ex-prev">{prev ? t('Last time {day}: {sets}', { day: fmtShort(prev.day, t.locale), sets: setsText(prev.sets, prev.unit, t.locale) }) : t('First time')}</div>
+        </div>
+        {#if prev && open}
+          <div class="qo" role="group" aria-label={t('Fill the sets from last time')}>
+            {#each quickOptions(e, prev) as o (o.id)}
+              {@const lab = qoLabel(e, o, prev)}
+              <button type="button" class="qo-b" class:on={qo[i] === o.id} onclick={() => quick(e, i, o.id)}><b>{lab[0]}</b><span>{lab[1]}</span></button>
+            {/each}
+          </div>
+        {/if}
+        <div class="sets" class:one={e.unit !== 'reps'}>
+          <div class="sets-head"><div>#</div>{#if e.unit === 'reps'}<div>{pair ? t('kg together') : 'kg'}</div><div>{t('reps')}</div>{:else}<div>{e.unit === 'minutes' ? t('time in minutes') : t('time in seconds')}</div>{/if}<div></div><div></div></div>
+          {#each e.sets as set, j (j)}
+            {@const p = ph(prev, j)}
+            <div class="set" class:done={set.done} class:pop={pop === `${i}-${j}`} class:new={pop === `new-${i}-${j}`} class:isPR={isRecord(e, j, bests[i])} data-set="{i}-{j}">
+              <div class="n">{j + 1}</div>
+              {#if e.unit === 'reps'}
+                <label class="kgw" class:p={pair}>
+                  <input
+                    inputmode="decimal"
+                    enterkeyhint="next"
+                    data-f="kg"
+                    aria-label={pair ? t('Both dumbbells together, kg') : t('Weight, kg')}
+                    value={set.kg ?? ''}
+                    placeholder={p?.kg ? fmtN(p.kg, t.locale) : entry?.bodyweight ? '—' : '0'}
+                    oninput={(ev) => setValue(e, j, 'kg', ev.currentTarget.value)}
+                    onkeydown={(ev) => {
+                      if (ev.key === 'Enter') {
+                        ev.preventDefault();
+                        (ev.currentTarget.closest('.set')?.querySelector('[data-f="amount"]') as HTMLInputElement | null)?.focus();
+                      }
+                    }}
+                  />
+                  {#if pair}<small class="ph">{(set.kg ?? p?.kg) ? `2 × ${fmtN((set.kg ?? p?.kg ?? 0) / 2, t.locale)} kg` : ''}</small>{/if}
+                </label>
+                <input inputmode="numeric" enterkeyhint="done" data-f="amount" aria-label={t('Reps')} value={set.reps ?? ''} placeholder={p?.reps ? String(p.reps) : '0'} oninput={(ev) => setValue(e, j, 'reps', ev.currentTarget.value)} />
+              {:else if e.unit === 'minutes'}
+                <input inputmode="decimal" enterkeyhint="done" data-f="amount" aria-label={t('Minutes')} value={set.seconds ? set.seconds / 60 : ''} placeholder={p?.seconds ? fmtN(p.seconds / 60, t.locale) : '0'} oninput={(ev) => setValue(e, j, 'minutes', ev.currentTarget.value)} />
+              {:else}
+                <input inputmode="numeric" enterkeyhint="done" data-f="amount" aria-label={t('Seconds')} value={set.seconds ?? ''} placeholder={p?.seconds ? String(p.seconds) : '0'} oninput={(ev) => setValue(e, j, 'seconds', ev.currentTarget.value)} />
+              {/if}
+              <button type="button" class="chk" aria-pressed={!!set.done} aria-label={t('Mark the set as done')} onclick={() => tickSet(i, j)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7" /></svg>
+              </button>
+              <button type="button" class="x" aria-label={t('Remove the set')} onclick={() => (e.sets.splice(j, 1), queue())}>×</button>
+            </div>
+          {/each}
+        </div>
+        {#if noteOpen[i] || e.note}<textarea class="note" placeholder={t('A note, e.g. the seat setting, how it felt')} value={e.note ?? ''} oninput={(ev) => ((e.note = ev.currentTarget.value || undefined), queue())}></textarea>{/if}
+        {#if prev?.note && !e.note}<div class="muted small lastnote">{t('Note from last time:')} <i>{prev.note}</i></div>{/if}
+        <div class="ex-foot">
+          <button type="button" class="link" onclick={() => addSet(e, i)}>+ {t('Add a set')}</button>
+          <span class="tools">
+            {#if !noteOpen[i] && !e.note}<button type="button" class="tool" onclick={() => (noteOpen[i] = true)}>{t('Note')}</button>{/if}
+            {#if bar}<button type="button" class="tool" onclick={() => (sheet = { mode: 'plates', ex: i, kg: platesFor(e, prev) })}>{t('Plates')}</button>{/if}
+            {#if e.unit !== 'minutes'}<button type="button" class="tool" onclick={() => switchUnit(e)}>{e.unit === 'reps' ? t('Count time') : t('Count weight')}</button>{/if}
+          </span>
+        </div>
+      </div>
+    {/if}
+  {/each}
+</div>
+
+<button type="button" class="gbtn line block" style:margin="4px 0 10px" onclick={() => (sheet = { mode: 'pick' })}>+ {t('Add an exercise or a run')}</button>
+{#if items.length}
+  {#if status === 'done'}
+    <button type="button" class="gbtn ink block big" onclick={() => (sheet = { mode: 'summary' })}>{t('Summary')}</button>
+  {:else}
+    <button type="button" class="gbtn ink block big" onclick={finish}>{t('Finish and save the workout')}</button>
+  {/if}
+{/if}
+
+{#if status !== 'done' && items.some((i) => i.kind === 'exercise')}<RestTimer bind:this={rest} />{/if}
+<canvas class="fx" bind:this={fx}></canvas>
+
+{#if toast}<div class="gym-layer"><div class="toast" class:gold={toast.gold} role="status">{toast.text}</div></div>{/if}
+
+{#if sheet?.mode === 'pick'}
+  <Sheet title={t('Add to the workout')} onclose={() => (sheet = null)}>
+    {#snippet head()}<input class="search" bind:value={query} placeholder={t('Search, or type your own exercise')} autocomplete="off" onkeydown={(ev) => ev.key === 'Enter' && query.trim() && addPicked(query.trim())} />{/snippet}
+    <Picker library={lib} {history} {inWorkout} bind:query onpick={addPicked} />
+  </Sheet>
+{:else if sheet?.mode === 'info'}
+  {@const sh = sheet}
+  <Sheet onclose={() => (sheet = null)}>
+    <ExerciseInfo entry={sh.ref ? libraryById(sh.ref, lib) : undefined} name={sh.name} keyId={sh.key} {history} action={null} />
+  </Sheet>
+{:else if sheet?.mode === 'plates'}
+  {@const sh = sheet}
+  <Sheet title={t('Plate calculator')} onclose={() => (sheet = null)}>
+    <Plates
+      kg={sh.kg}
+      onuse={sh.ex == null
+        ? undefined
+        : (kg) => {
+            const e = items[sh.ex!] as ExerciseItem;
+            for (const x of e.sets) if (!x.done && x.kg == null) x.kg = kg;
+            queue();
+            sheet = null;
+          }}
+    />
+  </Sheet>
+{:else if sheet?.mode === 'details'}
+  <Sheet title={t('Details')} onclose={() => (sheet = null)}>
+    <div class="form">
+      <label>{t('Title')}<input class="fld" maxlength="120" bind:value={title} oninput={queue} placeholder={items.length ? autoTitle(items, t) : t('e.g. Intervals 5 x 1 km')} /></label>
+      <div class="two">
+        <label>{t('Time (optional)')}<input class="fld" type="time" bind:value={time} onchange={queue} /></label>
+        <label
+          >{t('Plan')}
+          <select class="fld" bind:value={planId} onchange={queue}>
+            <option value="">{t('No plan')}</option>
+            {#each data.plans as pl (pl.id)}<option value={pl.id}>{pl.name}{pl.active ? ` (${t('active')})` : ''}</option>{/each}
+          </select>
+        </label>
+      </div>
+      <label>{t('Description')}<textarea class="fld" rows="3" maxlength="4000" bind:value={description} oninput={queue}></textarea></label>
+      <p class="muted small" style:margin="0">
+        {#if data.session.sent_at}{t('On the Garmin watch.')}{:else if data.watchable && status === 'planned'}{t('Not on the watch yet. Ask Claude: "Send this workout to my watch."')}{/if}
+        {#if data.session.activity_ref}{t('Linked to the activity {id}.', { id: data.session.activity_ref })}{/if}
+      </p>
+      <label>{t('Save as a template')}<input class="fld" maxlength="120" bind:value={tplName} placeholder={t('e.g. Full body A')} /></label>
+      <button type="button" class="gbtn line block" disabled={!tplName.trim() || !items.length} onclick={saveTemplate}>{tplSaved ? t('Saved') : t('Save the template')}</button>
+      {#if status === 'planned' && sid !== 'new'}<button type="button" class="gbtn line block" onclick={() => setStatus('skip')}>{t('Skip this workout')}</button>{/if}
+      {#if status !== 'planned'}<button type="button" class="gbtn line block" onclick={() => setStatus('reopen')}>{t('Back to planned')}</button>{/if}
+    </div>
+  </Sheet>
+{:else if sheet?.mode === 'summary'}
+  <Sheet full onclose={() => (sheet = null)}>
+    <div class="sum-hero">
+      <Mascot mood="charged" size={56} label={t('Pingo in a sweatband')} />
+      <div><h2>{records.length ? t('New records!') : t('Well done')}</h2><p>{cap(longDay)}{plan ? `, ${plan.name}` : ''}</p></div>
+    </div>
+    <div class="sum-kpis">
+      <div><b>{minutes || '—'}</b><span>{minutes ? t('minutes') : t('time unknown')}</span></div>
+      {#if volume || !km}<div><b>{Math.round(volume).toLocaleString(t.locale)}</b><span>{t('kg lifted')}</span></div>{:else}<div><b>{fmtN(km, t.locale)}</b><span>km</span></div>{/if}
+      <div><b>{setCount || items.filter((i) => i.kind === 'cardio' && i.done).length}</b><span>{setCount ? t('sets') : t('done')}</span></div>
+    </div>
+    {#if fact}<div class="fact">{fact.times >= 1.95 ? t('That is about {n} × {what}.', { n: fmtN(fact.times, t.locale), what: t(fact.what) }) : t('That is about as much as {what}.', { what: t(fact.what) })}</div>{/if}
+    {#if records.length}
+      <div class="panel prlist"><div class="h2">{t('Records')}</div>{#each records as r (r.name)}<div class="r"><span>{r.name}</span><b>{r.text}</b></div>{/each}</div>
+    {/if}
+    <div class="panel">
+      <div class="h2">{t('How hard was it?')}</div>
+      <div class="rpe" role="radiogroup" aria-label={t('Effort (RPE 1-10)')}>
+        {#each Array.from({ length: 10 }, (_, k) => String(k + 1)) as n (n)}
+          <button type="button" role="radio" aria-checked={rpe === n} class:on={rpe === n} onclick={() => ((rpe = rpe === n ? '' : n), queue())}>{n}</button>
+        {/each}
+      </div>
+      <textarea class="fld" rows="2" maxlength="2000" bind:value={note} oninput={queue} placeholder={t('How did it feel?')}></textarea>
+    </div>
+    {#if items.some((i) => i.kind === 'exercise')}
+      <div class="panel"><div class="h2">{t('Muscles at work')}</div><LoadBlock load={muscleLoad(items, 'logged', lib)} empty="" /></div>
+    {/if}
+    {#if !tplSaved}
+      <div class="form" style:margin-bottom="10px">
+        <input class="fld" maxlength="120" bind:value={tplName} placeholder={t('Template name, e.g. Full body A')} aria-label={t('Template name')} />
+        <button type="button" class="gbtn line block" disabled={!tplName.trim()} onclick={saveTemplate}>{t('Save as a template')}</button>
+      </div>
+    {/if}
+    <button type="button" class="gbtn ink block" onclick={() => goto(`/training?w=${day}`)}>{t('Done')}</button>
+  </Sheet>
+{/if}

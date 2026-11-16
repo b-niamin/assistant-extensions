@@ -1,10 +1,15 @@
-import { fail, type ExtActions, type ExtLoad } from '$shell';
-import { deleteCustomEntry, fullLibrary, saveCustomEntry } from '../../lib/db.server';
+import { fail, redirect, todayIn, type ExtActions, type ExtLoad } from '$shell';
+import { deleteCustomEntry, doneWorkouts, fullLibrary, saveCustomEntry } from '../../lib/db.server';
 import { MUSCLES } from '../../lib/library';
 import { CARDIO_SPORTS, UNITS, type Unit } from '../../lib/model';
+import { startWorkout } from '../../lib/start.server';
 
-/** The library: built-in entries and the profile's own; add, change or delete its own. */
-export const load = (async (_event, ctx) => ({ library: await ctx.db((sql) => fullLibrary(sql, ctx.dataProfileId!)) })) satisfies ExtLoad;
+/** The library, as the gym log's: pictures, muscles, how to, what to avoid, your progress; your own entries. */
+export const load = (async (_event, ctx) => {
+  const p = ctx.dataProfileId!;
+  const [library, history] = await ctx.db((sql) => Promise.all([fullLibrary(sql, p), doneWorkouts(sql, p, 300)]));
+  return { library, history };
+}) satisfies ExtLoad;
 
 export const actions: ExtActions = {
   save: async ({ request }, ctx) => {
@@ -31,5 +36,12 @@ export const actions: ExtActions = {
     const id = String((await request.formData()).get('id') ?? '');
     await ctx.db((sql) => deleteCustomEntry(sql, ctx.dataProfileId!, id));
     return { removed: id };
+  },
+  /** "Start a workout with this exercise". */
+  start: async ({ request }, ctx) => {
+    const id = String((await request.formData()).get('id') ?? '');
+    const sid = await ctx.db((sql) => startWorkout(sql, ctx.dataProfileId!, todayIn(), { from: 'entry', id }));
+    if (!sid) return fail(404, { error: ctx.t('It is not there any more.') });
+    throw redirect(303, `/training/session/${sid}`);
   }
 };
