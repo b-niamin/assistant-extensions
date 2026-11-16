@@ -14,9 +14,9 @@ distractions, a handful of answers:
   The board refreshes itself (30 s to 5 min) and right away when a tablet wakes.
 - **Alerts**: sensors you pick (a camera's person detection, the doorbell) show up at the bottom while on
   and for a few minutes after.
-- **Today** from the shared calendar: your Home Assistant calendars, and with the **Calendar** app also its
-  entries, subscribed calendars (Google, iCloud, Outlook) and what other apps put on it (workouts, activities).
-  Home's Home Assistant calendars show up in the Calendar app's month too.
+- **Today**, when the **Calendar** app is installed: its entries, subscribed calendars (Google, iCloud,
+  Outlook), your Home Assistant calendars and what other apps put on it (workouts, activities). Without
+  Calendar the board leaves this part out, and Home's settings suggest installing it at the bottom.
 
 Beni wears its bulb in the top bar and keeps watch: asleep when the house is quiet at night, on its toes
 on an alert, tired when it cannot reach Home Assistant. Full screen (top right) also keeps the screen on.

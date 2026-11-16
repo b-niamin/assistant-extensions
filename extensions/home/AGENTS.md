@@ -18,6 +18,8 @@ Rules of the shell's `AGENTS.md` and `specs/002-extensions.md` apply. In short: 
 - Calendar (shell 5, core spec 002 "Calendar entries"): `web/calendar.server.ts` puts the Home Assistant
   calendars the board watches on the shared calendar; the board's "Today" reads the shared calendar back
   (`ctx.calendar.entries`), so it also shows the Calendar app's entries and subscriptions, workouts, ...
+  Only when the Calendar app is among the sources: without it "Today" is hidden, and the manifest's
+  `worksWith` makes the shell suggest installing Calendar at the bottom of Home's settings panel.
   ICS subscriptions live in the Calendar app (home 2.0.0 dropped its own `calendar_links`).
 - Settings: the connection (`url`, secret `token`), edited in its "Connected accounts" card (`web/sources.server.ts`, `fields`), and `location`. What the board watches lives in
   `ctx.kv` `config` (`web/lib/config.ts`), changed only through the `home__configure` tool.

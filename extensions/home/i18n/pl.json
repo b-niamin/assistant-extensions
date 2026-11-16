@@ -186,7 +186,7 @@
   "New alert: {names}": "Nowy alert: {names}",
   "Home Assistant with a long-lived access token": "Home Assistant z tokenem długoterminowym",
   "A calm board for the house: lights, doors and windows, camera alerts, weather with warnings and today's calendar, from Home Assistant.": "Spokojna tablica domu: światła, drzwi i okna, alerty z kamer, pogoda z ostrzeżeniami i dzisiejszy kalendarz, z Home Assistant.",
-  "Install the Calendar app or connect Home Assistant.": "Zainstaluj aplikację Kalendarz albo połącz Home Assistanta.",
   "The calendar did not answer in time": "Kalendarz nie odpowiedział na czas",
-  "{name} did not answer": "{name} nie odpowiada"
+  "{name} did not answer": "{name} nie odpowiada",
+  "Shows what is on today on the board, from every calendar: your entries, subscriptions, training and Home Assistant.": "Pokazuje na tablicy, co jest dziś we wszystkich kalendarzach: Twoje wpisy, subskrypcje, treningi i Home Assistant."
 }

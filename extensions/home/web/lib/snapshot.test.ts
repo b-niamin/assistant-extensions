@@ -7,7 +7,7 @@ import { tools } from '../tools.server';
 import { EN } from '$shell';
 
 /** `other`: entries another app (the calendar) puts on the shared calendar. */
-function ctx(settings: Record<string, string | number | null>, token: string | null = 'secret-token', other: SharedEntry[] = []) {
+function ctx(settings: Record<string, string | number | null>, token: string | null = 'secret-token', other: SharedEntry[] = [], calendarApp = true) {
   const kv = new Map<string, string>();
   const c = {
     kv,
@@ -33,7 +33,7 @@ function ctx(settings: Record<string, string | number | null>, token: string | n
           } catch {
             sources[0].error = 'error';
           }
-          if (other.length) sources.push({ extension: 'calendar', name: 'Calendar', count: other.length });
+          if (calendarApp) sources.push({ extension: 'calendar', name: 'Calendar', count: other.length });
           return { entries: [...own, ...other], sources };
         }
       },
@@ -110,8 +110,17 @@ describe('snapshot', () => {
     const { ctx: c } = ctx({ url: 'http://ha.local:8123/down', location: '52.23, 21.01' });
     const s = await snapshot(c);
     expect(s.ha.error).toBe('Home Assistant is unreachable');
-    expect(s.calendar.error).toBe('Home Assistant is unreachable');
+    // The Calendar app still answers, so today's part stays up (the board says HA is down above it).
+    expect(s.calendar.error).toBeUndefined();
     expect(s.weather.data?.current.temp).toBe(6);
+  });
+
+  it('leaves today out without the Calendar app, even with Home Assistant calendars', async () => {
+    vi.stubGlobal('fetch', fakeFetch());
+    const s = await snapshot(ctx({ url: 'http://ha.local:8123/nocal' }, 'secret-token', [], false).ctx);
+    expect(s.ha.configured).toBe(true);
+    expect(s.calendar.configured).toBe(false);
+    expect(s.calendar.events).toEqual([]);
   });
 
   it('says what is missing when nothing is set', async () => {
@@ -175,9 +184,10 @@ describe('the shared calendar on the board', () => {
     expect(s.calendar.configured).toBe(true);
     expect(s.calendar.events.map((e) => e.title)).toEqual(["Parents' evening"]);
   });
-  it('asks for a calendar when there is none', async () => {
+  it('shows today only with the Calendar app', async () => {
     vi.stubGlobal('fetch', fakeFetch());
-    const s = await snapshot(ctx({ location: '52.23, 21.01' }, null).ctx);
+    expect((await snapshot(ctx({ location: '52.23, 21.01' }, null).ctx)).calendar.configured).toBe(true);
+    const s = await snapshot(ctx({ location: '52.23, 21.01' }, null, [], false).ctx);
     expect(s.calendar.configured).toBe(false);
   });
 });

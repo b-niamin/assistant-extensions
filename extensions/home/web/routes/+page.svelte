@@ -315,28 +315,28 @@
       </section>
     </div>
 
-    <div class="lower">
-      <section class="today" aria-label={t("Today's calendar")}>
-        <p class="eyebrow">{t('Today')}</p>
-        {#if !snap.calendar.configured}
-          <p class="muted">{t('Install the Calendar app or connect Home Assistant.')}</p>
-        {:else if snap.calendar.error}
-          <p class="muted">{t('Calendar unavailable: {error}.', { error: snap.calendar.error })}</p>
-        {:else if events.length}
-          <ul class="events">
-            {#each shown as e}
-              <li class:allday={e.allDay} class:past={isPast(e)} class:live={!e.allDay && !isPast(e) && Date.parse(e.start) <= now}>
-                <span class="etime num">{e.when}</span>
-                <span class="etitle">{e.title}{#if isPast(e)}<span class="sr"> ({t('ended')})</span>{/if}</span>
-                {#if e.location}<span class="muted eloc">{e.location}</span>{/if}
-              </li>
-            {/each}
-            {#if events.length > shown.length}<li class="muted more">{t('and {n} more', { n: events.length - shown.length })}</li>{/if}
-          </ul>
-        {:else}
-          <p class="muted">{t('Nothing in the calendar today.')}</p>
+    <div class="lower" class:solo={!snap.calendar.configured}>
+      {#if snap.calendar.configured}
+        <section class="today" aria-label={t("Today's calendar")}>
+          <p class="eyebrow">{t('Today')}</p>
+          {#if snap.calendar.error}
+            <p class="muted">{t('Calendar unavailable: {error}.', { error: snap.calendar.error })}</p>
+          {:else if events.length}
+            <ul class="events">
+              {#each shown as e}
+                <li class:allday={e.allDay} class:past={isPast(e)} class:live={!e.allDay && !isPast(e) && Date.parse(e.start) <= now}>
+                  <span class="etime num">{e.when}</span>
+                  <span class="etitle">{e.title}{#if isPast(e)}<span class="sr"> ({t('ended')})</span>{/if}</span>
+                  {#if e.location}<span class="muted eloc">{e.location}</span>{/if}
+                </li>
+              {/each}
+              {#if events.length > shown.length}<li class="muted more">{t('and {n} more', { n: events.length - shown.length })}</li>{/if}
+            </ul>
+          {:else}
+            <p class="muted">{t('Nothing in the calendar today.')}</p>
         {/if}
       </section>
+      {/if}
 
       {#if sum}
         <dl class="facts">
@@ -698,6 +698,9 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
     border-top: 1px solid var(--ring);
+  }
+  .lower.solo {
+    grid-template-columns: 1fr;
   }
   .today,
   .facts {

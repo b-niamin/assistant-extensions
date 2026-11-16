@@ -1,7 +1,7 @@
 /**
  * One snapshot of the house for the board, the tile and Claude: Home Assistant states (fresh on every
  * call), weather (Open-Meteo, cached 15 min in the extension's KV so a restart or an outage still shows
- * the last forecast) and today on the shared calendar (core spec 002: the calendar app's entries and
+ * the last forecast) and, with the Calendar app installed, today on the shared calendar (core spec 002: the calendar app's entries and
  * subscriptions, workouts, Home Assistant's calendars through calendar.server.ts, ...). Each part fails on its own.
  */
 import type { ExtensionContext, Translate } from '$shell';
@@ -103,7 +103,8 @@ export async function snapshot(ctx: ExtensionContext, opts: SnapshotOptions = {}
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
     ha: { configured: !!ha },
     weather: { configured: false, warnings: [] },
-    calendar: { configured: !!ha, events: [] }
+    // The board shows today's calendar only with the Calendar app installed (manifest "worksWith").
+    calendar: { configured: false, events: [] }
   };
 
   let states: HaState[] = [];
@@ -154,7 +155,8 @@ export async function snapshot(ctx: ExtensionContext, opts: SnapshotOptions = {}
         ctx.calendar.entries({ from: start, to: end }),
         new Promise<never>((_, reject) => (timer = setTimeout(() => reject(new Error(ctx.t('The calendar did not answer in time'))), opts.quick ? 1500 : 7000)))
       ]);
-      out.calendar.configured = !!ha || r.sources.some((s) => s.extension !== 'home');
+      out.calendar.configured = r.sources.some((s) => s.extension === 'calendar');
+      if (!out.calendar.configured) return;
       out.calendar.events = sortEvents(boardEvents(r.entries, out.timezone, day, ctx.t));
       const failed = r.sources.filter((s) => s.error);
       if (failed.length && failed.length === r.sources.length && !out.calendar.events.length)
