@@ -11,7 +11,7 @@ import logging
 import time
 from typing import Any
 
-from beni import env, env_int
+from pingo import env, env_int
 
 from . import strava as strava_mod
 from . import withings as withings_mod

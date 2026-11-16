@@ -26,7 +26,7 @@ import subprocess
 import sys
 import time
 
-from beni import env, env_int, logger
+from pingo import env, env_int, logger
 from garmin_core.auth import GarminAuth
 from garmin_core.errors import InvalidCredentials, MfaRequired
 from garmin_core.metrics import MetricsService

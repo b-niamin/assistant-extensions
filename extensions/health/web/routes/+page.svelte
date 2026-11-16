@@ -110,7 +110,7 @@
     </div>
     {@render delta(specOf('training_readiness')!, 'training_readiness')}
     <div class="pipline">
-      <div class="pipwrap"><Mascot {mood} size={76} label={t('Beni says: {line}', { line: pipSays })} /></div>
+      <div class="pipwrap"><Mascot {mood} size={76} label={t('Pingo says: {line}', { line: pipSays })} /></div>
       <p class="bubble">{pipSays}</p>
     </div>
     <Sparkline values={(data.trends['training_readiness'] ?? []).map((p) => p.value)} height={48} />

@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="256" height="256">
-  <title>Beni, the assistant's mascot</title>
+  <title>Pingo, the assistant's mascot</title>
   <ellipse fill="#000" opacity=".12" cx="32" cy="59.4" rx="16" ry="2.2"/>
   <g fill="#edb417"><path d="M9 14q0 4 4 4q-4 0-4 4q0-4-4-4q4 0 4-4Z"/><path d="M55 9q0 3 3 3q-3 0-3 3q0-3-3-3q3 0 3-3Z"/></g>
   <defs><clipPath id="b"><path d="M32 11C47 11 56 26 56 41 56 51.6 46 56 32 56 18 56 8 51.6 8 41 8 26 17 11 32 11Z"/></clipPath></defs>

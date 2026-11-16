@@ -14,7 +14,7 @@ The month on the left, the chosen day on the right, and under it **Calendars**: 
 with its colour and a switch. Your own entries, each subscribed calendar on its own, and every app that
 puts dates here (whatever is installed, a new one shows up by itself). What a profile switches off stays
 off for that profile, on the page and on the tile; Claude's tools still see everything. A dashboard tile shows what is on today and coming up this week, and Home puts today's entries
-on its board. Beni, holding its pencil, tells you how busy today is.
+on its board. Pingo, holding its pencil, tells you how busy today is.
 
 ## Subscribing (System settings -> Calendar)
 

@@ -13,7 +13,7 @@ Mac. One page, one dashboard tile, two tools for Claude.
 - **Warnings**: running hot, a disk filling up, memory or CPU pegged, and on a Raspberry Pi a weak power
   supply or throttling.
 
-Beni wears a wrench and keeps an eye on it: calm when all is fine, tired when something struggles or the
+Pingo wears a wrench and keeps an eye on it: calm when all is fine, tired when something struggles or the
 readings stop.
 
 ## How it reads the machine

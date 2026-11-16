@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ago, beni, bytes, diskPct, fillBuckets, hostLine, isStale, metricOf, pct, problems, rangeOf, rate, summarize, uptime } from './monitor';
+import { ago, pingo, bytes, diskPct, fillBuckets, hostLine, isStale, metricOf, pct, problems, rangeOf, rate, summarize, uptime } from './monitor';
 import { coarsen, monitorTile } from './tile';
 import type { Bucket, Latest, Reading } from './types';
 
@@ -60,17 +60,17 @@ describe('units', () => {
   });
 });
 
-describe('problems and Beni', () => {
+describe('problems and Pingo', () => {
   it('is quiet when all is fine', () => {
     expect(problems(reading())).toEqual([]);
-    expect(beni(latest(), false, 15).mood).toBe('steady');
-    expect(beni(latest(), false, 3).mood).toBe('asleep');
+    expect(pingo(latest(), false, 15).mood).toBe('steady');
+    expect(pingo(latest(), false, 3).mood).toBe('asleep');
   });
   it('puts the worst first', () => {
     const p = problems(reading({ temp_c: 83, cpu: { pct: 75, per_core: [], load: null, mhz: null } }));
     expect(p.map((x) => x.tone)).toEqual(['serious', 'warning']);
     expect(p[0].text).toBe('Running hot: 83 °C.');
-    expect(beni(latest({ temp_c: 83 }), false, 15).mood).toBe('tired');
+    expect(pingo(latest({ temp_c: 83 }), false, 15).mood).toBe('tired');
   });
   it('flags a weak power supply on a Raspberry Pi', () => {
     const p = problems(reading({ throttling: { under_voltage: true, throttled: false, under_voltage_since_boot: true, throttled_since_boot: false } }));
@@ -81,8 +81,8 @@ describe('problems and Beni', () => {
     expect(p[0]).toEqual({ tone: 'serious', text: '/volume1 is 93 % full.' });
   });
   it('is idle without a reading and tired when the collector stopped', () => {
-    expect(beni(null, false, 12).mood).toBe('idle');
-    expect(beni(latest(), true, 12).mood).toBe('tired');
+    expect(pingo(null, false, 12).mood).toBe('idle');
+    expect(pingo(latest(), true, 12).mood).toBe('tired');
   });
   it('calls a reading stale after three passes', () => {
     const now = Date.parse(at);

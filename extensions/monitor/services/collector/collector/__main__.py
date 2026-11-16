@@ -11,7 +11,7 @@ import os
 import sys
 import time
 
-from beni import env_int, log
+from pingo import env_int, log
 
 from . import sample
 

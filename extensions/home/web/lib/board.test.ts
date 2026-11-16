@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ago, beni, contactsLabel, countdown, lightsLabel } from './board';
+import { ago, pingo, contactsLabel, countdown, lightsLabel } from './board';
 import type { Snapshot } from './types';
 
 const base = (home?: Partial<NonNullable<Snapshot['ha']['home']>>, extra: Partial<Snapshot> = {}): Snapshot => ({
@@ -15,18 +15,18 @@ const base = (home?: Partial<NonNullable<Snapshot['ha']['home']>>, extra: Partia
   ...extra
 });
 
-describe('beni', () => {
+describe('pingo', () => {
   it('is calm by day and asleep at night when all is quiet', () => {
-    expect(beni(base(), 15).mood).toBe('steady');
-    expect(beni(base(), 2)).toEqual({ mood: 'asleep', line: 'All quiet. Lights off, everything closed.' });
+    expect(pingo(base(), 15).mood).toBe('steady');
+    expect(pingo(base(), 2)).toEqual({ mood: 'asleep', line: 'All quiet. Lights off, everything closed.' });
   });
   it('perks up on an alert and names what is open', () => {
-    expect(beni(base({ alerts: [{ id: 'a', name: 'Door camera', at: '', active: true }] }), 15).mood).toBe('charged');
+    expect(pingo(base({ alerts: [{ id: 'a', name: 'Door camera', at: '', active: true }] }), 15).mood).toBe('charged');
     const open = base({ contacts: { active: [{ id: 'x', name: 'Balcony door' }], total: 3, unknown: [] } });
-    expect(beni(open, 15).line).toBe('Balcony door is open.');
+    expect(pingo(open, 15).line).toBe('Balcony door is open.');
   });
   it('waits when nothing is set', () => {
-    expect(beni(base(undefined, { ha: { configured: false }, weather: { configured: false, warnings: [] } }), 12).mood).toBe('idle');
+    expect(pingo(base(undefined, { ha: { configured: false }, weather: { configured: false, warnings: [] } }), 12).mood).toBe('idle');
   });
 });
 

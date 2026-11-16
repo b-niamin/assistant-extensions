@@ -18,7 +18,7 @@ distractions, a handful of answers:
   Outlook), your Home Assistant calendars and what other apps put on it (workouts, activities). Without
   Calendar the board leaves this part out, and Home's settings suggest installing it at the bottom.
 
-Beni wears its bulb in the top bar and keeps watch: asleep when the house is quiet at night, on its toes
+Pingo wears its bulb in the top bar and keeps watch: asleep when the house is quiet at night, on its toes
 on an alert, tired when it cannot reach Home Assistant. Full screen (top right) also keeps the screen on.
 
 Read-only on purpose: it never switches anything in Home Assistant.

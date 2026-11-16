@@ -67,7 +67,7 @@
 <nav class="crumbs"><a href="/training?w={s.day}">{t('Training plan')}</a></nav>
 
 <header class="head rise" style="--hue: var(--hue-{SPORT_HUES[s.sport]})">
-  <Mascot {mood} size={64} label={t('Beni in a sweatband')} />
+  <Mascot {mood} size={64} label={t('Pingo in a sweatband')} />
   <div>
     <p class="eyebrow"><span class="dot" aria-hidden="true"></span>{t(SPORT_LABELS[s.sport])}{data.plan ? ` · ${data.plan.name}` : ''}</p>
     <h1>{s.title}</h1>

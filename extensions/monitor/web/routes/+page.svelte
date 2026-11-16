@@ -4,7 +4,7 @@
   import { EmptyState, LineChart, Mascot, useT } from '$shell/ui';
   import {
     ago,
-    beni,
+    pingo,
     bytes,
     celsius,
     cpuTone,
@@ -67,7 +67,7 @@
     };
   });
 
-  const pip = $derived(beni(v.latest, v.stale, new Date(now).getHours(), t));
+  const pip = $derived(pingo(v.latest, v.stale, new Date(now).getHours(), t));
   const mem = $derived(r ? memPct(r) : null);
   const net = $derived(
     r ? r.net.reduce((a, n) => ({ rx: a.rx + (n.rx_bps ?? 0), tx: a.tx + (n.tx_bps ?? 0), any: a.any || n.rx_bps !== null }), { rx: 0, tx: 0, any: false }) : null
@@ -100,7 +100,7 @@
 
 <section class="page">
   <header class="head card">
-    <span class="beni"><Mascot mood={pip.mood} size={64} label={t('Beni says: {line}', { line: pip.line })} /></span>
+    <span class="pingo"><Mascot mood={pip.mood} size={64} label={t('Pingo says: {line}', { line: pip.line })} /></span>
     <div class="who">
       <h1>{r?.host.hostname ?? t('This machine')}</h1>
       {#if r}<p class="muted">{hostLine(r, t)}</p>{/if}
@@ -122,7 +122,7 @@
 
   {#if !v.latest || !r}
     <div class="card">
-      <EmptyState title={t('No readings yet')} mascotLabel={t('Beni is waiting')}>
+      <EmptyState title={t('No readings yet')} mascotLabel={t('Pingo is waiting')}>
         <p>{t("This extension reads the machine through a small background service, the collector, which the assistant's worker starts within seconds of the install.")}</p>
         <p class="muted">{t('The first reading comes within a minute. If none comes, see System settings -> Worker: the worker comes with the assistant from 12 November 2026 on.')}</p>
       </EmptyState>
@@ -334,7 +334,7 @@
     gap: var(--space-4);
     flex-wrap: wrap;
   }
-  .beni {
+  .pingo {
     display: inline-flex;
     margin: -8px 0;
   }

@@ -1,12 +1,12 @@
-/** What the board says, pure: Beni's mood and line, short labels, "x min ago". */
+/** What the board says, pure: Pingo's mood and line, short labels, "x min ago". */
 import type { Translate } from '$shell';
 import type { Mood } from '$shell/ui';
 import { EN } from '$shell';
 import type { Group } from './home';
 import type { Snapshot } from './types';
 
-/** Beni keeps watch: alert -> on its toes, something open or on at night -> tired, all quiet -> by the hour. */
-export function beni(s: Snapshot, hour: number, t: Translate = EN): { mood: Mood; line: string } {
+/** Pingo keeps watch: alert -> on its toes, something open or on at night -> tired, all quiet -> by the hour. */
+export function pingo(s: Snapshot, hour: number, t: Translate = EN): { mood: Mood; line: string } {
   const home = s.ha.home;
   if (!s.ha.configured && !s.weather.configured) return { mood: 'idle', line: t('Connect Home Assistant and I will keep an eye on the house.') };
   if (s.ha.error) return { mood: 'tired', line: t('I cannot reach Home Assistant right now.') };

@@ -1,7 +1,7 @@
 # AGENTS.md (home extension)
 
 Rules of the shell's `AGENTS.md` and `specs/002-extensions.md` apply. In short: import from the shell only
-`$shell` / `$shell/ui`; the look is the shell's tokens and Beni (`specs/001-design.md`).
+`$shell` / `$shell/ui`; the look is the shell's tokens and Pingo (`specs/001-design.md`).
 
 ## How it works
 
@@ -14,7 +14,7 @@ Rules of the shell's `AGENTS.md` and `specs/002-extensions.md` apply. In short: 
 - Pure logic, unit-tested: `home.ts` (lights incl. lamp switches via `isLampSwitch` and group de-duplication
   in `lightsOf`, contacts, alerts, official warnings), `weather.ts`
   (Open-Meteo normalization, periods, summary, forecast warnings), `calendar.ts` (HA events as shared-calendar
-  entries, today's entries as board events in the house's time zone), `board.ts` (Beni's mood and line, labels, countdown), `tile.ts`.
+  entries, today's entries as board events in the house's time zone), `board.ts` (Pingo's mood and line, labels, countdown), `tile.ts`.
 - Calendar (shell 5, core spec 002 "Calendar entries"): `web/calendar.server.ts` puts the Home Assistant
   calendars the board watches on the shared calendar; the board's "Today" reads the shared calendar back
   (`ctx.calendar.entries`), so it also shows the Calendar app's entries and subscriptions, workouts, ...

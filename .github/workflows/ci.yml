@@ -56,7 +56,7 @@ jobs:
       run:
         working-directory: extensions/${{ matrix.service }}
     env:
-      # `import beni`: the worker puts docker/worker/lib on every unit's path.
+      # `import pingo`: the worker puts docker/worker/lib on every unit's path.
       PYTHONPATH: ${{ github.workspace }}/.core/docker/worker/lib
     steps:
       - uses: actions/checkout@v7

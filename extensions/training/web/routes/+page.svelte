@@ -26,7 +26,7 @@
 <svelte:head><title>{t('Training plan')} · {t('Assistant')}</title></svelte:head>
 
 <header class="head rise">
-  <Mascot {mood} size={64} label={t('Beni in a sweatband')} />
+  <Mascot {mood} size={64} label={t('Pingo in a sweatband')} />
   <div>
     <p class="eyebrow">{range}</p>
     <h1>{t('Training plan')}</h1>
@@ -45,7 +45,7 @@
 
 {#if nothing}
   <section class="card rise">
-    <EmptyState title={t('No plan yet')} level={2} mascotLabel={t('Beni is waiting')}>
+    <EmptyState title={t('No plan yet')} level={2} mascotLabel={t('Pingo is waiting')}>
       <p class="muted">
         {t('Ask Claude for one, e.g. "Plan me 8 weeks to a 10 km under 50 minutes, three runs and one gym session a week." Or add a session below.')}
       </p>

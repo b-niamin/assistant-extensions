@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="docs/beni.svg" alt="Beni, the assistant's mascot: an orange jelly-bean runner in a sweatband" width="128" />
+<img src="docs/pingo.svg" alt="Pingo, the assistant's mascot: an orange jelly-bean runner in a sweatband" width="128" />
 
-# Beni Assistant extensions
+# Pingo Assistant extensions
 
-Extensions for [Beni Assistant](https://github.com/b-niamin/assistant).
+Extensions for [Pingo Assistant](https://github.com/b-niamin/assistant).
 `extensions/` holds ones you install as they are, and the working examples Claude reads when it builds a new one.
 
 [Ready to use](#ready-to-use) · [Install](#install) · [Write your own](#write-your-own)
@@ -95,7 +95,7 @@ activities and Garmin plans, Home Assistant calendars), shown by the Calendar ap
 
 ## Install
 
-With a new Beni Assistant:
+With a new Pingo Assistant:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/b-niamin/assistant/main/install.sh | sudo sh -s -- health training home monitor calendar

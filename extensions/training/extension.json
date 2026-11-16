@@ -2,7 +2,7 @@
   "id": "training",
   "name": "Training plan",
   "description": "Plans and sessions of any sport: runs, rides, the gym. Log sets and weights, see the week, put it on the calendar. Built mostly with Claude.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "kind": "native",
   "scope": "profile",
   "accessory": "headband",

@@ -1,7 +1,7 @@
 # AGENTS.md (calendar extension)
 
 Rules of the shell's `AGENTS.md` and `specs/002-extensions.md` apply. In short: import from the shell only
-`$shell` / `$shell/ui`; the look is the shell's tokens and Beni (`specs/001-design.md`).
+`$shell` / `$shell/ui`; the look is the shell's tokens and Pingo (`specs/001-design.md`).
 
 ## How it works
 

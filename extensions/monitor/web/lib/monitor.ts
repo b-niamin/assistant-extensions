@@ -1,4 +1,4 @@
-/** Pure helpers of the monitor page, tile and tools: units, thresholds, Beni, ranges. */
+/** Pure helpers of the monitor page, tile and tools: units, thresholds, Pingo, ranges. */
 import type { TileTone, Translate } from '$shell';
 import type { Mood } from '$shell/ui';
 import { EN } from '$shell';
@@ -119,8 +119,8 @@ export function problems(r: Reading, t: Translate = EN): { tone: Tone; text: str
 export const diskName = (label: string, t: Translate = EN): string =>
   label === 'assistant' ? t('Assistant files') : label === 'docker' ? t('Docker data') : label;
 
-/** Beni keeps an eye on the machine. */
-export function beni(latest: Latest | null, stale: boolean, hour: number, t: Translate = EN): { mood: Mood; line: string } {
+/** Pingo keeps an eye on the machine. */
+export function pingo(latest: Latest | null, stale: boolean, hour: number, t: Translate = EN): { mood: Mood; line: string } {
   if (!latest) return { mood: 'idle', line: t('Start the collector and I will watch this machine.') };
   if (stale) return { mood: 'tired', line: t('I lost sight of the machine. Is the collector running?') };
   const p = problems(latest.data, t);

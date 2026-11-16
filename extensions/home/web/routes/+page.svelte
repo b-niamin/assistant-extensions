@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import type { DataOf } from '$shell';
   import { EmptyState, Mascot, useT } from '$shell/ui';
-  import { ago, beni, contactsLabel, countdown, lightsLabel } from '../lib/board';
+  import { ago, pingo, contactsLabel, countdown, lightsLabel } from '../lib/board';
   import ForecastChart from '../lib/ForecastChart.svelte';
   import type { Snapshot } from '../lib/types';
   import { condition, hhmm, periods, summary } from '../lib/weather';
@@ -131,7 +131,7 @@
   const next4 = $derived(w ? periods(w.hours) : []);
   const sum = $derived(w ? summary(w) : null);
   const listHours = $derived(w ? w.hours.filter((_, i) => i % 3 === 0) : []);
-  const pip = $derived(beni(snap, hour, t));
+  const pip = $derived(pingo(snap, hour, t));
   const alerts = $derived(home?.alerts ?? []);
   const warnings = $derived(snap.weather.warnings);
   const nothingSet = $derived(!snap.ha.configured && !snap.weather.configured && !snap.calendar.configured);
@@ -164,8 +164,8 @@
 
 <section class="board" class:full bind:this={board} aria-label={t('Home')}>
   <header class="top">
-    <span class="beni" title={pip.line}>
-      <Mascot mood={pip.mood} size={34} label={t('Beni says: {line}', { line: pip.line })} />
+    <span class="pingo" title={pip.line}>
+      <Mascot mood={pip.mood} size={34} label={t('Pingo says: {line}', { line: pip.line })} />
     </span>
 
     {#if snap.ha.configured}
@@ -237,7 +237,7 @@
 
   {#if nothingSet}
     <div class="empty">
-      <EmptyState title={t('Nothing to watch yet')} level={1} mascotLabel={t('Beni is waiting')}>
+      <EmptyState title={t('Nothing to watch yet')} level={1} mascotLabel={t('Pingo is waiting')}>
         <p class="muted">{t('Add your Home Assistant address and token, and a weather location, in System settings.')}</p>
         <a class="btn btn-primary" href={SETTINGS}>{t('Open settings')}</a>
       </EmptyState>
@@ -273,7 +273,7 @@
           </ol>
         {:else}
           <div class="quiet">
-            <Mascot mood="tired" size={64} accessory="umbrella" label={t('Beni has no forecast')} />
+            <Mascot mood="tired" size={64} accessory="umbrella" label={t('Pingo has no forecast')} />
             <p class="muted">
               {#if snap.weather.error}{t('No forecast: {error}.', { error: snap.weather.error })}{:else}{t('Set a weather location in')} <a href={SETTINGS}>{t('settings')}</a>.{/if}
             </p>
@@ -402,7 +402,7 @@
     min-height: 52px;
     flex-wrap: wrap;
   }
-  .beni {
+  .pingo {
     display: inline-flex;
     margin: -4px 0 -6px;
   }

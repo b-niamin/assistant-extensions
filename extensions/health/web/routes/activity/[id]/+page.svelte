@@ -64,7 +64,7 @@
 </nav>
 
 <header class="head rise">
-  <div class="beni"><Mascot mood="charged" size={64} label={t('Beni in a sweatband')} /></div>
+  <div class="pingo"><Mascot mood="charged" size={64} label={t('Pingo in a sweatband')} /></div>
   <div class="title">
     <p class="eyebrow">{t(sportLabel(a.sport))}{x.location ? ` · ${x.location}` : ''}</p>
     <h1>{a.name ?? t(sportLabel(a.sport))}</h1>
@@ -273,7 +273,7 @@
     gap: var(--space-4);
     margin-bottom: var(--space-5);
   }
-  .beni {
+  .pingo {
     flex: none;
   }
   .title {

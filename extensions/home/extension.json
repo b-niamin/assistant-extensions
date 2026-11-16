@@ -3,7 +3,7 @@
   "name": "Home",
   "description": "A calm board for the house: lights, doors and windows, camera alerts, weather with warnings and today's calendar, from Home Assistant.",
   "needs": "Home Assistant with a long-lived access token",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "kind": "native",
   "scope": "shared",
   "accessory": "bulb",
