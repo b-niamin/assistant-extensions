@@ -1,32 +1,25 @@
 import { fail, instantIn, todayIn, type ExtActions, type ExtLoad } from '$shell';
+import { calendarsOf, hiddenKey, parseHidden, switchCalendar } from '../lib/calendars';
 import { addEntry, removeEntry } from '../lib/entries.server';
 import { ownId, parseEntry } from '../lib/entry';
-import { linksOf } from '../lib/feeds.server';
+import { feedStates } from '../lib/feeds.server';
 import { addDays, monthGrid, pickMonth } from '../lib/month';
+import { daysOf } from '../lib/view';
 
 const zone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-const EXT_ID = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
-/** The apps a profile switched off on its calendar (the chips), kept per profile: the calendar is shared. */
-const hiddenKey = (profileId: string) => `hidden:${profileId}`;
-function parseHidden(v: string | null): string[] {
-  try {
-    const a = JSON.parse(v ?? '[]');
-    return Array.isArray(a) ? a.filter((x): x is string => typeof x === 'string' && EXT_ID.test(x)).slice(0, 50) : [];
-  } catch {
-    return [];
-  }
-}
 
 export const load = (async ({ url }, ctx) => {
   const tz = zone();
   const today = todayIn(tz);
   const { month, selected } = pickMonth(url.searchParams.get('m'), url.searchParams.get('d'), today);
   const grid = monthGrid(month);
-  const [cal, links, hidden] = await Promise.all([
+  // The feeds are fetched once: the calendar's own provider and this list share the cache.
+  const [cal, feeds, hidden] = await Promise.all([
     ctx.calendar.entries({ from: instantIn(grid.first, '00:00', tz), to: instantIn(addDays(grid.last, 1), '00:00', tz) }),
-    linksOf(ctx),
-    ctx.kv.get(hiddenKey(ctx.profileId)).then(parseHidden)
+    feedStates(ctx, 4500),
+    ctx.kv.get(hiddenKey(ctx.profileId))
   ]);
+  const inMonth = cal.entries.filter((e) => daysOf(e, tz).some((d) => d.startsWith(month)));
   return {
     today,
     timeZone: tz,
@@ -34,9 +27,14 @@ export const load = (async ({ url }, ctx) => {
     selected,
     weeks: grid.weeks,
     entries: cal.entries,
-    sources: cal.sources,
-    subscriptions: links.length,
-    hidden
+    calendars: calendarsOf(
+      cal.sources,
+      feeds.map((f) => ({ id: f.id, name: f.name, ok: f.ok })),
+      inMonth,
+      ctx.t('My entries')
+    ),
+    hidden: parseHidden(hidden),
+    subscriptions: feeds.length
   };
 }) satisfies ExtLoad;
 
@@ -64,11 +62,15 @@ export const actions: ExtActions = {
     await ctx.db((sql) => addEntry(sql, r.row, ctx.profileId));
     return { added: true };
   },
-  /** The chips: which apps this profile keeps off its calendar. */
-  hidden: async ({ request }, ctx) => {
-    const ids = parseHidden(JSON.stringify((await request.formData()).getAll('id').map(String)));
-    await ctx.kv.set(hiddenKey(ctx.profileId), JSON.stringify(ids));
-    return { hidden: ids };
+  /** Switch one calendar on or off for the viewing profile. */
+  calendars: async ({ request }, ctx) => {
+    const f = await request.formData();
+    const key = hiddenKey(ctx.profileId);
+    const next = switchCalendar(parseHidden(await ctx.kv.get(key)), String(f.get('key') ?? ''), f.get('on') === '1');
+    if (!next) return fail(400, { error: ctx.t('No such calendar.') });
+    if (next.length) await ctx.kv.set(key, JSON.stringify(next));
+    else await ctx.kv.remove(key);
+    return { hidden: next };
   },
   remove: async ({ request }, ctx) => {
     const id = ownId((await request.formData()).get('id'));

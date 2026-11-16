@@ -27,8 +27,6 @@
   "Month": "Miesiąc",
   "Previous month": "Poprzedni miesiąc",
   "Next month": "Następny miesiąc",
-  "Apps on the calendar": "Aplikacje w kalendarzu",
-  "{name} did not answer": "{name} nie odpowiada",
   "Title": "Tytuł",
   "Date": "Data",
   "Until (optional)": "Do (opcjonalnie)",
@@ -73,5 +71,20 @@
     "many": "{n} wydarzeń w tym tygodniu",
     "other": "{n} wydarzenia w tym tygodniu"
   },
-  "This entry belongs to another app.": "Ten wpis należy do innej aplikacji."
+  "This entry belongs to another app.": "Ten wpis należy do innej aplikacji.",
+  "My entries": "Moje wpisy",
+  "Calendars": "Kalendarze",
+  "{on} of {all} shown": "widoczne {on} z {all}",
+  "did not answer": "nie odpowiada",
+  "added here": "dodawane tutaj",
+  "subscribed": "subskrypcja",
+  "app": "aplikacja",
+  "{n} this month": {
+    "one": "{n} w tym miesiącu",
+    "few": "{n} w tym miesiącu",
+    "many": "{n} w tym miesiącu",
+    "other": "{n} w tym miesiącu"
+  },
+  "Subscribe to a calendar": "Subskrybuj kalendarz",
+  "No such calendar.": "Nie ma takiego kalendarza."
 }

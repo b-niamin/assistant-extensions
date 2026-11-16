@@ -20,7 +20,12 @@ Rules of the shell's `AGENTS.md` and `specs/002-extensions.md` apply. In short: 
   fetch fails, and retries a failing one after a minute. Nothing is stored: links can be read-only secrets.
 - Pure logic, unit-tested: `ics.ts` (parse ICS, occurrences in a range: RRULE DAILY/WEEKLY/MONTHLY/YEARLY,
   INTERVAL, BYDAY, BYMONTHDAY, BYMONTH, COUNT, UNTIL, EXDATE, RECURRENCE-ID), `entry.ts` (checking input,
-  row <-> entry), `month.ts` (the grid), `view.ts` (days and local times), `tile.ts`.
+  row <-> entry), `month.ts` (the grid), `view.ts` (days and local times), `tile.ts`, `calendars.ts`.
+- The **Calendars** card on the page (`web/lib/calendars.ts`, pure): one row per calendar with its colour
+  and a switch. Keys: `calendar` (own entries), `calendar:<link hash>` (each subscription), `<extension id>`
+  (every other contributor in `ctx.calendar` sources, so a newly installed app appears by itself).
+  Switched-off keys are a JSON list in `ctx.kv` under `hidden:<profile id>` (the extension is shared, the
+  choice is per profile), applied to the page and the tile, not to Claude's tools.
 - Times are the owner's zone (the server's TZ = APP_TIMEZONE), via `instantIn` / `dayIn` from `$shell`.
 
 ## Data for Claude
