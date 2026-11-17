@@ -71,24 +71,29 @@ export interface DbEntry {
   end_day: string | Date | null;
   location: string | null;
   note: string | null;
+  /** The calendar it is in (calendar.calendars) and that calendar's name. */
+  calendar_id?: string | number | bigint | null;
+  calendar_name?: string | null;
 }
 
 const dayText = (v: string | Date | null) => (v instanceof Date ? v.toISOString().slice(0, 10) : String(v ?? '').slice(0, 10));
 
-/** A row as a calendar entry (id "e<id>"), with a link to its day on the calendar page. */
+/** A row as a calendar entry (id "e<id>"), with a link to its day on the calendar page (naming its calendar). */
 export function toEntry(r: DbEntry, dayOf: (d: Date) => string): CalendarEntry {
+  const cal = r.calendar_id != null ? `&cal=${r.calendar_id}` : '';
   const base = {
     id: `e${r.id}`,
     title: r.title,
+    ...(r.calendar_name ? { kind: r.calendar_name.slice(0, 30) } : {}),
     ...(r.location ? { location: r.location } : {}),
     ...(r.note ? { note: r.note } : {})
   };
   if (r.all_day) {
     const start = dayText(r.start_day);
-    return { ...base, start, end: dayText(r.end_day), href: `/calendar?d=${start}` };
+    return { ...base, start, end: dayText(r.end_day), href: `/calendar?d=${start}${cal}` };
   }
   const s = r.start_at as Date;
-  return { ...base, start: s.toISOString(), end: (r.end_at ?? s).toISOString(), href: `/calendar?d=${dayOf(s)}` };
+  return { ...base, start: s.toISOString(), end: (r.end_at ?? s).toISOString(), href: `/calendar?d=${dayOf(s)}${cal}` };
 }
 
 /** "e42" -> 42; null for anything else (an id of another source). */

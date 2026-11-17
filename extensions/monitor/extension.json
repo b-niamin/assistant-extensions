@@ -1,12 +1,19 @@
 {
   "id": "monitor",
   "name": "System monitor",
+  "short": "Monitor",
   "description": "CPU, memory, temperature, disks, network and containers of the machine the assistant runs on: NAS, mini PC, Raspberry Pi or Mac.",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "kind": "native",
   "scope": "shared",
   "accessory": "wrench",
-  "shell": 6,
+  "icon": "monitor",
+  "pages": [
+    {"path": "", "label": "Overview", "icon": "chart"},
+    {"path": "storage", "label": "Storage", "icon": "disk"},
+    {"path": "containers", "label": "Containers", "icon": "box"}
+  ],
+  "shell": 7,
   "schema": "monitor",
   "services": [
     {

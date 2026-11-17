@@ -24,10 +24,10 @@
 </script>
 
 <label class="small muted" for="plKg">{t('Total weight (kg)')}</label>
-<input class="fld" id="plKg" inputmode="decimal" bind:value={text} oninput={() => (kg = parseFloat(text.replace(',', '.')) || 0)} style:margin="4px 0 12px" />
+<input id="plKg" inputmode="decimal" bind:value={text} oninput={() => (kg = parseFloat(text.replace(',', '.')) || 0)} style:margin="4px 0 12px" />
 <div class="small muted" style:margin-bottom="4px">{t('Bar')}</div>
-<div class="seg">
-  {#each [20, 15, 10, 0] as b (b)}<button type="button" class:on={bar === b} onclick={() => (bar = b)}>{b ? `${b} kg` : t('no bar')}</button>{/each}
+<div class="segmented full">
+  {#each [20, 15, 10, 0] as b (b)}<button type="button" aria-pressed={bar === b} onclick={() => (bar = b)}>{b ? `${b} kg` : t('no bar')}</button>{/each}
 </div>
 <div class="barbell">
   <svg viewBox="0 0 {Math.max(width + 30, 220)} 120" aria-hidden="true">
@@ -45,4 +45,4 @@
   <p class="muted">{t('Just the bar, no plates.')}</p>
 {/if}
 {#if r.rest > 0.001}<p class="small" style:margin-top="10px">{t('{missing} kg short of the exact weight. Closest: {closest} kg.', { missing: fmtN(r.rest * 2, t.locale), closest: fmtN(exact, t.locale) })}</p>{/if}
-{#if onuse}<button type="button" class="gbtn ink block" style:margin-top="14px" onclick={() => onuse(Math.round(exact * 100) / 100)}>{t('Put {kg} kg in the empty sets', { kg: fmtN(exact, t.locale) })}</button>{/if}
+{#if onuse}<button type="button" class="btn-primary btn-lg btn-block" style:margin-top="14px" onclick={() => onuse(Math.round(exact * 100) / 100)}>{t('Put {kg} kg in the empty sets', { kg: fmtN(exact, t.locale) })}</button>{/if}

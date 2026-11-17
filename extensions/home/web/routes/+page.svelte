@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { DataOf } from '$shell';
-  import { EmptyState, Mascot, useT } from '$shell/ui';
+  import { EmptyState, Mascot, PageHead, useT } from '$shell/ui';
   import { ago, pingo, contactsLabel, countdown, lightsLabel } from '../lib/board';
   import ForecastChart from '../lib/ForecastChart.svelte';
   import type { Snapshot } from '../lib/types';
@@ -162,11 +162,15 @@
   </svg>
 {/snippet}
 
+<PageHead title={t('Home')} sub={pip.line} mood={pip.mood} />
+
 <section class="board" class:full bind:this={board} aria-label={t('Home')}>
   <header class="top">
-    <span class="pingo" title={pip.line}>
-      <Mascot mood={pip.mood} size={34} label={t('Pingo says: {line}', { line: pip.line })} />
-    </span>
+    {#if full}
+      <span class="pingo" title={pip.line}>
+        <Mascot mood={pip.mood} size={34} label={t('Pingo says: {line}', { line: pip.line })} />
+      </span>
+    {/if}
 
     {#if snap.ha.configured}
       <details class="pill" class:on={home && home.lights.active.length > 0}>
@@ -228,7 +232,7 @@
       </span>
       <span class="secs">{loading ? '…' : failedAt !== null ? t('retry') : `${cd.left} s`}</span>
     </span>
-    <button class="btn-ghost icon" onclick={toggleFull} aria-label={full ? t('Leave full screen') : t('Full screen')} title={full ? t('Leave full screen') : t('Full screen')}>
+    <button class="btn-plain btn-icon icon" onclick={toggleFull} aria-label={full ? t('Leave full screen') : t('Full screen')} title={full ? t('Leave full screen') : t('Full screen')}>
       <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true">
         {#if full}<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />{:else}<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />{/if}
       </svg>
@@ -243,7 +247,6 @@
       </EmptyState>
     </div>
   {:else}
-    <h1 class="sr">{t('Home')}</h1>
     {#if snap.ha.error}
       <p class="banner status critical">
         {snap.ha.error}. {t('Lights, doors and calendar are unavailable.')} <a href={SETTINGS}>{t('Check the settings')}</a>
@@ -283,7 +286,7 @@
 
       <section class="ahead" aria-label={t('Next 24 hours')} onpointermove={hold} onfocusin={() => (focusInside = true)} onfocusout={leave}>
         {#if w}
-          <div class="tabs" role="group" aria-label={t('Forecast view')}>
+          <div class="segmented tabs" role="group" aria-label={t('Forecast view')}>
             <button type="button" aria-pressed={view === 'chart'} onclick={() => pick('chart')}>{t('Chart')}</button>
             <button type="button" aria-pressed={view === 'list'} onclick={() => pick('list')}>{t('List')}</button>
           </div>
@@ -523,11 +526,6 @@
   .secs {
     min-width: 3.2em;
   }
-  .icon {
-    display: inline-flex;
-    align-items: center;
-    height: 30px;
-  }
 
   .banner {
     display: flex;
@@ -628,22 +626,9 @@
   }
 
   .tabs {
+    margin: 0 auto var(--space-4);
+    width: fit-content;
     display: flex;
-    justify-content: center;
-    gap: var(--space-5);
-    margin-bottom: var(--space-4);
-  }
-  .tabs button {
-    border: none;
-    background: none;
-    padding: 4px 2px;
-    color: var(--ink-3);
-    font-weight: var(--weight-bold);
-    border-bottom: 2px solid transparent;
-  }
-  .tabs button[aria-pressed='true'] {
-    color: var(--ink);
-    border-bottom-color: var(--brand);
   }
   .lead {
     display: flex;

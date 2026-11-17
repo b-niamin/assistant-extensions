@@ -1,11 +1,10 @@
 <script lang="ts">
   import type { DataOf } from '$shell';
-  import { enhance, Mascot, useT } from '$shell/ui';
+  import { enhance, PageHead, Sheet, useT } from '$shell/ui';
   import { fmtShort, keyOf, usedOn, type Logged } from '../../lib/gym';
   import { GROUP_LABELS, GROUPS, MUSCLES, searchLibrary, type LibraryEntry } from '../../lib/library';
   import { CARDIO_SPORTS, SPORT_LABELS, UNITS } from '../../lib/model';
   import ExerciseInfo from '../../lib/ui/ExerciseInfo.svelte';
-  import Sheet from '../../lib/ui/Sheet.svelte';
   import Thumb from '../../lib/ui/Thumb.svelte';
   import type { load } from './+page.server';
 
@@ -38,36 +37,30 @@
 
 <svelte:head><title>{t('Exercises')} · {t('Training')}</title></svelte:head>
 
-<header class="top">
-  <Mascot mood="steady" size={52} label={t('Pingo in a sweatband')} />
-  <div>
-    <h1>{t('Exercises')}</h1>
-    <div class="sub">{t('How to do them, common mistakes and the muscles that work')}</div>
-  </div>
-</header>
+<PageHead title={t('Exercises')} sub={t('How to do them, common mistakes and the muscles that work')} />
 
-<input class="search" type="search" placeholder={t('Search an exercise')} aria-label={t('Search the library')} bind:value={query} autocomplete="off" style:margin-bottom="10px" />
+<input class="search" type="search" placeholder={t('Search an exercise')} aria-label={t('Search the library')} bind:value={query} autocomplete="off" />
 <div class="chips" role="radiogroup" aria-label={t('Group')}>
   {#each ['all', 'back_friendly', ...GROUPS] as g (g)}
-    <button type="button" class="chip" class:on={group === g} role="radio" aria-checked={group === g} onclick={() => (group = g)}>
+    <button type="button" class="chip" role="radio" aria-checked={group === g} onclick={() => (group = g)}>
       {g === 'all' ? t('All') : g === 'back_friendly' ? t('For a sore lower back') : t(GROUP_LABELS[g as keyof typeof GROUP_LABELS])}
     </button>
   {/each}
 </div>
 
-<div class="panel libl">
+<div class="list-group libl">
   {#each list as e (e.id)}
-    <button type="button" class="item th" onclick={() => (info = e)}>
-      <Thumb ref={e.id} name={t(e.name)} sport={e.kind === 'cardio' ? (e.sport ?? 'other') : undefined} />
-      <div class="tx"><div class="nm">{t(e.name)}</div><div class="mu">{sub(e)}{e.custom ? ` · ${t('yours')}` : ''}</div></div>
-      <span class="rt">{used.has(e.id) ? t('done {day}', { day: fmtShort(used.get(e.id)!, t.locale) }) : ''}</span>
+    <button type="button" class="list-row" onclick={() => (info = e)}>
+      <Thumb ref={e.id} name={t(e.name)} sport={e.kind === 'cardio' ? (e.sport ?? 'other') : undefined} cls="sm" />
+      <span class="list-text"><span class="list-title">{t(e.name)}</span><span class="list-sub">{sub(e)}{e.custom ? ` · ${t('yours')}` : ''}</span></span>
+      {#if used.has(e.id)}<span class="list-end">{t('done {day}', { day: fmtShort(used.get(e.id)!, t.locale) })}</span>{/if}
     </button>
   {:else}
     <div class="empty">{t('No such exercise in the library. Add it as your own below, or during a workout.')}</div>
   {/each}
 </div>
 
-<button class="gbtn line block" type="button" onclick={() => edit(null)}>+ {t('Your own exercise')}</button>
+<button class="btn btn-block" type="button" onclick={() => edit(null)}>+ {t('Your own exercise')}</button>
 
 <form method="POST" action="?/start" bind:this={startForm} hidden><input type="hidden" name="id" value={info?.id ?? ''} /></form>
 
@@ -77,9 +70,9 @@
     <ExerciseInfo entry={e} name={e.name} keyId={keyOf({ ref: e.id })} {history} action={{ label: t('Start a workout with this exercise'), run: () => startForm?.requestSubmit() }} />
     {#if e.custom}
       <div class="row" style:display="flex" style:gap="8px" style:margin-top="10px">
-        <button type="button" class="gbtn line sm" onclick={() => edit(e)}>{t('Edit')}</button>
+        <button type="button" class="btn btn-sm" onclick={() => edit(e)}>{t('Edit')}</button>
         <form method="POST" action="?/remove" use:enhance={() => async ({ update }) => { info = null; await update(); }}>
-          <input type="hidden" name="id" value={e.id} /><button class="gbtn line sm danger">{t('Delete')}</button>
+          <input type="hidden" name="id" value={e.id} /><button class="btn-danger btn-sm">{t('Delete')}</button>
         </form>
       </div>
     {/if}
@@ -101,18 +94,18 @@
       }}
     >
       {#if editing}<input type="hidden" name="id" value={editing.id} />{/if}
-      <label>{t('Name')}<input class="fld" name="name" required maxlength="80" value={editing?.name ?? ''} /></label>
+      <label>{t('Name')}<input name="name" required maxlength="80" value={editing?.name ?? ''} /></label>
       <div class="two">
         <label>{t('Kind')}
-          <select class="fld" name="kind" bind:value={kind}><option value="exercise">{t('Exercise')}</option><option value="cardio">{t('Cardio')}</option></select>
+          <select name="kind" bind:value={kind}><option value="exercise">{t('Exercise')}</option><option value="cardio">{t('Cardio')}</option></select>
         </label>
         {#if kind === 'cardio'}
           <label>{t('Sport')}
-            <select class="fld" name="sport">{#each CARDIO_SPORTS as sp (sp)}<option value={sp} selected={editing?.sport === sp}>{t(SPORT_LABELS[sp])}</option>{/each}</select>
+            <select name="sport">{#each CARDIO_SPORTS as sp (sp)}<option value={sp} selected={editing?.sport === sp}>{t(SPORT_LABELS[sp])}</option>{/each}</select>
           </label>
         {:else}
           <label>{t('Counts')}
-            <select class="fld" name="unit">{#each UNITS as u (u)}<option value={u} selected={(editing?.unit ?? 'reps') === u}>{unitLabel(u)}</option>{/each}</select>
+            <select name="unit">{#each UNITS as u (u)}<option value={u} selected={(editing?.unit ?? 'reps') === u}>{unitLabel(u)}</option>{/each}</select>
           </label>
         {/if}
       </div>
@@ -124,10 +117,10 @@
           {/each}
         </fieldset>
       {/if}
-      <label>{t('How to do it (optional)')}<textarea class="fld" name="description" rows="3" maxlength="2000">{editing?.description ?? ''}</textarea></label>
-      <label>{t('What to watch out for, one per line (optional)')}<textarea class="fld" name="cautions" rows="3" maxlength="2000">{editing?.cautions?.join('\n') ?? ''}</textarea></label>
+      <label>{t('How to do it (optional)')}<textarea name="description" rows="3" maxlength="2000">{editing?.description ?? ''}</textarea></label>
+      <label>{t('What to watch out for, one per line (optional)')}<textarea name="cautions" rows="3" maxlength="2000">{editing?.cautions?.join('\n') ?? ''}</textarea></label>
       {#if form?.error}<p class="error" role="alert">{form.error}</p>{/if}
-      <button class="gbtn ink block">{t('Save')}</button>
+      <button class="btn-primary btn-lg btn-block">{t('Save')}</button>
     </form>
   </Sheet>
 {/if}

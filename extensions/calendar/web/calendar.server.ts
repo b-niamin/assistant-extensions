@@ -6,16 +6,16 @@
 import { dayIn, type ExtCalendar } from '$shell';
 import { entriesIn } from './lib/entries.server';
 import { toEntry } from './lib/entry';
+import { listCalendars } from './lib/cals.server';
 import { feedEntries } from './lib/feeds.server';
 
 export const calendar: ExtCalendar = {
   async entries(ctx, range) {
     const days = { first: dayIn(range.from, range.timeZone), last: dayIn(new Date(range.to.getTime() - 1), range.timeZone) };
-    const [own, feeds] = await Promise.all([
-      ctx.db((sql) => entriesIn(sql, range, days)),
-      // The shell gives every extension 6 s; a slow provider gets less, so the own entries still show.
-      feedEntries(ctx, range, 4500)
-    ]);
+    const [own, rows] = await ctx.db((sql) => Promise.all([entriesIn(sql, range, days), listCalendars(sql)]));
+    const names = new Map(rows.filter((r) => r.feed_id).map((r) => [r.feed_id!, r.name]));
+    // The shell gives every extension 6 s; a slow provider gets less, so the own entries still show.
+    const feeds = await feedEntries(ctx, range, 4500, names);
     return [...own.map((r) => toEntry(r, (d) => dayIn(d, range.timeZone))), ...feeds];
   }
 };

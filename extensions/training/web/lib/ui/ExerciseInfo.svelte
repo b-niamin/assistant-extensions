@@ -65,8 +65,8 @@
         <div><b>{fm(best[metric])}</b><span>{t('record, {day}', { day: fmtShort(best.day, t.locale) })}</span></div>
         <div><b class:up={diff > 0.05} class:dn={diff < -0.05}>{diff > 0.05 ? '+' : ''}{delta(diff)}</b><span>{t('since {day}', { day: fmtShort(first.day, t.locale) })}</span></div>
       </div>
-      <div class="seg" style:margin-top="10px">
-        {#each metrics as [m, l] (m)}<button type="button" class:on={metric === m} onclick={() => (picked = m)}>{l}</button>{/each}
+      <div class="segmented full" style:margin-top="10px">
+        {#each metrics as [m, l] (m)}<button type="button" aria-pressed={metric === m} onclick={() => (picked = m)}>{l}</button>{/each}
       </div>
       <div class="chart">
         {#if rows.length > 1}<Chart pts={rows.map((x) => ({ d: x.day, v: x[metric] }))} locale={t.locale} />{:else}<p class="muted small" style:margin="4px 0 8px">{t('The chart shows up after the second session of this exercise.')}</p>{/if}
@@ -112,6 +112,6 @@
     <ul class="avoid">{#each entry.cautions as c (c)}<li>{t(c)}</li>{/each}</ul>
   {/if}
   {#if action}
-    <div style:margin-top="18px"><button type="button" class="gbtn ink block" onclick={action.run}>{action.label}</button></div>
+    <div style:margin-top="18px"><button type="button" class="btn-primary btn-lg btn-block" onclick={action.run}>{action.label}</button></div>
   {/if}
 </div>

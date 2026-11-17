@@ -78,7 +78,7 @@
     {/if}
   {/each}
   <div class="row">
-    <button type="button" class="gbtn line sm" onclick={() => add(newStep(steps?.length ? 'work' : 'warmup'))}>+ {t('Step')}</button>
-    <button type="button" class="gbtn line sm" onclick={() => add({ kind: 'repeat', repeats: 4, steps: [{ kind: 'work', durationType: 'distance', durationValue: 400 }, { kind: 'recovery', durationType: 'time', durationValue: 90 }] })}>+ {t('Intervals')}</button>
+    <button type="button" class="btn btn-sm" onclick={() => add(newStep(steps?.length ? 'work' : 'warmup'))}>+ {t('Step')}</button>
+    <button type="button" class="btn btn-sm" onclick={() => add({ kind: 'repeat', repeats: 4, steps: [{ kind: 'work', durationType: 'distance', durationValue: 400 }, { kind: 'recovery', durationType: 'time', durationValue: 90 }] })}>+ {t('Intervals')}</button>
   </div>
 </details>

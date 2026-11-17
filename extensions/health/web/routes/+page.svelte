@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { scaledTicks, type DataOf } from '$shell';
-  import { countUp, LineChart, lineFor, Mascot, moodFor, saveOnChoose, Sparkline, todayIn, useT } from '$shell/ui';
+  import { countUp, LineChart, lineFor, Mascot, moodFor, PageHead, saveOnChoose, Sparkline, todayIn, useT } from '$shell/ui';
   import MetricIcon from '../lib/MetricIcon.svelte';
   import { hueOf } from '../lib/look';
   import { formatValue, METRICS, specOf, type MetricSpec } from '../lib/metrics';
@@ -85,17 +85,12 @@
   {/if}
 {/snippet}
 
-<div class="pagehead">
-  <div>
-    <p class="eyebrow">{new Date().toLocaleDateString(t.locale, { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-    <h1>{t('Training & Health')}</h1>
-  </div>
-  {#if pill}
-    <a class="sync status {pill.tone}" href="/settings/extensions/health">{pill.text}</a>
-  {:else}
-    <a class="sync status" href="/settings/extensions/health">{t('Garmin not synced yet')}</a>
-  {/if}
-</div>
+<PageHead title={t('Training & Health')} mascot={false}>
+  {#snippet lede()}
+    {new Date().toLocaleDateString(t.locale, { weekday: 'long', day: 'numeric', month: 'long' })} ·
+    <a class="sync status {pill?.tone ?? ''}" href="/settings/extensions/health">{pill ? pill.text : t('Garmin not synced yet')}</a>
+  {/snippet}
+</PageHead>
 
 <section class="overview" aria-label={t('Latest readings')}>
   <div
@@ -105,7 +100,7 @@
   >
     <a class="eyebrow stretch" data-sveltekit-noscroll data-sveltekit-replacestate href="?metric=training_readiness&days={data.days}" aria-current={data.metric === 'training_readiness' ? 'true' : undefined}>{t('Training readiness')}</a>
     <div class="heroline">
-      <strong class="heronum" use:countUp={readiness?.value ?? null}>{readiness?.value == null ? '–' : Math.round(readiness.value)}</strong>
+      <strong class="figure heronum" use:countUp={readiness?.value ?? null}>{readiness?.value == null ? '–' : Math.round(readiness.value)}</strong>
       {#if level}<span class="status {level.tone} level">{t(level.label)}</span>{/if}
     </div>
     {@render delta(specOf('training_readiness')!, 'training_readiness')}
@@ -253,19 +248,7 @@
 {/if}
 
 <style>
-  .pagehead {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: var(--space-3);
-    margin-bottom: var(--space-5);
-  }
-  .pagehead p {
-    margin: 0 0 var(--space-1);
-  }
   .sync {
-    font-size: var(--text-sm);
     color: var(--ink-2);
     text-decoration: none;
   }
@@ -312,9 +295,6 @@
   .hero {
     padding: var(--space-5);
     gap: var(--space-2);
-    background:
-      radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--brand) 16%, transparent), transparent 60%),
-      var(--surface);
   }
   .pipline {
     display: flex;
@@ -353,9 +333,9 @@
     flex: 1;
     margin: 0;
     padding: 8px 12px;
-    border-radius: 12px;
+    border-radius: var(--radius-sm);
     background: color-mix(in srgb, var(--brand) 12%, var(--surface));
-    font-size: 0.875rem;
+    font-size: var(--text-md);
     color: var(--ink);
   }
   .bubble::before {
@@ -396,18 +376,16 @@
   }
   .heronum {
     font-size: 4rem;
-    line-height: 1;
-    font-weight: 650;
-    letter-spacing: -0.03em;
   }
   .level {
     font-size: var(--text-base);
     font-weight: var(--weight-bold);
   }
   .value {
-    font-size: 1.625rem;
+    font-family: var(--font-rounded);
+    font-size: var(--text-xl);
     line-height: 1.15;
-    font-weight: 650;
+    font-weight: var(--weight-heavy);
     letter-spacing: -0.02em;
   }
   .delta {
@@ -494,7 +472,7 @@
   table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.875rem;
+    font-size: var(--text-md);
     font-variant-numeric: tabular-nums;
   }
   th,
@@ -611,7 +589,7 @@
       grid-template-columns: repeat(2, 1fr);
     }
     .heronum {
-      font-size: 3.25rem;
+      font-size: var(--text-figure);
     }
   }
 </style>

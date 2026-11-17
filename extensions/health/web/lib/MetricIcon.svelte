@@ -31,7 +31,7 @@
     display: inline-grid;
     place-items: center;
     flex: none;
-    border-radius: 8px;
+    border-radius: var(--radius-xs);
     background: color-mix(in srgb, var(--hue) 14%, transparent);
   }
   svg {
