@@ -16,7 +16,7 @@ Rules of the shell's `AGENTS.md` and `specs/002-extensions.md` apply. In short: 
 - It runs in the assistant's worker (manifest `services`: `collector`, with `host: ["proc", "sys"]`;
   `jobs`: `prune`, nightly), as the extension's own user, never root: as root it could read
   `/proc/<pid>/environ` of host processes. Logging, settings and the database login come from the
-  worker's `pingo` module. Log: `/worker/logs/monitor.collector.log`;
+  worker's `assistant` module. Log: `/worker/logs/monitor.collector.log`;
   `docker compose exec worker ext-run monitor collector python -m collector once` prints one reading.
 - Web: `web/lib/data.server.ts` reads, `web/lib/monitor.ts` (units, thresholds, Pingo, problems,
   buckets) and `web/lib/tile.ts` are pure and tested in `monitor.test.ts`. The chart is the shell's `LineChart`

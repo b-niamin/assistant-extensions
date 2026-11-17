@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { byteTicks, type DataOf } from '$shell';
-  import { EmptyState, LineChart, Mascot, PageHead, useT } from '$shell/ui';
+  import { EmptyState, LineChart, Mascot, PageHead, useT, mascotName } from '$shell/ui';
   import {
     ago,
-    pingo,
+    mascotMood,
     bytes,
     celsius,
     cpuTone,
@@ -68,7 +68,7 @@
     };
   });
 
-  const pip = $derived(pingo(v.latest, v.stale, new Date(now).getHours(), t));
+  const pip = $derived(mascotMood(v.latest, v.stale, new Date(now).getHours(), t));
   const mem = $derived(r ? memPct(r) : null);
   const net = $derived(
     r ? r.net.reduce((a, n) => ({ rx: a.rx + (n.rx_bps ?? 0), tx: a.tx + (n.tx_bps ?? 0), any: a.any || n.rx_bps !== null }), { rx: 0, tx: 0, any: false }) : null
@@ -121,7 +121,7 @@
 
   {#if !v.latest || !r}
     <div class="card">
-      <EmptyState title={t('No readings yet')} mascotLabel={t('Pingo is waiting')}>
+      <EmptyState title={t('No readings yet')} mascotLabel={t('{name} is waiting', { name: mascotName() })}>
         <p>{t("This extension reads the machine through a small background service, the collector, which the assistant's worker starts within seconds of the install.")}</p>
         <p class="muted">{t('The first reading comes within a minute. If none comes, see System settings -> Worker: the worker comes with the assistant from 12 November 2026 on.')}</p>
       </EmptyState>

@@ -120,7 +120,7 @@ export const diskName = (label: string, t: Translate = EN): string =>
   label === 'assistant' ? t('Assistant files') : label === 'docker' ? t('Docker data') : label;
 
 /** Pingo keeps an eye on the machine. */
-export function pingo(latest: Latest | null, stale: boolean, hour: number, t: Translate = EN): { mood: Mood; line: string } {
+export function mascotMood(latest: Latest | null, stale: boolean, hour: number, t: Translate = EN): { mood: Mood; line: string } {
   if (!latest) return { mood: 'idle', line: t('Start the collector and I will watch this machine.') };
   if (stale) return { mood: 'tired', line: t('I lost sight of the machine. Is the collector running?') };
   const p = problems(latest.data, t);

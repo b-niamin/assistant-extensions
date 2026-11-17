@@ -3,7 +3,7 @@
   import { goto, replaceState } from '$app/navigation';
   import { page } from '$app/state';
   import type { DataOf } from '$shell';
-  import { Mascot, PageHead, Sheet, useT } from '$shell/ui';
+  import { Mascot, PageHead, Sheet, useT, mascotName } from '$shell/ui';
   import { onMount, tick as settle } from 'svelte';
   import {
     amount,
@@ -622,7 +622,7 @@
 {:else if sheet?.mode === 'summary'}
   <Sheet full onclose={() => (sheet = null)}>
     <div class="sum-hero">
-      <Mascot mood="charged" size={56} label={t('Pingo in a sweatband')} />
+      <Mascot mood="charged" size={56} label={t('{name} in a sweatband', { name: mascotName() })} />
       <div><h2>{records.length ? t('New records!') : t('Well done')}</h2><p>{cap(longDay)}{plan ? `, ${plan.name}` : ''}</p></div>
     </div>
     <div class="sum-kpis">

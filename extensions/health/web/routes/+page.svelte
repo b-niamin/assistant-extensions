@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { scaledTicks, type DataOf } from '$shell';
-  import { countUp, LineChart, lineFor, Mascot, moodFor, PageHead, saveOnChoose, Sparkline, todayIn, useT } from '$shell/ui';
+  import { countUp, LineChart, lineFor, Mascot, moodFor, PageHead, saveOnChoose, Sparkline, todayIn, useT, mascotName } from '$shell/ui';
   import MetricIcon from '../lib/MetricIcon.svelte';
   import { hueOf } from '../lib/look';
   import { formatValue, METRICS, specOf, type MetricSpec } from '../lib/metrics';
@@ -105,7 +105,7 @@
     </div>
     {@render delta(specOf('training_readiness')!, 'training_readiness')}
     <div class="pipline">
-      <div class="pipwrap"><Mascot {mood} size={76} label={t('Pingo says: {line}', { line: pipSays })} /></div>
+      <div class="pipwrap"><Mascot {mood} size={76} label={t('{name} says: {line}', { name: mascotName(), line: pipSays })} /></div>
       <p class="bubble">{pipSays}</p>
     </div>
     <Sparkline values={(data.trends['training_readiness'] ?? []).map((p) => p.value)} height={48} />

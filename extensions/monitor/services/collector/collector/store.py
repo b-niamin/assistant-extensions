@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 import psycopg
-from pingo import connect
+from assistant import connect
 from psycopg.types.json import Jsonb
 
 SAMPLE_COLS = ("cpu_pct", "load1", "mem_used", "mem_total", "swap_used", "temp_c",

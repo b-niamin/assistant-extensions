@@ -1,7 +1,7 @@
 /*
  * What is Training's own in its look: the week, the quick starts, the workout (sets, ticks, the rest timer),
  * the muscle map, the plate calculator and the summary. Everything else (cards, buttons, lists, segmented
- * controls, chips, fields, sheets, the page head and its navigation) comes from the shell (Pingo UI,
+ * controls, chips, fields, sheets, the page head and its navigation) comes from the shell (Assistant UI,
  * specs/001-design.md), so Training looks like every other app. Every rule sits under .gym and uses the
  * shell's tokens.
  */

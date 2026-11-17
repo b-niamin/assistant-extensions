@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ago, pingo, contactsLabel, countdown, lightsLabel } from './board';
+import { ago, mascotMood, contactsLabel, countdown, lightsLabel } from './board';
 import type { Snapshot } from './types';
 
 const base = (home?: Partial<NonNullable<Snapshot['ha']['home']>>, extra: Partial<Snapshot> = {}): Snapshot => ({
@@ -15,18 +15,18 @@ const base = (home?: Partial<NonNullable<Snapshot['ha']['home']>>, extra: Partia
   ...extra
 });
 
-describe('pingo', () => {
+describe('mascotMood', () => {
   it('is calm by day and asleep at night when all is quiet', () => {
-    expect(pingo(base(), 15).mood).toBe('steady');
-    expect(pingo(base(), 2)).toEqual({ mood: 'asleep', line: 'All quiet. Lights off, everything closed.' });
+    expect(mascotMood(base(), 15).mood).toBe('steady');
+    expect(mascotMood(base(), 2)).toEqual({ mood: 'asleep', line: 'All quiet. Lights off, everything closed.' });
   });
   it('perks up on an alert and names what is open', () => {
-    expect(pingo(base({ alerts: [{ id: 'a', name: 'Door camera', at: '', active: true }] }), 15).mood).toBe('charged');
+    expect(mascotMood(base({ alerts: [{ id: 'a', name: 'Door camera', at: '', active: true }] }), 15).mood).toBe('charged');
     const open = base({ contacts: { active: [{ id: 'x', name: 'Balcony door' }], total: 3, unknown: [] } });
-    expect(pingo(open, 15).line).toBe('Balcony door is open.');
+    expect(mascotMood(open, 15).line).toBe('Balcony door is open.');
   });
   it('waits when nothing is set', () => {
-    expect(pingo(base(undefined, { ha: { configured: false }, weather: { configured: false, warnings: [] } }), 12).mood).toBe('idle');
+    expect(mascotMood(base(undefined, { ha: { configured: false }, weather: { configured: false, warnings: [] } }), 12).mood).toBe('idle');
   });
 });
 
