@@ -16,6 +16,21 @@ export function weekOf(day: string, sessions: Session[]): DayColumn[] {
   });
 }
 
+/**
+ * A week's name for its header, Monday to Sunday: "Mon 16 – Sun 22" in today's month, else with the month
+ * ("26 Oct – 1 Nov"), and with the year when it is not this one.
+ */
+export function weekRange(monday: string, today: string, locale = 'en'): string {
+  const sunday = addDays(monday, 6);
+  const plain = monday.slice(0, 7) === today.slice(0, 7) && sunday.slice(0, 7) === today.slice(0, 7);
+  const end = (d: string) => {
+    const at = new Date(`${d}T12:00:00Z`);
+    if (plain) return `${at.toLocaleDateString(locale, { timeZone: 'UTC', weekday: 'short' })} ${at.getUTCDate()}`;
+    return at.toLocaleDateString(locale, { timeZone: 'UTC', day: 'numeric', month: 'short', ...(d.slice(0, 4) !== today.slice(0, 4) ? { year: 'numeric' } : {}) });
+  };
+  return `${end(monday)} – ${end(sunday)}`;
+}
+
 export function weekCounts(sessions: Session[]) {
   const planned = sessions.length;
   const done = sessions.filter((s) => s.status === 'done').length;

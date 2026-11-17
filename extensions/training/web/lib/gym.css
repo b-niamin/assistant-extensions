@@ -105,6 +105,7 @@
   stroke-dasharray: var(--c);
   stroke-dashoffset: var(--o);
   animation: g-ringin 1s var(--ease) both;
+  transition: stroke-dashoffset 0.4s ease-out;
 }
 @keyframes g-ringin {
   from {
@@ -143,7 +144,7 @@
 .gym .hd.has span {
   color: var(--accent-ink);
 }
-.gym .hd.plan::after {
+.gym .hd.planned::after {
   content: '';
   position: absolute;
   bottom: 4px;

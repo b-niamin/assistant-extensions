@@ -1,10 +1,12 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import type { DataOf } from '$shell';
-  import { enhance, Icon, PageHead, Sheet, useT, type Mood } from '$shell/ui';
+  import { enhance, Icon, PageHead, Pager, Sheet, useT, type Mood } from '$shell/ui';
   import { MUSCLE_IDS, recovery, type Logged } from '../lib/gym';
   import { MUSCLES, type LibraryEntry } from '../lib/library';
   import { addDays, itemsLine, type Session } from '../lib/model';
   import BodyMap from '../lib/ui/BodyMap.svelte';
+  import { weekRange } from '../lib/view';
   import Stack from '../lib/ui/Stack.svelte';
   import type { load } from './+page.server';
 
@@ -18,6 +20,10 @@
   const doneDays = $derived(new Set(done.map((s) => s.day)));
   const planDays = $derived(new Set(data.sessions.filter((s) => s.status === 'planned').map((s) => s.day)));
   const count = $derived(done.length);
+  const planned = $derived(data.sessions.filter((s) => s.status === 'planned' && s.day >= data.today).length);
+  const past = $derived(addDays(data.monday, 6) < data.today);
+  /** Another week in place (the swipe, the arrows): no new history entry, the page stays where it is. */
+  const toWeek = (day: string | null) => goto(day ? `?w=${day}` : '/training', { reset: false, replace: true });
   const pct = $derived(Math.min(1, count / data.goal));
   const C = 2 * Math.PI * 30;
   const last = $derived(history[0]);
@@ -64,22 +70,31 @@
         <a class="btn-primary btn-sm" href="/training/session/{data.going.id}">{t('Back to it')}</a>
       </div>
     {/if}
-    <section class="card hero" aria-label={t('This week')}>
-      <div class="hero-top">
-        <div>
-          <div class="eyebrow">{thisWeek ? t('This week') : `${shortDay(data.monday)} – ${shortDay(addDays(data.monday, 6))}`}</div>
-          <div class="figure">{count}<small> / {data.goal}</small></div>
-          <div class="hero-sub">{count >= data.goal ? t('Goal done') : t('workouts to the goal')}</div>
-        </div>
-        <svg class="ring" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="30" class="rb" /><circle cx="36" cy="36" r="30" class="rf" style="--c:{C.toFixed(1)};--o:{(C * (1 - pct)).toFixed(1)}" /></svg>
-      </div>
-      <div class="hweek">
-        {#each days as d, i (d)}
-          <div class="hd" class:has={doneDays.has(d)} class:plan={planDays.has(d)} class:today={d === data.today} class:future={d > data.today}>
-            <span>{t(WD[i])}</span><b>{Number(d.slice(8))}</b>
+    <section class="card hero" aria-label={t('Weekly goal')}>
+      <Pager
+        key={data.monday}
+        label={t('Weeks')}
+        prevLabel={t('Previous week')}
+        nextLabel={t('Next week')}
+        onprev={() => toWeek(addDays(data.monday, -7))}
+        onnext={() => toWeek(addDays(data.monday, 7))}>
+        {#snippet head()}<div class="eyebrow">{weekRange(data.monday, data.today, t.locale)}</div>{/snippet}
+        {#snippet actions()}{#if !thisWeek}<button type="button" class="btn-tinted btn-sm" onclick={() => toWeek(null)}>{t('Today')}</button>{/if}{/snippet}
+        <div class="hero-top">
+          <div>
+            <div class="figure">{count}<small> / {data.goal}</small></div>
+            <div class="hero-sub">{count >= data.goal ? t('Goal done') : past ? t('done that week') : planned && !thisWeek ? t('{n} planned', { n: planned }) : t('workouts to the goal')}</div>
           </div>
-        {/each}
-      </div>
+          <svg class="ring" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="30" class="rb" /><circle cx="36" cy="36" r="30" class="rf" style="--c:{C.toFixed(1)};--o:{(C * (1 - pct)).toFixed(1)}" /></svg>
+        </div>
+        <div class="hweek">
+          {#each days as d, i (d)}
+            <div class="hd" class:has={doneDays.has(d)} class:planned={planDays.has(d)} class:today={d === data.today} class:future={d > data.today}>
+              <span>{t(WD[i])}</span><b>{Number(d.slice(8))}</b>
+            </div>
+          {/each}
+        </div>
+      </Pager>
       <div class="hero-goal">
         <span>{t('Weekly goal')}</span>
         <form method="POST" action="?/goal" use:enhance class="stepper">
