@@ -23,7 +23,7 @@
   const stateText = $derived(pl.state === 'active' ? t('Active') : pl.state === 'waiting' ? t('Waiting') : t('Finished'));
 </script>
 
-<svelte:head><title>{pl.name} · {t('Training')}</title></svelte:head>
+<svelte:head><title>{pl.name} · {t('Training Plans')}</title></svelte:head>
 
 <PageHead title={pl.name} sub={`${stateText}${pl.start_day || pl.end_day ? ` · ${pl.start_day ?? '…'} – ${pl.end_day ?? '…'}` : ''}`} back={{ href: '/training/plans', label: t('Plans') }} />
 {#if pl.goal}<p class="muted goal">{pl.goal}</p>{/if}

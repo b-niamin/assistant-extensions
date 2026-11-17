@@ -55,9 +55,9 @@
   const statusOf = (s: Session) => (s.status === 'done' ? t('done') : s.status === 'skipped' ? t('skipped') : s.result?.started_at ? t('in progress') : t('planned'));
 </script>
 
-<svelte:head><title>{t('Training')} · {t('Assistant')}</title></svelte:head>
+<svelte:head><title>{t('Training Plans')} · {t('Assistant')}</title></svelte:head>
 
-<PageHead title={t('Training')} sub={last ? t('Last workout: {day}', { day: longDay(last.day) }) : t('Log your first workout')} {mood} />
+<PageHead title={t('Training Plans')} sub={last ? t('Last workout: {day}', { day: longDay(last.day) }) : t('Log your first workout')} {mood} />
 
 {#if form?.error}<p class="card small danger" role="alert">{form.error}</p>{/if}
 

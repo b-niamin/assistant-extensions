@@ -1,4 +1,4 @@
-# Training
+# Training Plans
 
 Assistant extension: training plans and workouts of any kind. Kind `native`, scope `profile`, schema
 `training`. It took over from the Gym Tracker, which is no longer in this repository.
@@ -24,7 +24,7 @@ Assistant extension: training plans and workouts of any kind. Kind `native`, sco
 - Photos: Free Exercise DB (public domain); body shapes: react-body-highlighter (MIT); font: Barlow
   Condensed (OFL).
 - Built mostly with Claude: `training__*` tools do everything the pages do. Claude puts a workout on the
-  Garmin watch through the Training & Health app (`training__garmin_workout`, then `health__send_workout`)
+  Garmin watch through the Training & Health Data app (`training__garmin_workout`, then `health__send_workout`)
   and names the real activity on Strava (`health__edit_activity`).
 
 ## Install

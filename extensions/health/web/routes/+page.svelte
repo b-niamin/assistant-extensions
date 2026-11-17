@@ -72,7 +72,7 @@
     !day ? t('no recent data') : daysBetween(day, today) > 1 ? t('as of {day}', { day: shortDay(day, false, t.locale) }) : '';
 </script>
 
-<svelte:head><title>{t('Training & Health')} · Assistant</title></svelte:head>
+<svelte:head><title>{t('Training & Health Data')} · Assistant</title></svelte:head>
 
 {#snippet delta(s: MetricSpec, key: string)}
   {@const d = deltaVsBaseline(s, data.trends[key] ?? [])}
@@ -85,7 +85,7 @@
   {/if}
 {/snippet}
 
-<PageHead title={t('Training & Health')} mascot={false}>
+<PageHead title={t('Training & Health Data')} mascot={false}>
   {#snippet lede()}
     {new Date().toLocaleDateString(t.locale, { weekday: 'long', day: 'numeric', month: 'long' })} ·
     <a class="sync status {pill?.tone ?? ''}" href="/settings/extensions/health">{pill ? pill.text : t('Garmin not synced yet')}</a>

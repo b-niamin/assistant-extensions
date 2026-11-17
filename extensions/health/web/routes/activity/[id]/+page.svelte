@@ -53,9 +53,9 @@
   const lapPace = (mps?: number) => (mps ? (paced ? paceText(paceOf(mps)) : `${one(mps * 3.6)}`) : '–');
 </script>
 
-<svelte:head><title>{a.name ?? t(sportLabel(a.sport))} · {t('Training & Health')}</title></svelte:head>
+<svelte:head><title>{a.name ?? t(sportLabel(a.sport))} · {t('Training & Health Data')}</title></svelte:head>
 
-<PageHead title={a.name ?? t(sportLabel(a.sport))} sub={[t(sportLabel(a.sport)), x.location, when].filter(Boolean).join(' · ')} back={{ href: '/health', label: t('Training & Health') }}>
+<PageHead title={a.name ?? t(sportLabel(a.sport))} sub={[t(sportLabel(a.sport)), x.location, when].filter(Boolean).join(' · ')} back={{ href: '/health', label: t('Training & Health Data') }}>
   {#snippet actions()}
     {#if data.prev}<a class="btn btn-icon" href="/health/activity/{data.prev}" rel="prev" aria-label={t('Older')}><Icon name="back" size={20} /></a>{/if}
     {#if data.next}<a class="btn btn-icon" href="/health/activity/{data.next}" rel="next" aria-label={t('Newer')}><Icon name="forward" size={20} /></a>{/if}

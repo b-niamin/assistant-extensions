@@ -40,7 +40,7 @@
   }
 </script>
 
-<svelte:head><title>{t('Exercises')} · {t('Training')}</title></svelte:head>
+<svelte:head><title>{t('Exercises')} · {t('Training Plans')}</title></svelte:head>
 
 <PageHead title={t('Exercises')} sub={t('How to do them, common mistakes and the muscles that work')} />
 

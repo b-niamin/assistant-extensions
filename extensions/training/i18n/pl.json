@@ -69,7 +69,7 @@
   "rest": "przerwa",
   "Check the fields: {list}.": "Sprawdź pola: {list}.",
   "Still to do": "Do zrobienia",
-  "Training": "Trening",
+  "Training Plans": "Plany treningowe",
   "Training plans with one active, and workouts made of anything: a run, exercises from the library, the sauna. Tick sets, rest timer, the week and the calendar. Built mostly with Claude.": "Plany treningowe, z jednym aktywnym, i treningi złożone z czego chcesz: bieg, ćwiczenia z biblioteki, sauna. Odhaczanie serii, minutnik przerwy, tydzień i kalendarz. Układane głównie z Claude.",
   "Strength ({n})": "Siłownia ({n})",
   "{n} sets": "{n} serii",

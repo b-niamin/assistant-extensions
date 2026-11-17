@@ -3,7 +3,7 @@
 Rules of the shell's `AGENTS.md` and `specs/002-extensions.md` apply: import only `$shell` / `$shell/ui`,
 queries only through `ctx.db` (role `ext_training`), always filtered by `ctx.dataProfileId`, migrations
 additive. This extension never reads another app's tables or calls another app: Claude joins it with
-Training & Health through both apps' tools.
+Training & Health Data through both apps' tools.
 
 ## Data
 

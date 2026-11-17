@@ -73,7 +73,7 @@ export function isStuck(o: SyncOverview, now: number): boolean {
 }
 
 export const STUCK_TEXT =
-  'The sync service is not picking up requests. Restart it in System settings -> Worker (Training & Health · garmin-sync).';
+  'The sync service is not picking up requests. Restart it in System settings -> Worker (Training & Health Data · garmin-sync).';
 
 /** "Fetch older data" makes sense only before the day the history is already checked back to. */
 export function olderLimit(o: SyncOverview, today: string): string {

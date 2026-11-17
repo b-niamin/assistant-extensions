@@ -1,4 +1,4 @@
-# Training & Health
+# Training & Health Data
 
 Assistant extension: Garmin, Strava and Withings in one place. Sleep, HRV, Body Battery, readiness,
 activities and weight, and writes back to them: workouts to the Garmin watch, titles and descriptions of
@@ -15,7 +15,7 @@ Kind `native`, scope `profile`, schema `health`.
 ```sh
 node scripts/ext.mjs install health     # in the assistant checkout (or the app's terminal)
 # garmin-sync starts in the worker within seconds (System settings -> Worker). Then, in the app's terminal, once
-# (or the button in System settings -> Training & Health, which runs it there):
+# (or the button in System settings -> Training & Health Data, which runs it there):
 ext-run health garmin-sync python -m sync login   # the password is never stored
 ```
 

@@ -400,7 +400,7 @@
   };
 </script>
 
-<svelte:head><title>{shownTitle} · {t('Training')}</title></svelte:head>
+<svelte:head><title>{shownTitle} · {t('Training Plans')}</title></svelte:head>
 
 {#if total || live}
   <div class="bar-live">
@@ -416,7 +416,7 @@
 <PageHead
   title={shownTitle}
   sub={`${cap(longDay)}${time ? ` · ${time}` : ''}${status === 'done' ? ` · ${t('done')}` : status === 'skipped' ? ` · ${t('skipped')}` : ''}`}
-  back={plan ? { href: `/training/plans/${plan.id}`, label: plan.name } : { href: `/training?w=${day}`, label: t('Training') }}
+  back={plan ? { href: `/training/plans/${plan.id}`, label: plan.name } : { href: `/training?w=${day}`, label: t('Training Plans') }}
   focus={status === 'planned'}>
   {#snippet actions()}<span class="sync muted small" role="status">{sync === 'saving' ? t('Saving…') : sync === 'saved' ? t('Saved') : sync === 'error' ? t('Not saved') : ''}</span>{/snippet}
 </PageHead>

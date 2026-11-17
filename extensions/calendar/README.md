@@ -7,7 +7,7 @@ One calendar for the house, and the place every other app puts its dates on:
 - **Subscribed calendars**: Google, iCloud, Outlook or any ICS / webcal link, read-only, with repeating
   events, exceptions and moved occurrences.
 - **What the other apps add**: sessions of the training plan, Garmin activities and planned workouts from
-  Training & Health, Home Assistant calendars from Home. Any extension can do the same with one file
+  Training & Health Data, Home Assistant calendars from Home. Any extension can do the same with one file
   (`web/calendar.server.ts`, core spec 002).
 
 The month on the left, the chosen day on the right, and under it **Calendars**: every calendar on the page

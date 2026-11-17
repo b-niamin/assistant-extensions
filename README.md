@@ -16,14 +16,14 @@ Extensions for [Assistant](https://github.com/b-niamin/assistant).
 <table>
   <tr>
     <td width="50%" valign="top">
-      <a href="docs/screenshots/health.png"><img src="docs/screenshots/health.png" alt="Training &amp; Health: readiness, sleep, HRV, Body Battery and more" /></a>
-      <h3><a href="extensions/health">Training &amp; Health</a></h3>
+      <a href="docs/screenshots/health.png"><img src="docs/screenshots/health.png" alt="Training &amp; Health Data: readiness, sleep, HRV, Body Battery and more" /></a>
+      <h3><a href="extensions/health">Training &amp; Health Data</a></h3>
       Sleep, HRV, Body Battery, readiness and activities with route, laps and charts, synced from Garmin.<br />
       <sub><code>health</code> · native · per profile · needs a Garmin Connect account</sub>
     </td>
     <td width="50%" valign="top">
-      <a href="docs/screenshots/training.png"><img src="docs/screenshots/training.png" alt="Training: the week against a weekly goal, quick start and the week's workouts" /></a>
-      <h3><a href="extensions/training">Training</a></h3>
+      <a href="docs/screenshots/training.png"><img src="docs/screenshots/training.png" alt="Training Plans: the week against a weekly goal, quick start and the week's workouts" /></a>
+      <h3><a href="extensions/training">Training Plans</a></h3>
       Plans with one active, and workouts made of anything: a run, exercises from the library, the sauna. Sets, rest timer, the calendar.<br />
       <sub><code>training</code> · native · per profile</sub>
     </td>
@@ -58,13 +58,13 @@ Extensions for [Assistant](https://github.com/b-niamin/assistant).
 
 | Light | Dark |
 |---|---|
-| <img src="docs/screenshots/health.png" alt="Training & Health, light"> | <img src="docs/screenshots/health-dark.png" alt="Training & Health, dark"> |
+| <img src="docs/screenshots/health.png" alt="Training & Health Data, light"> | <img src="docs/screenshots/health-dark.png" alt="Training & Health Data, dark"> |
 | <img src="docs/screenshots/training.png" alt="Training, light"> | <img src="docs/screenshots/training-dark.png" alt="Training, dark"> |
 | <img src="docs/screenshots/home.png" alt="Home, light"> | <img src="docs/screenshots/home-dark.png" alt="Home, dark"> |
 | <img src="docs/screenshots/monitor.png" alt="System monitor, light"> | <img src="docs/screenshots/monitor-dark.png" alt="System monitor, dark"> |
 | <img src="docs/screenshots/calendar.png" alt="Calendar, light"> | <img src="docs/screenshots/calendar-dark.png" alt="Calendar, dark"> |
 
-An activity in Training & Health:
+An activity in Training & Health Data:
 
 <img src="docs/screenshots/health-activity.png" alt="An activity: distance, pace, heart rate, route and charts">
 

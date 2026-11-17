@@ -15,7 +15,7 @@
   const dates = (a: string | null, b: string | null) => (a || b ? `${a ?? '…'} – ${b ?? '…'}` : '');
 </script>
 
-<svelte:head><title>{t('Plans')} · {t('Training')}</title></svelte:head>
+<svelte:head><title>{t('Plans')} · {t('Training Plans')}</title></svelte:head>
 
 <PageHead title={t('Plans')} sub={t('One plan is active: the week, the calendar and the dashboard show its workouts, and those of no plan.')} />
 

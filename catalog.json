@@ -16,7 +16,7 @@
     },
     {
       "id": "health",
-      "name": "Training & Health",
+      "name": "Training & Health Data",
       "description": "Garmin, Strava and Withings in one place: sleep, HRV, readiness, activities and weight, and writes back to them.",
       "kind": "native",
       "scope": "profile",
@@ -25,7 +25,7 @@
       "accessory": "headband",
       "i18n": {
         "pl": {
-          "name": "Trening i zdrowie",
+          "name": "Dane treningowe i zdrowotne",
           "description": "Garmin, Strava i Withings w jednym miejscu: sen, HRV, gotowość, aktywności i waga, z zapisem z powrotem do nich.",
           "needs": "Konto Garmin Connect; Strava i Withings opcjonalnie"
         }
@@ -64,14 +64,14 @@
     },
     {
       "id": "training",
-      "name": "Training",
+      "name": "Training Plans",
       "description": "Training plans with one active, and workouts made of anything: a run, exercises from the library, the sauna. Tick sets, rest timer, the week and the calendar. Built mostly with Claude.",
       "kind": "native",
       "scope": "profile",
       "accessory": "headband",
       "i18n": {
         "pl": {
-          "name": "Trening",
+          "name": "Plany treningowe",
           "description": "Plany treningowe, z jednym aktywnym, i treningi złożone z czego chcesz: bieg, ćwiczenia z biblioteki, sauna. Odhaczanie serii, minutnik przerwy, tydzień i kalendarz. Układane głównie z Claude."
         }
       }

@@ -74,7 +74,7 @@ put new logic in `sync/`. Each pass runs as a fresh process, so edits go live on
   (email, password via getpass, MFA code). The password is never stored, only the encrypted token.
 - `python -m sync backfill [--since 2020-01-01]`: full history, resumable. The first one after a login is
   queued by itself (5 years back, stops after a year without data); older data is asked for in System
-  settings -> Training & Health -> Connected accounts.
+  settings -> Training & Health Data -> Connected accounts.
 - The `loop` checks `health.sync_requests` every 5 s and runs the scheduled pass every
   `SYNC_INTERVAL_MINUTES`. Each pass reports `progress`/`phase` into its `sync_runs` row (the settings
   panel's progress bar). The panel itself is `web/sources.server.ts` (spec 002, "Connected accounts").

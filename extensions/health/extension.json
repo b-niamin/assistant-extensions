@@ -1,10 +1,10 @@
 {
   "id": "health",
-  "name": "Training & Health",
+  "name": "Training & Health Data",
   "short": "Health",
   "description": "Garmin, Strava and Withings in one place: sleep, HRV, readiness, activities and weight, and writes back to them.",
   "needs": "A Garmin Connect account; Strava and Withings optional",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "kind": "native",
   "scope": "profile",
   "accessory": "headband",

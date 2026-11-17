@@ -73,7 +73,7 @@ def cmd_login(a: argparse.Namespace) -> int:
         password = ""  # noqa: F841 - drop the reference early
     store.account_status(a.profile, "connected", fresh_login=True)
     print("Connected:", json.dumps(status, ensure_ascii=False))
-    print("The history (up to 5 years back) is fetched within a minute; progress in System settings -> Training & Health.")
+    print("The history (up to 5 years back) is fetched within a minute; progress in System settings -> Training & Health Data.")
     return 0
 
 

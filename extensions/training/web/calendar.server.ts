@@ -1,7 +1,7 @@
 /**
  * Training on the shared calendar (core spec 002, "Calendar entries"): the workouts of the active plan and
  * those of no plan, timed when they have a time, else all day. On the calendar it is one source
- * ("Training"), so it can be switched on or off there.
+ * ("Training Plans"), so it can be switched on or off there.
  */
 import { dayIn, instantIn, type CalendarEntry, type ExtCalendar } from '$shell';
 import { sessionsIn } from './lib/db.server';

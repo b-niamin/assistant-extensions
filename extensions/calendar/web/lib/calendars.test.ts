@@ -20,8 +20,8 @@ describe('calendarsOf', () => {
   ];
   const sources = [
     { extension: 'calendar', name: 'Calendar', count: 3 },
-    { extension: 'training', name: 'Training', count: 1 },
-    { extension: 'health', name: 'Training & Health', count: 0, error: 'timeout' }
+    { extension: 'training', name: 'Training Plans', count: 1 },
+    { extension: 'health', name: 'Training & Health Data', count: 0, error: 'timeout' }
   ];
   const feeds = [
     { id: 'aa11aa11aa', ok: true },
@@ -31,7 +31,7 @@ describe('calendarsOf', () => {
     { id: 'e1', href: '/calendar?d=2026-11-01&cal=1', source: { extension: 'calendar', name: 'Calendar' } },
     { id: 'f:aa11aa11aa:1', source: { extension: 'calendar', name: 'Calendar' } },
     { id: 'f:aa11aa11aa:2', source: { extension: 'calendar', name: 'Calendar' } },
-    { id: 'w1', source: { extension: 'training', name: 'Training' } }
+    { id: 'w1', source: { extension: 'training', name: 'Training Plans' } }
   ];
   const list = calendarsOf(rows, sources, feeds, entries);
 
@@ -40,8 +40,8 @@ describe('calendarsOf', () => {
       ['cal:1', 'Family', 'own', 1],
       ['calendar:aa11aa11aa', 'Work', 'feed', 2],
       ['calendar:bb22bb22bb', 'Holidays', 'feed', 0],
-      ['training', 'Training', 'app', 1],
-      ['health', 'Training & Health', 'app', 0]
+      ['health', 'Training & Health Data', 'app', 0],
+      ['training', 'Training Plans', 'app', 1]
     ]);
     expect(list.filter((c) => c.problem).map((c) => c.key)).toEqual(['calendar:bb22bb22bb', 'health']);
   });
