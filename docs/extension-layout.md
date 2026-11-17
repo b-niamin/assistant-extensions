@@ -29,12 +29,14 @@ The manifest's fields and limits, the `$shell` SDK and the tools contract are in
 
 ## `catalog.json`
 
-What "Extend the system" in the app and `ext available` list. Never edited by hand: `node
+What "Extend the system" in the app and `ext available` list, and the versions System settings -> Apps
+compares with the installed ones ("Update all"). Never edited by hand: `node
 scripts/build-catalog.mjs` makes it from every folder in `extensions/` (CI fails when it is stale):
 
 | Field | What |
 | --- | --- |
 | `id`, `name`, `description`, `kind`, `scope`, `accessory` | the manifest's |
+| `version`, `shell` | the manifest's: a newer `version` than the installed one is an update; one whose `shell` is above the core's waits for a core update |
 | `needs` | the manifest's optional `needs`: what the owner needs before it works, e.g. "A Garmin Connect account" |
 | `service` | `true` when the manifest has `services` or `jobs` (the worker runs them) |
 | `i18n.<lang>` | `name`, `description`, `needs` from the extension's `i18n/<lang>.json` |

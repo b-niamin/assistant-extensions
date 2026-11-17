@@ -6,6 +6,8 @@
       "description": "One calendar for the house: your calendars, ones subscribed from Google, iCloud or Outlook, and what the other apps put on it, like workouts and activities.",
       "kind": "native",
       "scope": "shared",
+      "version": "1.3.0",
+      "shell": 7,
       "accessory": "pencil",
       "i18n": {
         "pl": {
@@ -20,6 +22,8 @@
       "description": "Garmin, Strava and Withings in one place: sleep, HRV, readiness, activities and weight, and writes back to them.",
       "kind": "native",
       "scope": "profile",
+      "version": "1.2.1",
+      "shell": 7,
       "service": true,
       "needs": "A Garmin Connect account; Strava and Withings optional",
       "accessory": "headband",
@@ -37,6 +41,8 @@
       "description": "A calm board for the house: lights, doors and windows, camera alerts, weather with warnings and today's calendar, from Home Assistant.",
       "kind": "native",
       "scope": "shared",
+      "version": "2.3.0",
+      "shell": 7,
       "needs": "Home Assistant with a long-lived access token",
       "accessory": "bulb",
       "i18n": {
@@ -53,6 +59,8 @@
       "description": "CPU, memory, temperature, disks, network and containers of the machine the assistant runs on: NAS, mini PC, Raspberry Pi or Mac.",
       "kind": "native",
       "scope": "shared",
+      "version": "1.5.0",
+      "shell": 7,
       "service": true,
       "accessory": "wrench",
       "i18n": {
@@ -68,6 +76,8 @@
       "description": "Training plans with one active, and workouts made of anything: a run, exercises from the library, the sauna. Tick sets, rest timer, the week and the calendar. Built mostly with Claude.",
       "kind": "native",
       "scope": "profile",
+      "version": "1.6.0",
+      "shell": 9,
       "accessory": "headband",
       "i18n": {
         "pl": {

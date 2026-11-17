@@ -1,6 +1,6 @@
 // catalog.json is made from the extensions' own files (audit R13): id, name, description, kind, scope,
-// needs and accessory from extension.json, `service` from its services/jobs, and every language of
-// i18n/<lang>.json. Nothing is typed twice.
+// version, shell (System settings -> Apps offers updates from them), needs and accessory from extension.json,
+// `service` from its services/jobs, and every language of i18n/<lang>.json. Nothing is typed twice.
 //   node scripts/build-catalog.mjs           writes catalog.json
 //   node scripts/build-catalog.mjs --check   fails when catalog.json is not what it would write (CI)
 import { readdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
@@ -18,7 +18,7 @@ const extensions = dirs.map((id) => {
   const dir = path.join(root, 'extensions', id);
   const m = read(path.join(dir, 'extension.json'));
   if (m.id !== id) errors.push(`extensions/${id}: the manifest's id is "${m.id}"`);
-  const entry = { id, name: m.name, description: m.description, kind: m.kind, scope: m.scope };
+  const entry = { id, name: m.name, description: m.description, kind: m.kind, scope: m.scope, version: m.version, shell: m.shell };
   if (m.services?.length || m.jobs?.length) entry.service = true;
   if (m.needs) entry.needs = m.needs;
   if (m.accessory) entry.accessory = m.accessory;
