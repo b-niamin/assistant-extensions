@@ -20,14 +20,14 @@
 
 <svg viewBox="0 0 {W} {H}" aria-hidden="true">
   {#each [range.mn, (range.mn + range.mx) / 2, range.mx] as tk (tk)}
-    <line x1={pl} x2={W - pr} y1={y(tk)} y2={y(tk)} stroke="var(--g-line)" />
-    <text x={pl - 6} y={y(tk) + 4} text-anchor="end" font-size="11" fill="var(--g-muted)">{Math.round(tk)}</text>
+    <line x1={pl} x2={W - pr} y1={y(tk)} y2={y(tk)} stroke="var(--grid)" />
+    <text x={pl - 6} y={y(tk) + 4} text-anchor="end" font-size="11" fill="var(--ink-3)">{Math.round(tk)}</text>
   {/each}
   <path d={line} fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
   {#each P as p, i (i)}
-    <circle cx={x(i)} cy={y(p.v)} r={i === L ? 5 : 3.5} fill={i === L ? 'var(--g-red)' : 'var(--g-surface)'} stroke={i === L ? 'var(--g-red)' : 'var(--ink)'} stroke-width="2" />
+    <circle cx={x(i)} cy={y(p.v)} r={i === L ? 5 : 3.5} fill={i === L ? 'var(--accent)' : 'var(--surface)'} stroke={i === L ? 'var(--accent)' : 'var(--ink)'} stroke-width="2" />
   {/each}
-  <text x={pl} y={H - 5} font-size="11" fill="var(--g-muted)">{fmtShort(P[0].d, locale)}</text>
-  <text x={W - pr} y={H - 5} font-size="11" fill="var(--g-muted)" text-anchor="end">{fmtShort(P[L].d, locale)}</text>
-  <text x={Math.min(x(L), W - pr)} y={y(P[L].v) - 11} font-size="15" font-weight="600" fill="var(--ink)" text-anchor="end" style:font-family="var(--g-cond)">{fmtN(P[L].v, locale)}</text>
+  <text x={pl} y={H - 5} font-size="11" fill="var(--ink-3)">{fmtShort(P[0].d, locale)}</text>
+  <text x={W - pr} y={H - 5} font-size="11" fill="var(--ink-3)" text-anchor="end">{fmtShort(P[L].d, locale)}</text>
+  <text x={Math.min(x(L), W - pr)} y={y(P[L].v) - 11} font-size="15" font-weight="600" fill="var(--ink)" text-anchor="end" style:font-family="var(--font-rounded)">{fmtN(P[L].v, locale)}</text>
 </svg>

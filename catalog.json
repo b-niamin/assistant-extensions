@@ -3,14 +3,14 @@
     {
       "id": "calendar",
       "name": "Calendar",
-      "description": "One calendar for the house: your own entries, subscribed calendars (Google, iCloud, Outlook) and what the other apps put on it, like workouts and activities.",
+      "description": "One calendar for the house: your calendars, ones subscribed from Google, iCloud or Outlook, and what the other apps put on it, like workouts and activities.",
       "kind": "native",
       "scope": "shared",
       "accessory": "pencil",
       "i18n": {
         "pl": {
           "name": "Kalendarz",
-          "description": "Jeden kalendarz dla domu: własne wpisy, subskrybowane kalendarze (Google, iCloud, Outlook) i to, co dodają inne aplikacje, np. treningi i aktywności."
+          "description": "Jeden kalendarz dla domu: Twoje kalendarze, subskrybowane z Google, iCloud lub Outlook, i to, co dodają inne aplikacje, np. treningi i aktywności."
         }
       }
     },

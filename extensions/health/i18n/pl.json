@@ -243,5 +243,6 @@
   "running": "w toku",
   "done": "gotowe",
   "failed": "nie udało się",
-  "not supported": "nieobsługiwane"
+  "not supported": "nieobsługiwane",
+  "Health": "Zdrowie"
 }

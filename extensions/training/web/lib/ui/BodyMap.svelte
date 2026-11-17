@@ -7,7 +7,7 @@
   const t = useT();
   const fill = (m: string | null) => {
     const v = m ? scores[m] || 0 : 0;
-    return v > 0 ? (colors[m!] ?? 'var(--g-red)') : m ? 'var(--g-body)' : 'var(--g-body-2)';
+    return v > 0 ? (colors[m!] ?? 'var(--critical)') : m ? 'var(--body)' : 'var(--body-2)';
   };
   const opacity = (m: string | null) => {
     const v = m ? scores[m] || 0 : 0;
@@ -23,6 +23,6 @@
       {/each}
     </g>
   {/each}
-  <text x="50" y="211" text-anchor="middle" font-size="9" fill="var(--g-muted)">{t('front')}</text>
-  <text x="166" y="211" text-anchor="middle" font-size="9" fill="var(--g-muted)">{t('back')}</text>
+  <text x="50" y="211" text-anchor="middle" font-size="9" fill="var(--ink-3)">{t('front')}</text>
+  <text x="166" y="211" text-anchor="middle" font-size="9" fill="var(--ink-3)">{t('back')}</text>
 </svg>

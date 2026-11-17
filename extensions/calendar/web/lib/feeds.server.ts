@@ -112,10 +112,12 @@ export async function feedStates(ctx: ExtensionContext, timeoutMs = 5000): Promi
   );
 }
 
-/** Entries of every subscribed feed in the range, each with the feed's name as its kind. */
-export async function feedEntries(ctx: ExtensionContext, range: CalendarRange, timeoutMs = 5000): Promise<CalendarEntry[]> {
+/** Entries of every subscribed feed in the range, each with its calendar's name (`names`, by feed id) or the feed's as its kind. */
+export async function feedEntries(ctx: ExtensionContext, range: CalendarRange, timeoutMs = 5000, names: Map<string, string> = new Map()): Promise<CalendarEntry[]> {
   const states = await feedStates(ctx, timeoutMs);
   return states.flatMap((f) =>
-    f.cal ? occurrences(f.cal, range, 1500).map((e) => ({ ...e, id: `f:${f.id}:${e.id}`.slice(0, 200), kind: f.name.slice(0, 30) })) : []
+    f.cal
+      ? occurrences(f.cal, range, 1500).map((e) => ({ ...e, id: `f:${f.id}:${e.id}`.slice(0, 200), kind: (names.get(f.id) ?? f.name).slice(0, 30) }))
+      : []
   );
 }

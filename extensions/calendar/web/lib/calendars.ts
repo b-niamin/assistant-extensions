@@ -1,15 +1,22 @@
 /**
- * The calendars on the page, each with its colour and an on/off switch: the calendar's own entries, each
- * subscribed calendar on its own, and every other app that puts dates on it (whatever is installed, read
- * from what the shell hands out). Which ones a profile switched off is kept per profile. Pure.
+ * The calendars on the page, each with its colour and an on/off switch: the calendars added here (that keep
+ * entries, or stand for a subscription link), and every other app that puts dates on the shared calendar
+ * (whatever is installed, read from what the shell hands out). Which ones a profile switched off is kept
+ * per profile. Pure.
  */
 import type { SharedEntry } from '$shell';
+import { feedUrls } from './ics';
 
 export type CalendarKind = 'own' | 'feed' | 'app';
+export const HUES = ['blue', 'violet', 'aqua', 'orange', 'magenta', 'yellow', 'green', 'red'] as const;
+export type Hue = (typeof HUES)[number];
+export const isHue = (v: unknown): v is Hue => HUES.includes(v as Hue);
 
 export interface CalendarItem {
-  /** "calendar" (own entries), "calendar:<feed id>" (a subscription), or another app's id. */
+  /** "cal:<id>" (a calendar added here), "calendar:<feed id>" (its subscription's entries), or another app's id. */
   key: string;
+  /** The row in calendar.calendars, for a calendar added here. */
+  id?: number;
   name: string;
   kind: CalendarKind;
   /** A shell categorical hue: blue, orange, aqua, ... (CSS var(--hue-<hue>)). */
@@ -27,49 +34,56 @@ export interface AppSource {
   error?: string;
 }
 
+export interface CalRowLike {
+  id: number;
+  name: string;
+  hue: string;
+  feed_id: string | null;
+}
+
 export interface FeedInfo {
   id: string;
-  name: string;
   ok: boolean;
 }
 
-/** Every app keeps the colour it always had; the rest get the hues left over, in order. */
-const FIXED: Record<string, string> = { calendar: 'blue', training: 'orange', gym: 'orange', health: 'aqua', home: 'violet' };
-const HUES = ['blue', 'orange', 'aqua', 'violet', 'magenta', 'yellow', 'green', 'red'];
+/** Apps keep the colour they always had; calendars added here wear the one picked for them. */
+const APP_HUES: Record<string, string> = { training: 'orange', gym: 'orange', health: 'aqua', home: 'violet' };
 
-/** Which calendar an entry belongs to. */
-export function calendarKey(e: Pick<SharedEntry, 'id' | 'source'>): string {
-  if (e.source.extension !== 'calendar') return e.source.extension;
-  const m = /^f:([0-9a-f]{1,20}):/.exec(e.id);
-  return m ? `calendar:${m[1]}` : 'calendar';
+/** The colour for a new calendar: the first one not taken yet. */
+export function nextHue(taken: string[]): Hue {
+  return HUES.find((h) => !taken.includes(h)) ?? HUES[taken.length % HUES.length];
 }
 
-/**
- * The list in the order shown: own entries, then the other apps by name, then the subscriptions in the
- * order they were added. `ownName` is "My entries" in the page's language.
- */
-export function calendarsOf(sources: AppSource[], feeds: FeedInfo[], entries: Pick<SharedEntry, 'id' | 'source'>[], ownName: string): CalendarItem[] {
+/** Which calendar an entry belongs to: an own entry names its calendar in its link (?cal=<id>). */
+export function calendarKey(e: Pick<SharedEntry, 'id' | 'source' | 'href'>): string {
+  if (e.source.extension !== 'calendar') return e.source.extension;
+  const f = /^f:([0-9a-f]{1,20}):/.exec(e.id);
+  if (f) return `calendar:${f[1]}`;
+  const c = /[?&]cal=(\d{1,15})/.exec(e.href ?? '');
+  return c ? `cal:${c[1]}` : 'calendar';
+}
+
+/** The key a calendar row answers to: its subscription's for a link, its own otherwise. */
+export const rowKey = (r: Pick<CalRowLike, 'id' | 'feed_id'>) => (r.feed_id ? `calendar:${r.feed_id}` : `cal:${r.id}`);
+
+/** The list in the order shown: calendars added here (in the order added), then the other apps by name. */
+export function calendarsOf(rows: CalRowLike[], sources: AppSource[], feeds: FeedInfo[], entries: Pick<SharedEntry, 'id' | 'source' | 'href'>[]): CalendarItem[] {
   const counts = new Map<string, number>();
   for (const e of entries) counts.set(calendarKey(e), (counts.get(calendarKey(e)) ?? 0) + 1);
   const count = (k: string) => counts.get(k) ?? 0;
   const own = sources.find((s) => s.extension === 'calendar');
+  const list: CalendarItem[] = rows.map((r) => {
+    const key = rowKey(r);
+    const feed = r.feed_id ? feeds.find((f) => f.id === r.feed_id) : null;
+    const problem = r.feed_id ? !feed?.ok : !!own?.error;
+    return { key, id: r.id, name: r.name, kind: r.feed_id ? 'feed' : 'own', hue: r.hue, count: count(key), ...(problem ? { problem: true } : {}) };
+  });
+  const taken = new Set(rows.map((r) => r.hue));
   const apps = sources.filter((s) => s.extension !== 'calendar').sort((a, b) => a.name.localeCompare(b.name));
-
-  const taken = new Set<string>(Object.values(FIXED));
-  const spare = HUES.filter((h) => !taken.has(h));
-  let next = 0;
-  const pick = () => (spare.length ? spare[next++ % spare.length] : HUES[next++ % HUES.length]);
-  // Apps without a fixed colour go first (sorted by id, so a new subscription never repaints an app).
-  const appHue = new Map<string, string>();
-  for (const s of [...apps].sort((a, b) => a.extension.localeCompare(b.extension))) appHue.set(s.extension, FIXED[s.extension] ?? pick());
-
-  const list: CalendarItem[] = [];
-  if (own) list.push({ key: 'calendar', name: ownName, kind: 'own', hue: FIXED.calendar, count: count('calendar'), ...(own.error ? { problem: true } : {}) });
-  for (const s of apps)
-    list.push({ key: s.extension, name: s.name, kind: 'app', hue: appHue.get(s.extension)!, count: s.error ? 0 : count(s.extension), ...(s.error ? { problem: true } : {}) });
-  for (const f of feeds) {
-    const key = `calendar:${f.id}`;
-    list.push({ key, name: f.name, kind: 'feed', hue: pick(), count: count(key), ...(f.ok ? {} : { problem: true }) });
+  for (const s of apps) {
+    const hue = APP_HUES[s.extension] ?? nextHue([...taken]);
+    taken.add(hue);
+    list.push({ key: s.extension, name: s.name, kind: 'app', hue, count: s.error ? 0 : count(s.extension), ...(s.error ? { problem: true } : {}) });
   }
   return list;
 }
@@ -95,3 +109,14 @@ export function switchCalendar(hidden: string[], key: string, on: boolean): stri
 
 /** Where a profile's switched-off calendars are kept (the calendar is shared, the choice is not). */
 export const hiddenKey = (profileId: string) => `hidden:${profileId}`;
+
+/** The stored list of links (one per line) with one more; at most 20. */
+export function addItemTo(stored: string | null, url: string): string {
+  const urls = feedUrls(stored);
+  if (!urls.includes(url)) urls.push(url);
+  if (urls.length > 20) throw new Error('Too many calendars (at most 20 links).');
+  return urls.join('\n');
+}
+
+/** The list of links without one ('' when none is left). */
+export const removeItemFrom = (urls: string[], url: string): string => urls.filter((u) => u !== url).join('\n');

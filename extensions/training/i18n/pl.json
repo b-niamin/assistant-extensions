@@ -566,5 +566,11 @@
   "Fri": "pt",
   "Sat": "so",
   "Sun": "nd",
-  "Start": "Zacznij"
+  "Start": "Zacznij",
+  "All": "Wszystkie",
+  "Copy": "Kopiuj",
+  "It is not there any more.": "Już tego nie ma.",
+  "Summary": "Podsumowanie",
+  "Time": "Czas",
+  "Saving…": "Zapisuję…"
 }

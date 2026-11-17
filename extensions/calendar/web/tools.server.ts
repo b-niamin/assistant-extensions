@@ -4,6 +4,8 @@
  * calendar's own entries (ids "e<n>"): the others belong to their extensions and change there.
  */
 import { dayIn, instantIn, nextDay, todayIn, ToolError, type ExtensionContext, type ExtTool } from '$shell';
+import { addOwnCalendar, calendarForEntry, withFeeds } from './lib/cals.server';
+import { HUES, isHue, nextHue } from './lib/calendars';
 import { addEntry, removeEntry, updateEntry } from './lib/entries.server';
 import { ownId, parseEntry, toEntry, type EntryInput } from './lib/entry';
 import { feedStates } from './lib/feeds.server';
@@ -25,8 +27,18 @@ const entryProps = {
   start_time: { type: 'string', description: 'HH:MM in the owner\'s time zone; leave out for an all-day entry' },
   end_time: { type: 'string', description: 'HH:MM; default an hour after start_time' },
   location: { type: 'string', maxLength: 200 },
-  note: { type: 'string', maxLength: 1000 }
+  note: { type: 'string', maxLength: 1000 },
+  calendar: { type: 'string', description: 'The calendar it goes into: its id or name from overview (one that keeps entries, not a subscription). Default: the first one' }
 };
+
+/** The calendar named in args, or the default one; a ToolError when the name is unknown. */
+async function calendarOf(ctx: ExtensionContext, args: Record<string, unknown>, required: boolean) {
+  const wanted = args.calendar == null || args.calendar === '' ? null : String(args.calendar);
+  if (!wanted && !required) return null;
+  const cal = await ctx.db((sql) => calendarForEntry(sql, wanted, ctx.t('Calendar'), 'claude'));
+  if (!cal) throw new ToolError(`no calendar "${wanted}" that keeps entries (see overview)`);
+  return cal;
+}
 
 function checked(args: Record<string, unknown>, ctx: ExtensionContext) {
   const r = parseEntry(args as EntryInput, zone(), ctx.t);
@@ -53,7 +65,9 @@ export const tools: ExtTool[] = [
       let last = today;
       for (let i = 1; i < days; i++) last = nextDay(last);
       const [r, feeds] = await Promise.all([between(ctx, today, last), feedStates(ctx)]);
+      const rows = await withFeeds(ctx, feeds);
       return {
+        calendars: rows.map((c) => ({ id: String(c.id), name: c.name, color: c.hue, ...(c.feed_id ? { subscription: true } : {}) })),
         today,
         timeZone: tz,
         range: { from: today, to: last },
@@ -100,7 +114,8 @@ export const tools: ExtTool[] = [
     input: { type: 'object', properties: entryProps, required: ['title', 'date'] },
     run: async (args, ctx) => {
       const row = checked(args, ctx);
-      const r = await ctx.db((sql) => addEntry(sql, row, 'claude'));
+      const cal = (await calendarOf(ctx, args, true))!;
+      const r = await ctx.db((sql) => addEntry(sql, row, 'claude', cal));
       const e = toEntry(r, (d) => dayIn(d, zone()));
       return { saved: { ...e, when: localWhen({ allDay: row.all_day, start: e.start, end: e.end ?? e.start }, zone()) } };
     }
@@ -118,7 +133,8 @@ export const tools: ExtTool[] = [
       const id = ownId(args.id);
       if (id === null) throw new ToolError('only the calendar\'s own entries (ids "e<n>") can be changed here');
       const row = checked(args, ctx);
-      const r = await ctx.db((sql) => updateEntry(sql, id, row));
+      const cal = await calendarOf(ctx, args, false);
+      const r = await ctx.db((sql) => updateEntry(sql, id, row, cal?.id ?? null));
       if (!r) throw new ToolError(`no entry ${String(args.id)}`);
       return { saved: toEntry(r, (d) => dayIn(d, zone())) };
     }
@@ -135,6 +151,28 @@ export const tools: ExtTool[] = [
       if (id === null) throw new ToolError('only the calendar\'s own entries (ids "e<n>") can be removed here');
       if (!(await ctx.db((sql) => removeEntry(sql, id)))) throw new ToolError(`no entry ${String(args.id)}`);
       return { removed: String(args.id) };
+    }
+  },
+  {
+    name: 'add_calendar',
+    title: 'Add a calendar',
+    readOnly: false,
+    description:
+      'Add a calendar that keeps entries (e.g. "Family", "Work"), with a colour. Entries go into it with add_entry {calendar}. ' +
+      'Subscriptions to Google, iCloud or Outlook calendars are added by the owner on the calendar page (the link is a secret).',
+    input: {
+      type: 'object',
+      properties: { name: { type: 'string', minLength: 1, maxLength: 60 }, color: { type: 'string', enum: [...HUES] } },
+      required: ['name']
+    },
+    run: async (args, ctx) => {
+      const name = String(args.name ?? '').trim().slice(0, 60);
+      if (!name) throw new ToolError('a name is needed');
+      const cal = await ctx.db(async (sql) => {
+        const taken = (await sql<{ hue: string }[]>`SELECT hue FROM calendar.calendars`).map((r) => r.hue);
+        return addOwnCalendar(sql, name, isHue(args.color) ? args.color : nextHue(taken), 'claude');
+      });
+      return { saved: { id: String(cal.id), name: cal.name, color: cal.hue } };
     }
   }
 ];

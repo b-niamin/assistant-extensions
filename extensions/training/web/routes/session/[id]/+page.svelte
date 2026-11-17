@@ -3,7 +3,7 @@
   import { goto, replaceState } from '$app/navigation';
   import { page } from '$app/state';
   import type { DataOf } from '$shell';
-  import { Mascot, useT } from '$shell/ui';
+  import { Mascot, PageHead, Sheet, useT } from '$shell/ui';
   import { onMount, tick as settle } from 'svelte';
   import {
     amount,
@@ -35,7 +35,6 @@
   import Picker from '../../../lib/ui/Picker.svelte';
   import Plates from '../../../lib/ui/Plates.svelte';
   import RestTimer from '../../../lib/ui/RestTimer.svelte';
-  import Sheet from '../../../lib/ui/Sheet.svelte';
   import Thumb from '../../../lib/ui/Thumb.svelte';
   import type { load } from './+page.server';
 
@@ -410,36 +409,34 @@
       <div class="t"><span>{live ? t('workout time') : status === 'done' ? t('saved') : t('plan')}</span><span>{t('{done} of {all}', { done: ticked, all: total })}</span></div>
       <div class="pb"><i style:width="{total ? Math.round((ticked / total) * 100) : 0}%"></i></div>
     </div>
-    {#if status === 'done'}<button type="button" class="gbtn ink sm" onclick={() => (sheet = { mode: 'summary' })}>{t('Summary')}</button>{:else}<button type="button" class="gbtn ink sm" onclick={finish}>{t('Finish')}</button>{/if}
+    {#if status === 'done'}<button type="button" class="btn-primary btn-sm" onclick={() => (sheet = { mode: 'summary' })}>{t('Summary')}</button>{:else}<button type="button" class="btn-primary btn-sm" onclick={finish}>{t('Finish')}</button>{/if}
   </div>
 {/if}
 
-<nav class="crumbs"><a class="link" href="/training?w={day}">‹ {t('Training')}</a>{#if plan}{' · '}<a class="link" href="/training/plans/{plan.id}">{plan.name}</a>{/if}</nav>
-<header class="top">
-  <Mascot mood={status === 'done' ? 'charged' : ticked ? 'steady' : 'idle'} size={52} label={t('Pingo in a sweatband')} />
-  <div>
-    <h1>{cap(longDay)}</h1>
-    <div class="sub">{shownTitle}{time ? ` · ${time}` : ''}{status === 'done' ? ` · ${t('done')}` : status === 'skipped' ? ` · ${t('skipped')}` : ''}</div>
-  </div>
-  <span class="sync" role="status">{sync === 'saving' ? t('Saving…') : sync === 'saved' ? t('Saved') : sync === 'error' ? t('Not saved') : ''}</span>
-</header>
+<PageHead
+  title={shownTitle}
+  sub={`${cap(longDay)}${time ? ` · ${time}` : ''}${status === 'done' ? ` · ${t('done')}` : status === 'skipped' ? ` · ${t('skipped')}` : ''}`}
+  back={plan ? { href: `/training/plans/${plan.id}`, label: plan.name } : { href: `/training?w=${day}`, label: t('Training') }}
+  focus={status === 'planned'}>
+  {#snippet actions()}<span class="sync muted small" role="status">{sync === 'saving' ? t('Saving…') : sync === 'saved' ? t('Saved') : sync === 'error' ? t('Not saved') : ''}</span>{/snippet}
+</PageHead>
 
 <div class="wk-meta">
   <label>{t('Date')} <input type="date" bind:value={day} onchange={queue} /></label>
   <span class="wk-acts">
-    <button type="button" class="gbtn line sm" onclick={() => (sheet = { mode: 'details' })}>{t('Details')}</button>
-    <button type="button" class="gbtn line sm danger" onclick={discard}>{confirm === 'discard' ? t('Sure?') : t('Discard')}</button>
+    <button type="button" class="btn btn-sm" onclick={() => (sheet = { mode: 'details' })}>{t('Details')}</button>
+    <button type="button" class="btn-danger btn-sm" onclick={discard}>{confirm === 'discard' ? t('Sure?') : t('Discard')}</button>
   </span>
 </div>
 
-{#if description}<p class="panel small desc">{description}</p>{/if}
+{#if description}<p class="card small desc">{description}</p>{/if}
 
 {#if items.some((i) => i.kind === 'exercise')}
-  <details class="panel fold" open>
+  <details class="card fold" open>
     <summary><span class="h2" style:margin="0">{t('Muscles at work')}</span><svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg></summary>
-    <div class="seg">
-      <button type="button" class:on={mapMode === 'done'} onclick={() => (mapMode = 'done')}>{t('Done ({n})', { n: ticked })}</button>
-      <button type="button" class:on={mapMode === 'plan'} onclick={() => (mapMode = 'plan')}>{t('The whole plan ({n})', { n: total })}</button>
+    <div class="segmented full">
+      <button type="button" aria-pressed={mapMode === 'done'} onclick={() => (mapMode = 'done')}>{t('Done ({n})', { n: ticked })}</button>
+      <button type="button" aria-pressed={mapMode === 'plan'} onclick={() => (mapMode = 'plan')}>{t('The whole plan ({n})', { n: total })}</button>
     </div>
     <LoadBlock load={muscleLoad(items, mapMode, lib)} empty={mapMode === 'done' ? t('Tick the first set and the muscles that worked show up here.') : t('Add exercises to see the muscles.')} />
   </details>
@@ -546,7 +543,7 @@
         {#if noteOpen[i] || e.note}<textarea class="note" placeholder={t('A note, e.g. the seat setting, how it felt')} value={e.note ?? ''} oninput={(ev) => ((e.note = ev.currentTarget.value || undefined), queue())}></textarea>{/if}
         {#if prev?.note && !e.note}<div class="muted small lastnote">{t('Note from last time:')} <i>{prev.note}</i></div>{/if}
         <div class="ex-foot">
-          <button type="button" class="link" onclick={() => addSet(e, i)}>+ {t('Add a set')}</button>
+          <button type="button" class="btn-plain btn-sm" onclick={() => addSet(e, i)}>+ {t('Add a set')}</button>
           <span class="tools">
             {#if !noteOpen[i] && !e.note}<button type="button" class="tool" onclick={() => (noteOpen[i] = true)}>{t('Note')}</button>{/if}
             {#if bar}<button type="button" class="tool" onclick={() => (sheet = { mode: 'plates', ex: i, kg: platesFor(e, prev) })}>{t('Plates')}</button>{/if}
@@ -558,23 +555,23 @@
   {/each}
 </div>
 
-<button type="button" class="gbtn line block" style:margin="4px 0 10px" onclick={() => (sheet = { mode: 'pick' })}>+ {t('Add an exercise or a run')}</button>
+<button type="button" class="btn-tinted btn-block" style:margin="4px 0 10px" onclick={() => (sheet = { mode: 'pick' })}>+ {t('Add an exercise or a run')}</button>
 {#if items.length}
   {#if status === 'done'}
-    <button type="button" class="gbtn ink block big" onclick={() => (sheet = { mode: 'summary' })}>{t('Summary')}</button>
+    <button type="button" class="btn-primary btn-lg btn-block" onclick={() => (sheet = { mode: 'summary' })}>{t('Summary')}</button>
   {:else}
-    <button type="button" class="gbtn ink block big" onclick={finish}>{t('Finish and save the workout')}</button>
+    <button type="button" class="btn-primary btn-lg btn-block" onclick={finish}>{t('Finish and save the workout')}</button>
   {/if}
 {/if}
 
 {#if status !== 'done' && items.some((i) => i.kind === 'exercise')}<RestTimer bind:this={rest} />{/if}
 <canvas class="fx" bind:this={fx}></canvas>
 
-{#if toast}<div class="gym-layer"><div class="toast" class:gold={toast.gold} role="status">{toast.text}</div></div>{/if}
+{#if toast}<div class="toast" class:gold={toast.gold} role="status">{toast.text}</div>{/if}
 
 {#if sheet?.mode === 'pick'}
   <Sheet title={t('Add to the workout')} onclose={() => (sheet = null)}>
-    {#snippet head()}<input class="search" bind:value={query} placeholder={t('Search, or type your own exercise')} autocomplete="off" onkeydown={(ev) => ev.key === 'Enter' && query.trim() && addPicked(query.trim())} />{/snippet}
+    {#snippet head()}<input class="search" type="search" bind:value={query} placeholder={t('Search, or type your own exercise')} autocomplete="off" onkeydown={(ev) => ev.key === 'Enter' && query.trim() && addPicked(query.trim())} />{/snippet}
     <Picker library={lib} {history} {inWorkout} bind:query onpick={addPicked} />
   </Sheet>
 {:else if sheet?.mode === 'info'}
@@ -600,26 +597,26 @@
 {:else if sheet?.mode === 'details'}
   <Sheet title={t('Details')} onclose={() => (sheet = null)}>
     <div class="form">
-      <label>{t('Title')}<input class="fld" maxlength="120" bind:value={title} oninput={queue} placeholder={items.length ? autoTitle(items, t) : t('e.g. Intervals 5 x 1 km')} /></label>
+      <label>{t('Title')}<input maxlength="120" bind:value={title} oninput={queue} placeholder={items.length ? autoTitle(items, t) : t('e.g. Intervals 5 x 1 km')} /></label>
       <div class="two">
-        <label>{t('Time (optional)')}<input class="fld" type="time" bind:value={time} onchange={queue} /></label>
+        <label>{t('Time (optional)')}<input type="time" bind:value={time} onchange={queue} /></label>
         <label
           >{t('Plan')}
-          <select class="fld" bind:value={planId} onchange={queue}>
+          <select bind:value={planId} onchange={queue}>
             <option value="">{t('No plan')}</option>
             {#each data.plans as pl (pl.id)}<option value={pl.id}>{pl.name}{pl.active ? ` (${t('active')})` : ''}</option>{/each}
           </select>
         </label>
       </div>
-      <label>{t('Description')}<textarea class="fld" rows="3" maxlength="4000" bind:value={description} oninput={queue}></textarea></label>
+      <label>{t('Description')}<textarea rows="3" maxlength="4000" bind:value={description} oninput={queue}></textarea></label>
       <p class="muted small" style:margin="0">
         {#if data.session.sent_at}{t('On the Garmin watch.')}{:else if data.watchable && status === 'planned'}{t('Not on the watch yet. Ask Claude: "Send this workout to my watch."')}{/if}
         {#if data.session.activity_ref}{t('Linked to the activity {id}.', { id: data.session.activity_ref })}{/if}
       </p>
-      <label>{t('Save as a template')}<input class="fld" maxlength="120" bind:value={tplName} placeholder={t('e.g. Full body A')} /></label>
-      <button type="button" class="gbtn line block" disabled={!tplName.trim() || !items.length} onclick={saveTemplate}>{tplSaved ? t('Saved') : t('Save the template')}</button>
-      {#if status === 'planned' && sid !== 'new'}<button type="button" class="gbtn line block" onclick={() => setStatus('skip')}>{t('Skip this workout')}</button>{/if}
-      {#if status !== 'planned'}<button type="button" class="gbtn line block" onclick={() => setStatus('reopen')}>{t('Back to planned')}</button>{/if}
+      <label>{t('Save as a template')}<input maxlength="120" bind:value={tplName} placeholder={t('e.g. Full body A')} /></label>
+      <button type="button" class="btn btn-block" disabled={!tplName.trim() || !items.length} onclick={saveTemplate}>{tplSaved ? t('Saved') : t('Save the template')}</button>
+      {#if status === 'planned' && sid !== 'new'}<button type="button" class="btn btn-block" onclick={() => setStatus('skip')}>{t('Skip this workout')}</button>{/if}
+      {#if status !== 'planned'}<button type="button" class="btn btn-block" onclick={() => setStatus('reopen')}>{t('Back to planned')}</button>{/if}
     </div>
   </Sheet>
 {:else if sheet?.mode === 'summary'}
@@ -635,26 +632,26 @@
     </div>
     {#if fact}<div class="fact">{fact.times >= 1.95 ? t('That is about {n} × {what}.', { n: fmtN(fact.times, t.locale), what: t(fact.what) }) : t('That is about as much as {what}.', { what: t(fact.what) })}</div>{/if}
     {#if records.length}
-      <div class="panel prlist"><div class="h2">{t('Records')}</div>{#each records as r (r.name)}<div class="r"><span>{r.name}</span><b>{r.text}</b></div>{/each}</div>
+      <div class="card prlist"><div class="h2">{t('Records')}</div>{#each records as r (r.name)}<div class="r"><span>{r.name}</span><b>{r.text}</b></div>{/each}</div>
     {/if}
-    <div class="panel">
+    <div class="card">
       <div class="h2">{t('How hard was it?')}</div>
       <div class="rpe" role="radiogroup" aria-label={t('Effort (RPE 1-10)')}>
         {#each Array.from({ length: 10 }, (_, k) => String(k + 1)) as n (n)}
-          <button type="button" role="radio" aria-checked={rpe === n} class:on={rpe === n} onclick={() => ((rpe = rpe === n ? '' : n), queue())}>{n}</button>
+          <button type="button" role="radio" aria-checked={rpe === n} onclick={() => ((rpe = rpe === n ? '' : n), queue())}>{n}</button>
         {/each}
       </div>
-      <textarea class="fld" rows="2" maxlength="2000" bind:value={note} oninput={queue} placeholder={t('How did it feel?')}></textarea>
+      <textarea rows="2" maxlength="2000" bind:value={note} oninput={queue} placeholder={t('How did it feel?')}></textarea>
     </div>
     {#if items.some((i) => i.kind === 'exercise')}
-      <div class="panel"><div class="h2">{t('Muscles at work')}</div><LoadBlock load={muscleLoad(items, 'logged', lib)} empty="" /></div>
+      <div class="card"><div class="h2">{t('Muscles at work')}</div><LoadBlock load={muscleLoad(items, 'logged', lib)} empty="" /></div>
     {/if}
     {#if !tplSaved}
       <div class="form" style:margin-bottom="10px">
-        <input class="fld" maxlength="120" bind:value={tplName} placeholder={t('Template name, e.g. Full body A')} aria-label={t('Template name')} />
-        <button type="button" class="gbtn line block" disabled={!tplName.trim()} onclick={saveTemplate}>{t('Save as a template')}</button>
+        <input maxlength="120" bind:value={tplName} placeholder={t('Template name, e.g. Full body A')} aria-label={t('Template name')} />
+        <button type="button" class="btn btn-block" disabled={!tplName.trim()} onclick={saveTemplate}>{t('Save as a template')}</button>
       </div>
     {/if}
-    <button type="button" class="gbtn ink block" onclick={() => goto(`/training?w=${day}`)}>{t('Done')}</button>
+    <button type="button" class="btn-primary btn-lg btn-block" onclick={() => goto(`/training?w=${day}`)}>{t('Done')}</button>
   </Sheet>
 {/if}

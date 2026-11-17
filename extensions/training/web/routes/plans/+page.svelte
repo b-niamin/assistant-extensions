@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { DataOf } from '$shell';
-  import { enhance, Mascot, useT } from '$shell/ui';
+  import { enhance, PageHead, useT } from '$shell/ui';
   import type { load } from './+page.server';
 
   let { data, form }: { data: DataOf<typeof load>; form: { error?: string; created?: string } | null } = $props();
@@ -17,15 +17,7 @@
 
 <svelte:head><title>{t('Plans')} · {t('Training')}</title></svelte:head>
 
-<nav class="crumbs"><a href="/training">{t('Training')}</a></nav>
-
-<header class="head rise">
-  <Mascot mood="steady" size={56} label={t('Pingo in a sweatband')} />
-  <div>
-    <h1>{t('Plans')}</h1>
-    <p class="muted">{t('One plan is active: the week, the calendar and the dashboard show its workouts, and those of no plan.')}</p>
-  </div>
-</header>
+<PageHead title={t('Plans')} sub={t('One plan is active: the week, the calendar and the dashboard show its workouts, and those of no plan.')} />
 
 {#if !data.plans.length}
   <p class="muted hint">{t('No plan yet. Ask Claude for one, or make one here and add workouts to it.')}</p>
@@ -34,13 +26,13 @@
 {#each groups as g (g.state)}
   {#if g.plans.length}
     <section class="rise" aria-labelledby="g-{g.state}">
-      <h2 id="g-{g.state}">{g.title}</h2>
-      <div class="list">
+      <div class="section-head"><h2 id="g-{g.state}">{g.title}</h2></div>
+      <div class="plans">
         {#each g.plans as pl (pl.id)}
           <article class="card plancard" class:active={pl.active}>
             <div class="ptop">
               <a href="/training/plans/{pl.id}"><strong>{pl.name}</strong></a>
-              <span class="badge {pl.state}">{pl.state === 'active' ? t('Active') : pl.state === 'waiting' ? t('Waiting') : t('Finished')}</span>
+              <span class="chip {pl.state}">{pl.state === 'active' ? t('Active') : pl.state === 'waiting' ? t('Waiting') : t('Finished')}</span>
             </div>
             {#if pl.goal}<p class="muted small">{pl.goal}</p>{/if}
             <p class="small">{[dates(pl.start_day, pl.end_day), t('{done} of {n} workouts done', { done: pl.done, n: pl.sessions })].filter(Boolean).join(' · ')}</p>
@@ -48,12 +40,12 @@
             <form method="POST" action="?/activate" use:enhance class="row">
               {#if pl.active}
                 <input type="hidden" name="plan" value="" />
-                <button class="btn btn-ghost">{t('Set aside')}</button>
+                <button class="btn-plain">{t('Set aside')}</button>
               {:else}
                 <input type="hidden" name="plan" value={pl.id} />
-                <button class="btn">{t('Make active')}</button>
+                <button class="btn-tinted btn-sm">{t('Make active')}</button>
               {/if}
-              <a class="btn btn-ghost" href="/training/plans/{pl.id}">{t('Open')}</a>
+              <a class="btn-plain" href="/training/plans/{pl.id}">{t('Open')}</a>
             </form>
           </article>
         {/each}
@@ -63,7 +55,7 @@
 {/each}
 
 <section class="card rise newplan" aria-labelledby="new-title">
-  <h2 id="new-title">{t('New plan')}</h2>
+  <h2 id="new-title" class="title">{t('New plan')}</h2>
   {#if !adding}
     <button class="btn btn-primary" type="button" onclick={() => (adding = true)}>{t('New plan')}</button>
   {:else}
@@ -83,8 +75,8 @@
       <label class="wide check"><input type="checkbox" name="active" checked={!data.plans.some((p) => p.active)} /> {t('Make it the active plan')}</label>
       {#if form?.error}<p class="error wide" role="alert">{form.error}</p>{/if}
       <div class="row wide">
-        <button class="btn btn-primary">{t('Create')}</button>
-        <button class="btn btn-ghost" type="button" onclick={() => (adding = false)}>{t('Cancel')}</button>
+        <button class="btn-primary">{t('Create')}</button>
+        <button class="btn-plain" type="button" onclick={() => (adding = false)}>{t('Cancel')}</button>
       </div>
     </form>
   {/if}
@@ -92,29 +84,17 @@
 </section>
 
 <style>
-  .crumbs {
-    margin-bottom: var(--space-3);
-  }
-  .head {
-    display: flex;
-    gap: var(--space-4);
-    align-items: center;
-    margin-bottom: var(--space-5);
-  }
-  .head h1,
-  .head p {
-    margin: 0;
-  }
   .hint {
     margin: 0 0 var(--space-4);
   }
   section {
     margin-bottom: var(--space-5);
   }
-  h2 {
+  .title {
     margin: 0 0 var(--space-3);
+    font-size: var(--text-lg);
   }
-  .list {
+  .plans {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: var(--space-3);
@@ -139,17 +119,9 @@
   .ptop a {
     color: var(--ink);
   }
-  .badge {
-    font-size: var(--text-sm);
-    padding: 0 8px;
-    border-radius: 999px;
-    background: var(--surface-2);
-    color: var(--ink-2);
-    white-space: nowrap;
-  }
-  .badge.active {
-    background: var(--accent-fill);
-    color: #fff;
+  .chip.active {
+    background: var(--accent-tint);
+    color: var(--accent-ink);
   }
   .small {
     font-size: var(--text-sm);
@@ -157,7 +129,7 @@
   .progress {
     height: 6px;
     border-radius: 3px;
-    background: var(--surface-2);
+    background: var(--fill-1);
     overflow: hidden;
   }
   .progress span {

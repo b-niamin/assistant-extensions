@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { DataOf } from '$shell';
-  import { enhance, Mascot, useT } from '$shell/ui';
+  import { enhance, Icon, Mascot, PageHead, useT } from '$shell/ui';
   import StreamChart from '../../../lib/StreamChart.svelte';
   import { paceOf, paceText, PACED } from '../../../lib/activity';
   import { hms, km, sportLabel } from '../../../lib/format';
@@ -55,22 +55,12 @@
 
 <svelte:head><title>{a.name ?? t(sportLabel(a.sport))} · {t('Training & Health')}</title></svelte:head>
 
-<nav class="crumbs" aria-label={t('Activity navigation')}>
-  <a href="/health">{t('Training & Health')}</a>
-  <span class="step">
-    {#if data.prev}<a href="/health/activity/{data.prev}" rel="prev">{t('Older')}</a>{/if}
-    {#if data.next}<a href="/health/activity/{data.next}" rel="next">{t('Newer')}</a>{/if}
-  </span>
-</nav>
-
-<header class="head rise">
-  <div class="pingo"><Mascot mood="charged" size={64} label={t('Pingo in a sweatband')} /></div>
-  <div class="title">
-    <p class="eyebrow">{t(sportLabel(a.sport))}{x.location ? ` · ${x.location}` : ''}</p>
-    <h1>{a.name ?? t(sportLabel(a.sport))}</h1>
-    <p class="muted when">{when}</p>
-  </div>
-</header>
+<PageHead title={a.name ?? t(sportLabel(a.sport))} sub={[t(sportLabel(a.sport)), x.location, when].filter(Boolean).join(' · ')} back={{ href: '/health', label: t('Training & Health') }}>
+  {#snippet actions()}
+    {#if data.prev}<a class="btn btn-icon" href="/health/activity/{data.prev}" rel="prev" aria-label={t('Older')}><Icon name="back" size={20} /></a>{/if}
+    {#if data.next}<a class="btn btn-icon" href="/health/activity/{data.next}" rel="next" aria-label={t('Newer')}><Icon name="forward" size={20} /></a>{/if}
+  {/snippet}
+</PageHead>
 
 <section class="kpis" aria-label={t('Summary')}>
   {#each kpis as k, i (k.label)}
@@ -89,7 +79,7 @@
 <section class="card naming rise" style:--i="2" aria-labelledby="naming-title">
   <div class="naming-head">
     <h2 id="naming-title">{t('Title and description')}</h2>
-    {#if !editing}<button class="btn btn-ghost" type="button" onclick={() => (editing = true)}>{t('Edit')}</button>{/if}
+    {#if !editing}<button class="btn-plain" type="button" onclick={() => (editing = true)}>{t('Edit')}</button>{/if}
   </div>
   {#if editing}
     <form
@@ -111,7 +101,7 @@
       {#if form?.error}<p class="error" role="alert">{form.error}</p>{/if}
       <div class="row">
         <button class="btn btn-primary">{t('Save')}</button>
-        <button class="btn btn-ghost" type="button" onclick={() => (editing = false)}>{t('Cancel')}</button>
+        <button class="btn-plain" type="button" onclick={() => (editing = false)}>{t('Cancel')}</button>
       </div>
     </form>
   {:else}
@@ -253,41 +243,6 @@
   .write {
     margin: 0;
   }
-  .crumbs {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-3);
-    margin-bottom: var(--space-3);
-    font-size: 0.875rem;
-  }
-  .crumbs > a::before {
-    content: '← ';
-  }
-  .step {
-    display: flex;
-    gap: var(--space-4);
-  }
-  .head {
-    display: flex;
-    align-items: center;
-    gap: var(--space-4);
-    margin-bottom: var(--space-5);
-  }
-  .pingo {
-    flex: none;
-  }
-  .title {
-    display: grid;
-    gap: 2px;
-    min-width: 0;
-  }
-  .title p,
-  .title h1 {
-    margin: 0;
-  }
-  .when {
-    font-size: 0.875rem;
-  }
   .kpis {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -300,8 +255,8 @@
     padding: var(--space-4);
   }
   .kpi strong {
-    font-size: 1.375rem;
-    font-weight: 650;
+    font-size: var(--text-xl);
+    font-weight: var(--weight-heavy);
     letter-spacing: -0.01em;
   }
   .sub {
@@ -314,7 +269,7 @@
     gap: var(--space-2);
     align-items: baseline;
     margin: 0 0 var(--space-4);
-    font-size: 0.875rem;
+    font-size: var(--text-md);
   }
   .effect .status {
     font-weight: var(--weight-bold);
@@ -406,7 +361,7 @@
   table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.875rem;
+    font-size: var(--text-md);
     font-variant-numeric: tabular-nums;
   }
   th,
@@ -459,9 +414,6 @@
     }
     .withmap .route {
       position: static;
-    }
-    .head {
-      gap: var(--space-3);
     }
   }
 </style>

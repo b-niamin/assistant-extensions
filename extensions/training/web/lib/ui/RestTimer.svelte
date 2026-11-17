@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { useT } from '$shell/ui';
-  import { fade, fly } from 'svelte/transition';
+  import { Sheet, useT } from '$shell/ui';
+  import { fly } from 'svelte/transition';
 
   /**
    * The rest timer of the gym log: a round button with the time; tap it for -15 / +5 / +15 / Start, and a
@@ -99,7 +99,7 @@
 <div class="rest" class:run={on} class:end={done} aria-live="polite">
   <button
     type="button"
-    class="fab"
+    class="fab glass"
     aria-label={t('Rest timer: show or hide its settings')}
     onclick={() => {
       if (on) big = true;
@@ -111,30 +111,27 @@
     <b>{mmss(left)}</b>
   </button>
   {#if open && !on}
-    <div class="rest-panel" role="group" aria-label={t('Rest timer')} transition:fly={{ x: 18, duration: 200 }}>
-      <button type="button" class="r" aria-label={t('15 seconds shorter')} onclick={() => adj(-15)}>−15</button>
-      <button type="button" class="r" aria-label={t('5 seconds longer')} onclick={() => adj(5)}>+5 s</button>
-      <button type="button" class="r" aria-label={t('15 seconds longer')} onclick={() => adj(15)}>+15</button>
-      <button type="button" class="r go" onclick={toggle}>{t('Start')}</button>
+    <div class="rest-panel glass" role="group" aria-label={t('Rest timer')} transition:fly={{ x: 18, duration: 200 }}>
+      <button type="button" class="btn" aria-label={t('15 seconds shorter')} onclick={() => adj(-15)}>−15</button>
+      <button type="button" class="btn" aria-label={t('5 seconds longer')} onclick={() => adj(5)}>+5 s</button>
+      <button type="button" class="btn" aria-label={t('15 seconds longer')} onclick={() => adj(15)}>+15</button>
+      <button type="button" class="btn-primary" onclick={toggle}>{t('Start')}</button>
     </div>
   {/if}
 </div>
 {#if big}
-  <div class="gym-layer">
-    <div class="sheet-bg" role="presentation" style:z-index="44" onclick={() => (big = false)} transition:fade={{ duration: 200 }}></div>
-    <div class="rbig" class:end={done} role="dialog" aria-label={t('Rest timer')} transition:fly={{ y: 500, duration: 300, opacity: 1 }}>
-      <div class="grab"></div>
-      <div class="rbig-top"><span class="h2" style:margin="0">{t('Rest')}</span><button type="button" class="gbtn sm" onclick={() => (big = false)}>{t('Hide')}</button></div>
+  <Sheet title={t('Rest')} onclose={() => (big = false)}>
+    <div class="rbig" class:end={done} aria-live="polite">
       <div class="rbig-ring">
         <svg viewBox="0 0 220 220" aria-hidden="true"><circle class="bgc" cx="110" cy="110" r="100" /><circle class="fg" cx="110" cy="110" r="100" stroke-dasharray={RBC} stroke-dashoffset={(RBC * frac).toFixed(1)} /></svg>
         <div class="rbig-t"><b>{mmss(left)}</b><span>{done ? t('Time is up!') : t('left')}</span></div>
       </div>
       <div class="rbig-btns">
-        <button type="button" class="r" aria-label={t('15 seconds shorter')} onclick={() => adj(-15)}>−15</button>
-        <button type="button" class="r" aria-label={t('5 seconds longer')} onclick={() => adj(5)}>+5 s</button>
-        <button type="button" class="r" aria-label={t('15 seconds longer')} onclick={() => adj(15)}>+15</button>
+        <button type="button" class="btn" aria-label={t('15 seconds shorter')} onclick={() => adj(-15)}>−15</button>
+        <button type="button" class="btn" aria-label={t('5 seconds longer')} onclick={() => adj(5)}>+5 s</button>
+        <button type="button" class="btn" aria-label={t('15 seconds longer')} onclick={() => adj(15)}>+15</button>
       </div>
-      <button type="button" class="go2" onclick={toggle}>{done ? t('Done') : t('Skip')}</button>
+      <button type="button" class="btn-primary btn-lg btn-block" onclick={toggle}>{done ? t('Done') : t('Skip')}</button>
     </div>
-  </div>
+  </Sheet>
 {/if}

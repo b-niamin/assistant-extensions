@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { useT } from '$shell/ui';
+  import { Icon, useT } from '$shell/ui';
   import { usedOn, type Logged } from '../gym';
   import { MUSCLES, type LibraryEntry } from '../library';
   import Thumb from './Thumb.svelte';
@@ -35,16 +35,18 @@
           : t('Your own');
 </script>
 
+<div class="list-group">
 {#if query.trim() && !exact}
-  <button type="button" class="item new" onclick={() => onpick(query.trim())}>
-    <div><div class="nm">{t('Add “{name}”', { name: query.trim() })}</div><div class="mu">{t('Your own exercise')}</div></div>
-    <span class="add-dot">+</span>
+  <button type="button" class="list-row" onclick={() => onpick(query.trim())}>
+    <span class="list-text"><span class="list-title new">{t('Add “{name}”', { name: query.trim() })}</span><span class="list-sub">{t('Your own exercise')}</span></span>
+    <span class="list-end add"><Icon name="plus" size={20} /></span>
   </button>
 {/if}
 {#each list as e (e.id)}
-  <button type="button" class="item th" onclick={() => onpick(e)}>
+  <button type="button" class="list-row" onclick={() => onpick(e)}>
     <Thumb ref={e.id} name={t(e.name)} sport={e.kind === 'cardio' ? (e.sport ?? 'other') : undefined} cls="sm" />
-    <div class="tx"><div class="nm">{t(e.name)}</div><div class="mu">{sub(e)}{inWorkout.has(e.id) ? t(', already in the workout') : ''}</div></div>
-    <span class="add-dot">+</span>
+    <span class="list-text"><span class="list-title">{t(e.name)}</span><span class="list-sub">{sub(e)}{inWorkout.has(e.id) ? t(', already in the workout') : ''}</span></span>
+    <span class="list-end add"><Icon name="plus" size={20} /></span>
   </button>
 {/each}
+</div>
