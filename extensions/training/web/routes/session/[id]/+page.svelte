@@ -3,7 +3,7 @@
   import { goto, replaceState } from '$app/navigation';
   import { page } from '$app/state';
   import type { DataOf } from '$shell';
-  import { Mascot, PageHead, Sheet, useT, mascotName } from '$shell/ui';
+  import { Confirm, Mascot, PageHead, Sheet, useT, mascotName } from '$shell/ui';
   import { onMount, tick as settle } from 'svelte';
   import {
     amount,
@@ -317,10 +317,23 @@
   }
 
   // -- finishing -----------------------------------------------------------------------------------------
-  async function finish() {
-    const kept = items
+  const keptItems = () =>
+    items
       .map((i) => (i.kind === 'cardio' ? i : { ...i, sets: i.sets.filter((x) => amount(x, i.unit) > 0) }))
       .filter((i) => i.kind === 'cardio' || i.sets.length);
+  // "Finish" asks first (yes/no): a tap by mistake mid-workout would close it.
+  let asking = $state(false);
+  const setsTicked = $derived(items.reduce((n, i) => n + (i.kind === 'cardio' ? 0 : i.sets.filter((x) => x.done).length), 0));
+  const setsAll = $derived(items.reduce((n, i) => n + (i.kind === 'cardio' ? 0 : i.sets.length), 0));
+  function askFinish() {
+    if (!keptItems().length) {
+      say(t('Type the reps of at least one set.'));
+      return;
+    }
+    asking = true;
+  }
+  async function finish() {
+    const kept = keptItems();
     if (!kept.length) {
       say(t('Type the reps of at least one set.'));
       return;
@@ -409,7 +422,7 @@
       <div class="t"><span>{live ? t('workout time') : status === 'done' ? t('saved') : t('plan')}</span><span>{t('{done} of {all}', { done: ticked, all: total })}</span></div>
       <div class="pb"><i style:width="{total ? Math.round((ticked / total) * 100) : 0}%"></i></div>
     </div>
-    {#if status === 'done'}<button type="button" class="btn-primary btn-sm" onclick={() => (sheet = { mode: 'summary' })}>{t('Summary')}</button>{:else}<button type="button" class="btn-primary btn-sm" onclick={finish}>{t('Finish')}</button>{/if}
+    {#if status === 'done'}<button type="button" class="btn-primary btn-sm" onclick={() => (sheet = { mode: 'summary' })}>{t('Summary')}</button>{:else}<button type="button" class="btn-primary btn-sm" onclick={askFinish}>{t('Finish')}</button>{/if}
   </div>
 {/if}
 
@@ -560,11 +573,22 @@
   {#if status === 'done'}
     <button type="button" class="btn-primary btn-lg btn-block" onclick={() => (sheet = { mode: 'summary' })}>{t('Summary')}</button>
   {:else}
-    <button type="button" class="btn-primary btn-lg btn-block" onclick={finish}>{t('Finish and save the workout')}</button>
+    <button type="button" class="btn-primary btn-lg btn-block" onclick={askFinish}>{t('Finish and save the workout')}</button>
   {/if}
 {/if}
 
 {#if status !== 'done' && items.some((i) => i.kind === 'exercise')}<RestTimer bind:this={rest} />{/if}
+<Confirm
+  bind:open={asking}
+  mood="charged"
+  title={t('Finish the workout?')}
+  message={setsAll && setsTicked < setsAll
+    ? t('{done} of {all} sets ticked. Sets with reps are saved, empty ones dropped.', { done: setsTicked, all: setsAll })
+    : t('It is saved as done. You can reopen it later.')}
+  confirm={t('Finish')}
+  cancel={t('Not yet')}
+  onconfirm={finish} />
+
 <canvas class="fx" bind:this={fx}></canvas>
 
 {#if toast}<div class="toast" class:gold={toast.gold} role="status">{toast.text}</div>{/if}

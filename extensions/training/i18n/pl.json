@@ -583,5 +583,9 @@
   "Search a photo": "Szukaj zdjęcia",
   "Searching…": "Szukam…",
   "No photo with that name. Try another word.": "Brak zdjęcia o tej nazwie. Spróbuj innego słowa.",
-  "Photos: Free Exercise DB (public domain), named in English.": "Zdjęcia: Free Exercise DB (domena publiczna), nazwy po angielsku."
+  "Photos: Free Exercise DB (public domain), named in English.": "Zdjęcia: Free Exercise DB (domena publiczna), nazwy po angielsku.",
+  "Finish the workout?": "Zakończyć trening?",
+  "{done} of {all} sets ticked. Sets with reps are saved, empty ones dropped.": "Odhaczone serie: {done} z {all}. Serie z powtórzeniami zostaną zapisane, puste pominięte.",
+  "It is saved as done. You can reopen it later.": "Zapisze się jako zrobiony. Możesz go później otworzyć ponownie.",
+  "Not yet": "Jeszcze nie"
 }

@@ -3,7 +3,7 @@
   "name": "Training Plans",
   "short": "Plans",
   "description": "Training plans with one active, and workouts made of anything: a run, exercises from the library, the sauna. Tick sets, rest timer, the week and the calendar. Built mostly with Claude.",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "kind": "native",
   "scope": "profile",
   "accessory": "headband",
@@ -13,6 +13,6 @@
     {"path": "plans", "label": "Plans", "icon": "calendar"},
     {"path": "library", "label": "Exercises", "icon": "book"}
   ],
-  "shell": 8,
+  "shell": 9,
   "schema": "training"
 }
