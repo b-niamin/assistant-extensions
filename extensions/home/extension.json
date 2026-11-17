@@ -3,11 +3,15 @@
   "name": "Home",
   "description": "A calm board for the house: lights, doors and windows, camera alerts, weather with warnings and today's calendar, from Home Assistant.",
   "needs": "Home Assistant with a long-lived access token",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "kind": "native",
   "scope": "shared",
   "accessory": "bulb",
   "icon": "house",
+  "pages": [
+    {"path": "", "label": "Home", "icon": "house"},
+    {"path": "eink", "label": "E-ink", "icon": "monitor"}
+  ],
   "shell": 7,
   "worksWith": [
     { "id": "calendar", "why": "Shows what is on today on the board, from every calendar: your entries, subscriptions, training and Home Assistant." }

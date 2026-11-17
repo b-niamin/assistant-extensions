@@ -188,5 +188,14 @@
   "A calm board for the house: lights, doors and windows, camera alerts, weather with warnings and today's calendar, from Home Assistant.": "Spokojna tablica domu: światła, drzwi i okna, alerty z kamer, pogoda z ostrzeżeniami i dzisiejszy kalendarz, z Home Assistant.",
   "The calendar did not answer in time": "Kalendarz nie odpowiedział na czas",
   "{name} did not answer": "{name} nie odpowiada",
-  "Shows what is on today on the board, from every calendar: your entries, subscriptions, training and Home Assistant.": "Pokazuje na tablicy, co jest dziś we wszystkich kalendarzach: Twoje wpisy, subskrypcje, treningi i Home Assistant."
+  "Shows what is on today on the board, from every calendar: your entries, subscriptions, training and Home Assistant.": "Pokazuje na tablicy, co jest dziś we wszystkich kalendarzach: Twoje wpisy, subskrypcje, treningi i Home Assistant.",
+  "Black and white, for a wall tablet or an e-ink display.": "Czarno-biały, na tablet na ścianie albo ekran e-ink.",
+  "Calendar": "Kalendarz",
+  "Data from {time}.": "Dane z {time}.",
+  "Doors and windows": "Drzwi i okna",
+  "E-ink": "E-ink",
+  "E-ink board": "Tablica e-ink",
+  "Lights": "Światła",
+  "No forecast": "Brak prognozy",
+  "on": "włączone"
 }

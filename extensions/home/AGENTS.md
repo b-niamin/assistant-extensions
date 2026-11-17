@@ -6,6 +6,10 @@ Rules of the shell's `AGENTS.md` and `specs/002-extensions.md` apply. In short: 
 ## How it works
 
 - Native, scope **shared** (one house for every profile). No tables of its own: everything is read live.
+- Two pages (manifest `"pages"`): `/home`, the house at a glance in the app's own look (Assistant UI cards,
+  lists and sheets), and `/home/eink`, the calm board for a wall tablet or an e-ink display (`web/lib/Board.svelte`):
+  black on white in every theme, no colour, full screen with the screen kept on, Chart/List taking turns.
+  Both keep the snapshot fresh through `web/lib/live.svelte.ts` (`Live`, `shownEvents`).
 - `web/lib/snapshot.server.ts` builds one `Snapshot` (`web/lib/types.ts`) for the page, the
   `/home/state` endpoint (the board's auto-refresh), the dashboard tile and Claude's `home__overview` tool.
   Each part fails on its own: Home Assistant down still shows the weather.
