@@ -2,6 +2,8 @@ import { fail, redirect, todayIn, type ExtActions, type ExtLoad } from '$shell';
 import { deleteCustomEntry, doneWorkouts, fullLibrary, saveCustomEntry } from '../../lib/db.server';
 import { MUSCLES } from '../../lib/library';
 import { CARDIO_SPORTS, UNITS, type Unit } from '../../lib/model';
+import { isPhoto } from '../../lib/photos';
+import { keepPhoto } from '../../lib/photos.server';
 import { startWorkout } from '../../lib/start.server';
 
 /** The library, as the gym log's: pictures, muscles, how to, what to avoid, your progress; your own entries. */
@@ -27,9 +29,12 @@ export const actions: ExtActions = {
         unit: UNITS.includes(get('unit') as Unit) ? (get('unit') as Unit) : 'reps',
         muscles: f.getAll('muscles').map(String).filter((m) => m in MUSCLES),
         description: get('description').slice(0, 2000),
-        cautions: get('cautions').split('\n')
+        cautions: get('cautions').split('\n'),
+        photo: kind === 'exercise' && isPhoto(get('photo')) ? get('photo') : null
       })
     );
+    const photo = get('photo');
+    if (kind === 'exercise' && isPhoto(photo)) await ctx.db((sql) => keepPhoto(sql, ctx.dataProfileId!, photo));
     return { saved: id };
   },
   remove: async ({ request }, ctx) => {

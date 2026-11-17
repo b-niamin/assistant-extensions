@@ -19,7 +19,8 @@ Assistant extension: training plans and workouts of any kind. Kind `native`, sco
   distance and blocks for the watch (repeats, pace or heart rate targets); a summary at the end.
 - `/training/plans`: active, waiting and finished plans; `/training/plans/<id>`: a plan and its workouts.
 - `/training/library`: every exercise with its photos (start and end of the movement, animated), the
-  muscles on the body, how to do it, what to avoid, your progress with a chart; and your own entries.
+  muscles on the body, how to do it, what to avoid, your progress with a chart; and your own entries,
+  which pick their photos from the same source (in the app or with `training__exercise_photos`).
 - Photos: Free Exercise DB (public domain); body shapes: react-body-highlighter (MIT); font: Barlow
   Condensed (OFL).
 - Built mostly with Claude: `training__*` tools do everything the pages do. Claude puts a workout on the

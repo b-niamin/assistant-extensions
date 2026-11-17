@@ -5,6 +5,7 @@
   import { GROUP_LABELS, GROUPS, MUSCLES, searchLibrary, type LibraryEntry } from '../../lib/library';
   import { CARDIO_SPORTS, SPORT_LABELS, UNITS } from '../../lib/model';
   import ExerciseInfo from '../../lib/ui/ExerciseInfo.svelte';
+  import PhotoPick from '../../lib/ui/PhotoPick.svelte';
   import Thumb from '../../lib/ui/Thumb.svelte';
   import type { load } from './+page.server';
 
@@ -19,6 +20,8 @@
   let editing = $state<LibraryEntry | null>(null);
   let adding = $state(false);
   let kind = $state<'exercise' | 'cardio'>('exercise');
+  let photo = $state('');
+  let entryName = $state('');
   let startForm = $state<HTMLFormElement>();
 
   const list = $derived(
@@ -31,6 +34,8 @@
     info = null;
     editing = e;
     kind = e?.kind ?? 'exercise';
+    photo = e?.photo ?? '';
+    entryName = e?.name ?? '';
     adding = true;
   }
 </script>
@@ -94,7 +99,7 @@
       }}
     >
       {#if editing}<input type="hidden" name="id" value={editing.id} />{/if}
-      <label>{t('Name')}<input name="name" required maxlength="80" value={editing?.name ?? ''} /></label>
+      <label>{t('Name')}<input name="name" required maxlength="80" bind:value={entryName} /></label>
       <div class="two">
         <label>{t('Kind')}
           <select name="kind" bind:value={kind}><option value="exercise">{t('Exercise')}</option><option value="cardio">{t('Cardio')}</option></select>
@@ -110,6 +115,7 @@
         {/if}
       </div>
       {#if kind !== 'cardio'}
+        <PhotoPick bind:photo name={entryName} />
         <fieldset class="checks" style:border="0" style:padding="0" style:margin="0">
           <legend class="small muted" style:margin-bottom="6px">{t('Muscles')}</legend>
           {#each Object.entries(MUSCLES) as [id, label] (id)}

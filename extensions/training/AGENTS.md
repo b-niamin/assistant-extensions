@@ -12,7 +12,8 @@ Training & Health through both apps' tools.
 | `training.plans` | a goal over some days: name, goal, sport (NULL = mixed), start_day, end_day, status active/done/archived, `active` (at most one per profile, a partial unique index) |
 | `training.sessions` | one workout on a day: title, time_local, duration_min, `items` (the workout: cardio and exercise items, see `Item` in `web/lib/model.ts`), `sport` (the main sport, derived), status planned/done/skipped, `result` (rpe, note, started_at, finished_at; ticked sets live in the items), `activity_ref`, `sent_at` (on the watch), `source`. Rows from before 1.1 have `steps`/`exercises` instead of `items`; `itemsOf` reads both |
 | `training.templates` | reusable workouts (`items`) |
-| `training.library` | the profile's own library entries; the built-in ones are in `web/lib/library.ts` |
+| `training.library` | the profile's own library entries; the built-in ones are in `web/lib/library.ts`. `photo` = a Free Exercise DB id (`web/lib/photos.json`) |
+| `training.photos` | the two pictures (start, end) of each photo an own entry took, fetched once from the Free Exercise DB and served at `/training/photo/<id>/<0|1>` |
 
 Visible = of the active plan or of no plan (`sessionsIn(..., { visible: true })`): the week, the
 calendar and the tile. Tools and the plan page see everything.
@@ -28,7 +29,8 @@ calendar and the tile. Tools and the plan page see everything.
 
 Pure logic (items, checks, the Garmin workout, bests) is in `web/lib/model.ts`, the library in
 `web/lib/library.ts`, the gym side (last time, records, quick fills, muscles, recovery, plates, photos in
-`web/lib/img/<id>_0|1.webp`) in `web/lib/gym.ts`, all with tests. The look is `web/lib/gym.css` (every
+`web/lib/img/<id>_0|1.webp`; own entries pick one from the same source, `web/lib/photos.ts`, searched by
+`/training/photos?q=` and the `exercise_photos` tool) in `web/lib/gym.ts`, all with tests. The look is `web/lib/gym.css` (every
 rule under `.gym`, loaded by `web/routes/+layout.svelte`), the parts in `web/lib/ui/`. The workout page
 saves through the `autosave` action a moment after each change;
 `web/lib/view.ts` has the week and the tile.

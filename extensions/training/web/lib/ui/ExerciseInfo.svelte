@@ -1,6 +1,7 @@
 <script lang="ts">
   import { useT } from '$shell/ui';
-  import { fmtN, fmtSec, fmtShort, historyOf, imageOf, restFor, setsText, type Logged, type Metric } from '../gym';
+  import { getContext } from 'svelte';
+  import { fmtN, fmtSec, fmtShort, historyOf, imageOf, OWN_PHOTOS, photoUrl, restFor, setsText, type Logged, type Metric } from '../gym';
   import { MUSCLES, type LibraryEntry } from '../library';
   import type { Unit } from '../model';
   import BodyMap from './BodyMap.svelte';
@@ -42,6 +43,8 @@
   const diff = $derived(last && first ? last[metric] - first[metric] : 0);
   const delta = (d: number) => (secs ? (d < 0 ? '−' : '') + fmtSec(Math.abs(d)) : fmtN(d, t.locale));
   let paused = $state(false);
+  const own = getContext<(() => Record<string, string>) | undefined>(OWN_PHOTOS);
+  const pic = (frame: 0 | 1) => (entry?.photo ? photoUrl(entry.photo, frame) : imageOf(entry?.id, frame, own?.()));
   const shown = $derived(t(name));
   const scores = $derived(Object.fromEntries([...(entry?.also ?? []).map((m) => [m, 0.38]), ...(entry?.muscles ?? []).map((m) => [m, 1])]));
   const credit = $derived(
@@ -84,11 +87,11 @@
     {/if}
   {/if}
 
-  {#if entry && imageOf(entry.id)}
+  {#if entry && pic(0)}
     <h3>{t('How the movement looks')}</h3>
     <button type="button" class="demo" class:paused aria-label={t('Stop or resume the animation')} onclick={() => (paused = !paused)}>
-      <img src={imageOf(entry.id, 0)} alt={t('{name}: start position', { name: shown })} />
-      <img class="b" src={imageOf(entry.id, 1)} alt={t('{name}: end of the movement', { name: shown })} />
+      <img src={pic(0)} alt={t('{name}: start position', { name: shown })} />
+      <img class="b" src={pic(1)} alt={t('{name}: end of the movement', { name: shown })} />
       <span class="lab"><i class="l1">{t('Start position')}</i><i class="l2">{t('End of the movement')}</i></span>
     </button>
     <div class="credit">{credit}</div>

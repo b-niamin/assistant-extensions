@@ -1,5 +1,6 @@
 /** Reads and writes of the training schema, as role ext_training, always for one profile. */
 import type { Sql } from '$shell';
+import { isPhoto } from './photos';
 import { groupFor, LIBRARY, type LibraryEntry, type Muscle } from './library';
 import { cleanItems, itemsOf, mainSport, sessionColumns, sportOf, UNITS, type Item, type Session, type SessionInput, type SessionResult, type Status, type Unit } from './model';
 
@@ -280,6 +281,8 @@ export interface CustomEntryInput {
   muscles?: string[];
   description?: string | null;
   cautions?: string[];
+  /** A Free Exercise DB id; null takes the photo away, undefined keeps the one it has. */
+  photo?: string | null;
 }
 
 /** The profile's own entries, as library entries. */
@@ -298,6 +301,7 @@ export async function customLibrary(sql: Sql, p: string): Promise<LibraryEntry[]
       group: groupFor({ kind, unit, muscles }),
       ...(r.description ? { description: String(r.description) } : {}),
       ...(Array.isArray(r.cautions) && r.cautions.length ? { cautions: r.cautions.map(String) } : {}),
+      ...(r.photo ? { photo: String(r.photo) } : {}),
       custom: true
     } satisfies LibraryEntry;
   });
@@ -312,17 +316,25 @@ export async function saveCustomEntry(sql: Sql, p: string, e: CustomEntryInput):
   // Own ids start with x, so one never shadows a built-in entry.
   const id = e.id && /^x[a-z0-9]{4,40}$/.test(e.id) ? e.id : newId('x');
   const cautions = (e.cautions ?? []).map((c) => String(c).trim().slice(0, 200)).filter(Boolean).slice(0, 10);
+  const photo = isPhoto(e.photo) ? e.photo : null;
   await sql`
-    INSERT INTO training.library (id, profile_id, name, kind, sport, unit, muscles, description, cautions)
+    INSERT INTO training.library (id, profile_id, name, kind, sport, unit, muscles, description, cautions, photo)
     VALUES (${id}, ${p}, ${e.name.trim().slice(0, 80)}, ${e.kind}, ${e.kind === 'cardio' ? sportOf(e.sport) : null},
             ${e.kind === 'exercise' ? (e.unit ?? 'reps') : null}, ${e.muscles ?? []}, ${e.description?.trim().slice(0, 2000) || null},
-            ${cautions.length ? sql.json(cautions as never) : null})
+            ${cautions.length ? sql.json(cautions as never) : null}, ${photo})
     ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, kind = EXCLUDED.kind, sport = EXCLUDED.sport, unit = EXCLUDED.unit,
-      muscles = EXCLUDED.muscles, description = EXCLUDED.description, cautions = EXCLUDED.cautions, updated_at = now()
+      muscles = EXCLUDED.muscles, description = EXCLUDED.description, cautions = EXCLUDED.cautions,
+      ${e.photo === undefined ? sql`` : sql`photo = EXCLUDED.photo,`} updated_at = now()
     WHERE training.library.profile_id = ${p}`;
   return id;
 }
 
 export async function deleteCustomEntry(sql: Sql, p: string, id: string): Promise<boolean> {
   return (await sql`DELETE FROM training.library WHERE profile_id = ${p} AND id = ${id} RETURNING id`).length > 0;
+}
+
+/** Own entry id -> its photo (a Free Exercise DB id), for the pictures on every page (+layout.server.ts). */
+export async function ownPhotos(sql: Sql, p: string): Promise<Record<string, string>> {
+  const rows = await sql`SELECT id, photo FROM training.library WHERE profile_id = ${p} AND photo IS NOT NULL`;
+  return Object.fromEntries(rows.map((r) => [String(r.id), String(r.photo)]));
 }

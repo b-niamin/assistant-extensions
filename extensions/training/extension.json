@@ -2,7 +2,7 @@
   "id": "training",
   "name": "Training",
   "description": "Training plans with one active, and workouts made of anything: a run, exercises from the library, the sauna. Tick sets, rest timer, the week and the calendar. Built mostly with Claude.",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "kind": "native",
   "scope": "profile",
   "accessory": "headband",

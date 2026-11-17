@@ -79,6 +79,8 @@ export interface LibraryEntry {
   set?: { reps?: number; seconds?: number; kg?: number };
   sets?: number;
   custom?: boolean;
+  /** An own entry's photo: a Free Exercise DB id (lib/photos.ts). Built-in entries have theirs in lib/img. */
+  photo?: string;
 }
 
 type Ex = Omit<LibraryEntry, 'kind' | 'group'> & { group?: Group };

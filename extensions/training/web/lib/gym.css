@@ -1553,3 +1553,32 @@
 .gym .list-end.add {
   color: var(--accent-ink);
 }
+
+/* the photo of an own exercise (PhotoPick) */
+.gym .ppick {
+  display: grid;
+  gap: var(--space-2);
+}
+.gym .ppick .pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.gym .ppick .pair img {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: 14px;
+  background: var(--fill-2);
+}
+.gym .ppick .row {
+  display: flex;
+  gap: 8px;
+}
+.gym .ppick .list-group {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.gym .ppick .list-row[aria-pressed='true'] .list-title {
+  color: var(--accent-ink);
+}

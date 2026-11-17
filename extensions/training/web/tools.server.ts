@@ -6,6 +6,8 @@
  * log_session.
  */
 import { todayIn, ToolError, type ExtTool, type ExtensionContext } from '$shell';
+import { isPhoto, searchPhotos } from './lib/photos';
+import { keepPhoto } from './lib/photos.server';
 import {
   customLibrary,
   deleteCustomEntry,
@@ -421,7 +423,9 @@ export const tools: ExtTool[] = [
     readOnly: false,
     description:
       'The profile\'s own library entry: name, kind cardio (with sport) or exercise (with unit reps|seconds|minutes and muscles), ' +
-      `description, cautions (what to watch out for). Muscles: ${Object.keys(MUSCLES).join(', ')}. Give id to change one of its own. Returns its id.`,
+      `description, cautions (what to watch out for). Muscles: ${Object.keys(MUSCLES).join(', ')}. Give id to change one of its own; what is left out then stays. ` +
+      'An exercise can have a photo like the built-in ones (start position and end of the movement, Free Exercise DB): photo = an id from ' +
+      'exercise_photos, "" removes it, leaving it out keeps the current one. Returns its id and whether the photo is there.',
     input: {
       type: 'object',
       properties: {
@@ -432,27 +436,45 @@ export const tools: ExtTool[] = [
         unit: { type: 'string', enum: [...UNITS] },
         muscles: { type: 'array', items: { type: 'string', enum: Object.keys(MUSCLES) }, maxItems: 8 },
         description: { type: 'string', maxLength: 2000 },
-        cautions: { type: 'array', items: { type: 'string', maxLength: 200 }, maxItems: 10 }
+        cautions: { type: 'array', items: { type: 'string', maxLength: 200 }, maxItems: 10 },
+        photo: { type: 'string', maxLength: 100, description: 'A Free Exercise DB id from exercise_photos, e.g. Lying_Leg_Curls; "" removes it.' }
       },
-      required: ['name', 'kind']
+      required: []
     },
     run: (args, ctx) =>
       ctx.db(async (sql) => {
-        if (args.id && !(await customLibrary(sql, p(ctx))).some((e) => e.id === args.id)) throw new ToolError(`No own entry ${args.id}; built-in entries cannot be changed.`);
-        const muscles = ((args.muscles as string[]) ?? []).filter((m) => m in MUSCLES);
-        return {
-          id: await saveCustomEntry(sql, p(ctx), {
-            id: args.id as string | undefined,
-            name: String(args.name),
-            kind: args.kind === 'cardio' ? 'cardio' : 'exercise',
-            sport: (args.sport as string) ?? null,
-            unit: UNITS.includes(args.unit as never) ? (args.unit as never) : 'reps',
-            muscles,
-            description: (args.description as string) ?? null,
-            cautions: (args.cautions as string[]) ?? []
-          })
-        };
+        const was = args.id ? (await customLibrary(sql, p(ctx))).find((e) => e.id === args.id) : undefined;
+        if (args.id && !was) throw new ToolError(`No own entry ${args.id}; built-in entries cannot be changed.`);
+        if (!was && (!args.name || !args.kind)) throw new ToolError('A new entry needs name and kind.');
+        // Changing one: what is left out stays as it was (e.g. only a photo).
+        const kind = (args.kind ?? was?.kind) === 'cardio' ? 'cardio' : 'exercise';
+        const muscles = ((args.muscles as string[] | undefined) ?? was?.muscles ?? []).filter((m) => m in MUSCLES);
+        const photo = args.photo === undefined ? undefined : args.photo === '' || kind === 'cardio' ? null : String(args.photo);
+        if (photo && !isPhoto(photo)) throw new ToolError(`No photo ${photo}; find one with exercise_photos.`);
+        const id = await saveCustomEntry(sql, p(ctx), {
+          id: args.id as string | undefined,
+          name: String(args.name ?? was?.name),
+          kind,
+          sport: (args.sport as string | undefined) ?? was?.sport ?? null,
+          unit: UNITS.includes(args.unit as never) ? (args.unit as never) : (was?.unit ?? 'reps'),
+          muscles,
+          description: (args.description as string | undefined) ?? was?.description ?? null,
+          cautions: (args.cautions as string[] | undefined) ?? was?.cautions ?? [],
+          photo
+        });
+        return photo ? { id, photo, photo_ready: await keepPhoto(sql, p(ctx), photo) } : { id };
       })
+  },
+  {
+    name: 'exercise_photos',
+    title: 'Find a photo for an own exercise',
+    readOnly: true,
+    description:
+      'Photos an own exercise can take, from the same source as the built-in ones (Free Exercise DB, public domain, two pictures each: ' +
+      'start position and end of the movement). Search in English by name, equipment or muscle (e.g. "leg curl", "calf raise machine"). ' +
+      'Give the chosen id as save_exercise photo. Each result has its pictures at app path /training/photo/<id>/0 and /1.',
+    input: { type: 'object', properties: { query: { type: 'string', minLength: 1, maxLength: 80 } }, required: ['query'] },
+    run: async (args) => ({ photos: searchPhotos(String(args.query ?? ''), 20) })
   },
   {
     name: 'delete_exercise',

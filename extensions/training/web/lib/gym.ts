@@ -6,8 +6,16 @@ import { libraryById, MUSCLES, type LibraryEntry, type Muscle } from './library'
 import type { ExerciseItem, Item, SetSpec, Unit } from './model';
 
 const files = import.meta.glob('./img/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-/** The photo of an exercise: start (0) or end (1) of the movement (Free Exercise DB, public domain). */
-export const imageOf = (id: string | undefined, frame: 0 | 1 = 0): string | undefined => (id ? files[`./img/${id}_${frame}.webp`] : undefined);
+/** Where the app serves an own entry's photo (a Free Exercise DB id, lib/photos.ts): start (0) or end (1). */
+export const photoUrl = (photo: string, frame: 0 | 1 = 0): string => `/training/photo/${encodeURIComponent(photo)}/${frame}`;
+/** The context key of own entry id -> photo, set by +layout.svelte for Thumb and ExerciseInfo. */
+export const OWN_PHOTOS = 'training:own-photos';
+/**
+ * The photo of an exercise: start (0) or end (1) of the movement (Free Exercise DB, public domain). Built-in
+ * entries ship theirs; own ones have the photo they picked (`own`: entry id -> photo).
+ */
+export const imageOf = (id: string | undefined, frame: 0 | 1 = 0, own?: Record<string, string>): string | undefined =>
+  id ? (files[`./img/${id}_${frame}.webp`] ?? (own?.[id] ? photoUrl(own[id], frame) : undefined)) : undefined;
 
 /** Rest between sets, in seconds, by exercise (90 for the rest). */
 export const REST: Record<string, number> = {
