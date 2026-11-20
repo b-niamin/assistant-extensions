@@ -22,7 +22,7 @@
       "description": "Garmin, Strava and Withings in one place: sleep, HRV, readiness, activities and weight, and writes back to them.",
       "kind": "native",
       "scope": "profile",
-      "version": "1.2.1",
+      "version": "1.3.0",
       "shell": 7,
       "service": true,
       "needs": "A Garmin Connect account; Strava and Withings optional",

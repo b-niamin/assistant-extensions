@@ -75,6 +75,10 @@ export interface LinkedActivity {
   start_time: string;
   distance_m: number | null;
   duration_s: number | null;
+  /** Garmin only: heart rate (bpm) and training load. */
+  avg_hr: number | null;
+  max_hr: number | null;
+  training_load: number | null;
   strava: { id: string; name: string | null; description: string | null } | null;
 }
 
@@ -82,12 +86,12 @@ export interface LinkedActivity {
 export async function linkedActivities(sql: Sql, profileId: string, from: string, to: string, limit: number): Promise<LinkedActivity[]> {
   const rows = await sql`
     SELECT a.activity_id, a.sport, a.name, a.raw->>'description' AS description, a.start_time, a.distance_m, a.duration_s,
-           s.strava_id, s.name AS s_name, s.description AS s_description
+           a.avg_hr, a.max_hr, a.training_load, s.strava_id, s.name AS s_name, s.description AS s_description
       FROM health.synced_activities a
       LEFT JOIN health.synced_strava_activities s ON s.profile_id = a.profile_id AND s.garmin_activity_id = a.activity_id
      WHERE a.profile_id = ${profileId} AND a.start_time >= ${from}::date AND a.start_time < ${to}::date + 1
     UNION ALL
-    SELECT NULL, s.sport, NULL, NULL, s.start_time, s.distance_m, s.duration_s, s.strava_id, s.name, s.description
+    SELECT NULL, s.sport, NULL, NULL, s.start_time, s.distance_m, s.duration_s, NULL, NULL, NULL, s.strava_id, s.name, s.description
       FROM health.synced_strava_activities s
      WHERE s.profile_id = ${profileId} AND s.garmin_activity_id IS NULL AND s.start_time >= ${from}::date AND s.start_time < ${to}::date + 1
     ORDER BY start_time DESC LIMIT ${limit}`;
@@ -99,6 +103,9 @@ export async function linkedActivities(sql: Sql, profileId: string, from: string
     start_time: iso(r.start_time)!,
     distance_m: r.distance_m ?? null,
     duration_s: r.duration_s ?? null,
+    avg_hr: r.avg_hr ?? null,
+    max_hr: r.max_hr ?? null,
+    training_load: r.training_load ?? null,
     strava: r.strava_id ? { id: String(r.strava_id), name: r.s_name ?? null, description: r.s_description ?? null } : null
   }));
 }

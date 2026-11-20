@@ -54,6 +54,10 @@ Garmin writes beyond workouts (weigh-in, activity name and description) are in `
   "Allow" link; the provider sends the browser to `/health/oauth`, which stores the code for that sign-in
   (`web/routes/oauth`), and the command trades it for tokens. Strava: callback domain = the app's host;
   Withings: callback URL = `https://<this app>/health/oauth`. `disconnect` forgets a login.
+- Read tools: `overview` (daily metrics, recent activities), `activities` (a date range, with avg/max HR and the
+  Strava twin), `activity` (one activity: Garmin summary numbers, HR zones, laps/splits, journal and every stored
+  stream except GPS averaged into at most `points` stretches; `web/lib/activity.ts` `ai*`). The connector has no
+  SQL, so whatever Claude should see over claude.ai must come out of these tools.
 - Tools for writes: `edit_activity`, `send_workout` / `remove_workout` (Claude uses these to put another
   app's plan on the watch, with that app's ids as `ref`), `add_weight`, `copy_weights_to_garmin`, `configure`,
   `sync_now`; `writes` says how each ended. The calendar hides Garmin planned workouts that are in

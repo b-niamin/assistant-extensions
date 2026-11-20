@@ -142,3 +142,103 @@ export function paceText(secPerKm: number | null): string {
   const s = Math.round(secPerKm % 60);
   return s === 60 ? `${m + 1}:00` : `${m}:${String(s).padStart(2, '0')}`;
 }
+
+/** Streams the AI gets, in this order; `speed` also yields `pace_s_per_km` for paced sports. */
+export const AI_STREAMS = [
+  'heartRate', 'speed', 'cadence', 'grade', 'elevation', 'power', 'temperature', 'respirationRate', 'strideLength',
+  'groundContactTime', 'groundContactBalance', 'verticalOscillation', 'verticalRatio', 'stamina', 'staminaPotential',
+  'performanceCondition'
+] as const;
+
+const round = (v: number, d = 2) => Math.round(v * 10 ** d) / 10 ** d;
+
+/** `n` samples cut into at most `max` buckets: [start, end) index pairs, evenly sized. */
+export function buckets(n: number, max: number): [number, number][] {
+  const k = Math.max(1, Math.min(n, max));
+  return Array.from({ length: k }, (_, b) => [Math.floor((b * n) / k), Math.floor(((b + 1) * n) / k)] as [number, number]);
+}
+
+/** Mean of the numbers in arr[from..to), null when there are none. */
+function meanOf(arr: unknown[], from: number, to: number): number | null {
+  let s = 0;
+  let c = 0;
+  for (let i = from; i < to; i++) {
+    const v = num(arr[i]);
+    if (v !== null) {
+      s += v;
+      c++;
+    }
+  }
+  return c ? s / c : null;
+}
+
+/**
+ * Stored streams averaged over at most `points` equal stretches (a peak inside one stretch is smoothed: the
+ * laps and the summary keep max values). Every stream holds one value per entry of `time_s` (seconds from
+ * start of each stretch). No GPS: the route is not the AI's business.
+ */
+export function aiSamples(raw: Record<string, unknown> | null, sport: string, points = 120, only?: string[]) {
+  const time = raw && Array.isArray(raw.time) ? raw.time : [];
+  const n = time.length;
+  if (n < 2) return { samples: 0, time_s: [] as number[], series: {} as Record<string, (number | null)[]> };
+  const parts = buckets(n, Math.min(1000, Math.max(10, points)));
+  const series: Record<string, (number | null)[]> = {};
+  for (const key of AI_STREAMS) {
+    const arr = raw![key];
+    if (!Array.isArray(arr) || arr.length !== n || (only && !only.includes(key))) continue;
+    const values = parts.map(([a, b]) => meanOf(arr, a, b));
+    if (!values.some((v) => v !== null)) continue;
+    if (key === 'speed' && PACED.includes(sport)) {
+      series.pace_s_per_km = values.map((v) => {
+        const p = paceOf(v);
+        return p === null ? null : Math.round(p);
+      });
+    }
+    series[key === 'speed' ? 'speed_mps' : key] = values.map((v) => (v === null ? null : round(v)));
+  }
+  return { samples: n, time_s: parts.map(([a]) => Math.round(num(time[a]) ?? 0)), series };
+}
+
+/** Laps (or Garmin's typed splits) as stored, numbers rounded; at most 200. */
+export function aiLaps(list: unknown): Record<string, number | string>[] {
+  if (!Array.isArray(list)) return [];
+  return list
+    .filter((l): l is Record<string, unknown> => !!l && typeof l === 'object')
+    .slice(0, 200)
+    .map((l, i) => {
+      const out: Record<string, number | string> = { index: num(l.index) ?? i + 1 };
+      for (const [k, v] of Object.entries(l)) {
+        if (k === 'index') continue;
+        if (typeof v === 'number' && Number.isFinite(v)) out[k] = round(v);
+        else if (typeof v === 'string' && v.length <= 60) out[k] = v;
+      }
+      return out;
+    });
+}
+
+/** Garmin summary keys that identify people, devices or places rather than describe the workout. */
+const SKIP_SUMMARY = /id$|uuid|owner|user|device|latitude|longitude|timestamp|gmt|offset|sequence|manufacturer|privacy|parent|favorite/i;
+
+/**
+ * Every top-level number (and true flag) of Garmin's activity summary, e.g. maxHR, hrTimeInZone_1..5,
+ * averageRunningCadenceInStepsPerMinute, avgStrideLength, avgVerticalOscillation, avgGroundContactTime,
+ * aerobicTrainingEffect, vO2MaxValue, minElevation: field names as Garmin sends them.
+ */
+export function aiSummary(raw: Record<string, unknown> | null): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const [k, v] of Object.entries(raw ?? {})) {
+    if (typeof v === 'number' && Number.isFinite(v) && !SKIP_SUMMARY.test(k)) out[k] = round(v);
+  }
+  return out;
+}
+
+/** Seconds in each heart-rate zone, from the summary's hrTimeInZone_<n>; null when Garmin sent none. */
+export function hrZones(raw: Record<string, unknown> | null): { zone: number; seconds: number }[] | null {
+  const zones: { zone: number; seconds: number }[] = [];
+  for (const [k, v] of Object.entries(raw ?? {})) {
+    const m = /^hrTimeInZone_(\d)$/.exec(k);
+    const s = num(v);
+    if (m && s !== null) zones.push({ zone: Number(m[1]), seconds: Math.round(s) });
+  }
+  return zones.length ? zones.sort((a, b) => a.zone - b.zone) : null;
+}

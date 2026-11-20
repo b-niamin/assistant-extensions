@@ -18,6 +18,8 @@ import {
   weights,
   writes
 } from './lib/connectors.server';
+import { activityById } from './lib/activity.server';
+import { AI_STREAMS, aiLaps, aiSamples, aiSummary, extrasOf, hrZones } from './lib/activity';
 import { latestReadings, recentActivities, recentSeries } from './lib/health.server';
 import { METRICS } from './lib/metrics';
 
@@ -121,8 +123,9 @@ export const tools: ExtTool[] = [
     description:
       'Activities between `from` and `to` (YYYY-MM-DD, default the last 14 days), newest first, at most `limit` ' +
       '(default 50, max 200): Garmin id, sport, name, description, start, distance, duration and the Strava ' +
-      'activity of the same workout ({id, name, description}) when Strava is connected. Strava-only activities ' +
-      'have activity_id null. Use the ids with edit_activity.',
+      'activity of the same workout ({id, name, description}) when Strava is connected, avg and max heart rate ' +
+      '(bpm) and training load. Strava-only activities have activity_id null. Use the ids with edit_activity, ' +
+      'and with activity for heart rate over time, cadence, grade, laps and running dynamics.',
     input: {
       type: 'object',
       properties: {
@@ -135,6 +138,52 @@ export const tools: ExtTool[] = [
       const to = String(args.to ?? todayIn());
       const from = String(args.from ?? new Date(Date.parse(`${to}T12:00:00Z`) - 13 * 86_400_000).toISOString().slice(0, 10));
       return ctx.db((sql) => linkedActivities(sql, ctx.dataProfileId!, from, to, Number(args.limit ?? 50)));
+    }
+  },
+  {
+    name: 'activity',
+    title: 'One activity in detail',
+    readOnly: true,
+    description:
+      'One activity (Garmin `activity_id` from overview or activities) in detail: the summary (avg/max heart ' +
+      'rate, distance, durations, power, load), every number of Garmin\'s own summary under `garmin` (field ' +
+      'names as Garmin sends them, e.g. maxHR, hrTimeInZone_1..5, averageRunningCadenceInStepsPerMinute, ' +
+      'avgStrideLength, avgGroundContactTime, avgVerticalOscillation, aerobicTrainingEffect, vO2MaxValue), ' +
+      'seconds per heart-rate zone, laps and Garmin\'s splits (avgHr, maxHr, pace as avgSpeedMps, cadence, ' +
+      'stride, ground contact, ...), the RPE/note saved for it, and its recorded streams averaged over at most ' +
+      '`points` equal stretches (default 120, max 1000): time_s (start of each stretch, seconds from the ' +
+      'start), heartRate (bpm), pace_s_per_km (runs, walks, hikes), speed_mps, cadence (as the watch records ' +
+      'it: for runs often steps of one foot per minute, double it for steps per minute), grade (%), elevation ' +
+      '(m), power (W), temperature, respirationRate, strideLength, groundContactTime, verticalOscillation, ' +
+      'verticalRatio, stamina, ... Only the streams the watch recorded are there; `streams` limits which.',
+    input: {
+      type: 'object',
+      properties: {
+        activity_id: { type: 'string', maxLength: 40 },
+        points: { type: 'integer', minimum: 10, maximum: 1000 },
+        streams: { type: 'array', items: { type: 'string', enum: [...AI_STREAMS] }, maxItems: AI_STREAMS.length }
+      },
+      required: ['activity_id']
+    },
+    run: async (args, ctx) => {
+      const id = String(args.activity_id ?? '');
+      if (!/^[0-9A-Za-z_-]{1,40}$/.test(id)) throw new ToolError('activity_id must be a Garmin activity id');
+      const d = await ctx.db((sql) => activityById(sql, ctx.dataProfileId!, id));
+      if (!d.activity) throw new ToolError(`No activity ${id} for this profile`);
+      const { raw, has_gps, ...summary } = d.activity;
+      const only = Array.isArray(args.streams) && args.streams.length ? args.streams.map(String) : undefined;
+      const streams = d.streams as Record<string, unknown> | null;
+      return {
+        activity: { ...summary, description: typeof raw?.description === 'string' ? raw.description : null },
+        extras: extrasOf(raw),
+        hr_zones_s: hrZones(raw),
+        garmin: aiSummary(raw),
+        laps: aiLaps(streams?.laps),
+        splits: aiLaps(streams?.typedSplits),
+        journal: d.journal,
+        ...aiSamples(streams, summary.sport, Number(args.points) || 120, only),
+        ...(streams ? {} : { note: 'No streams synced for this activity yet (or the watch recorded none).' })
+      };
     }
   },
   {
